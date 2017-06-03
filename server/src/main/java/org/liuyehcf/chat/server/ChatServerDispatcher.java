@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -266,6 +267,57 @@ public class ChatServerDispatcher {
             loadBalancingLock.lock();
         } finally {
             loadBalancingLock.unlock();
+        }
+    }
+
+    public void stop() {
+        for (PipeLineTask pipeLineTask : pipeLineTasks) {
+            for (Service service : pipeLineTask.getServices()) {
+                service.offerMessage(
+                        ServerUtils.createSystemMessage(
+                                true,
+                                service.getServiceDescription().getFromUserName(),
+                                "[很抱歉通知您，服务器已关闭]"
+                        ));
+            }
+        }
+
+        boolean canStop = false;
+        while (!canStop) {
+            try {
+                loadBalancingLock.lock();
+
+                /*
+                 * 该方法只有ChatServerListener所处的线程才会调用，因此必须所有PipeLineTask都位于阻塞状态才行
+                 * 这一点与负载均衡不同，负载均衡时由PipeLineTask中的任意一个线程来做的
+                 */
+                while (loadBalancingLock.getQueueLength() < pipeLineTasks.size()) ;
+
+                for (PipeLineTask pipeLineTask : pipeLineTasks) {
+                    for (Service service : pipeLineTask.getServices()) {
+                        if (service.getWriteMessages().isEmpty()) {
+                            pipeLineTask.offLine(service);
+                        } else {
+                            service.cancel();//不允许再接受消息了，但是要将尚未发送的Message发送完
+                        }
+                    }
+                }
+
+                if (pipeLineTasks.isEmpty())
+                    canStop = true;
+
+            } finally {
+                loadBalancingLock.unlock();
+            }
+
+            //尚不能结束，则等待剩余Message发送完毕
+            if (!canStop) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(500);
+                } catch (InterruptedException e) {
+
+                }
+            }
         }
     }
 

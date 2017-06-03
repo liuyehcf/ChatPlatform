@@ -46,25 +46,34 @@ public class ChatServerListener {
     }
 
 
-    private void init() {
+    private boolean init() {
+        boolean initSuccessful;
         try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.bind(new InetSocketAddress(serverHost, serverPort));
             handler.onSucceed();
+            initSuccessful = true;
         } catch (IOException e) {
             e.printStackTrace(System.out);
             handler.onFailure();
-            System.exit(0);
+            initSuccessful = false;
         }
+        return initSuccessful;
     }
 
     private void start() {
-        init();
-        ChatServerDispatcher.LOGGER.info("The server starts");
+        if (!init()) {
+            ChatServerDispatcher.LOGGER.info("The server starts failed!");
+            return;
+        }
+        ChatServerDispatcher.LOGGER.info("The server starts successfully!");
 
         while (!Thread.currentThread().isInterrupted()) {
 
             SocketChannel socketChannel = listen();
+
+            //由于当前线程可能被中断，listen()方法会阻塞直到检测到新的连接或者被中断，被中断时返回null，并且此时中断标志位未被置位置
+            if (socketChannel == null) continue;
 
             ChatServerDispatcher.LOGGER.info("Listen to new connections");
 
@@ -77,6 +86,9 @@ public class ChatServerListener {
                 Thread.currentThread().interrupt();
             }
         }
+
+        //终止服务器
+        ChatServerDispatcher.getSingleton().stop();
     }
 
     private SocketChannel listen() {
@@ -84,7 +96,7 @@ public class ChatServerListener {
         try {
             socketChannel = serverSocketChannel.accept();
         } catch (IOException e) {
-            e.printStackTrace(System.out);
+            ChatServerDispatcher.LOGGER.info("The ServerListener thread is interrupted");
         }
         return socketChannel;
     }

@@ -133,6 +133,10 @@ public abstract class Service {
         return recentActiveTimeStamp;
     }
 
+    public Queue<Message> getWriteMessages() {
+        return writeMessages;
+    }
+
     public Service(
             String fromUserName,
             String toUserName,

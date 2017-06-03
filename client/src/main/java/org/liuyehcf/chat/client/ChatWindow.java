@@ -184,7 +184,8 @@ public class ChatWindow {
         } catch (Exception e) {
             handler.onFailure();
             //todo 如何只关闭当前ChatWindow
-            System.exit(0);
+            frame.dispose();
+            return;
         }
 
         ChatClientDispatcher.getSingleton().dispatch(service);
@@ -267,14 +268,6 @@ public class ChatWindow {
 
         @Override
         public void windowDeactivated(WindowEvent e) {
-
-        }
-    }
-
-
-    private static final class EnterListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
 
         }
     }

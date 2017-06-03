@@ -24,5 +24,4 @@ public class ServerService extends Service {
 
         this.socketChannel = socketChannel;
     }
-
 }
