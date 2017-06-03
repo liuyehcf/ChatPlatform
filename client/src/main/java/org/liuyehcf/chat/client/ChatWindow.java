@@ -1,6 +1,7 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.handler.WindowHandler;
+import org.liuyehcf.chat.service.Service;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -42,12 +43,17 @@ public class ChatWindow {
     /**
      * 登录回调
      */
-    private LoginHandler handler;
+    private WindowHandler handler;
 
     /**
      * 连接
      */
     private Service service;
+
+    /**
+     * 滚动框区域
+     */
+    private JScrollPane scrollPane;
 
     /**
      * 文本域
@@ -70,7 +76,7 @@ public class ChatWindow {
         return textPane;
     }
 
-    public ChatWindow(String serverHost, Integer serverPort, String fromUserName, String toUserName, LoginHandler handler) {
+    public ChatWindow(String serverHost, Integer serverPort, String fromUserName, String toUserName, WindowHandler handler) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
         this.fromUserName = fromUserName;
@@ -93,9 +99,10 @@ public class ChatWindow {
         textPane.setFont(GLOBAL_FONT);
         textPane.setBackground(Color.WHITE);
 
-        JScrollPane scrollPane = new JScrollPane(textPane);
+        scrollPane = new JScrollPane(textPane);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setBounds(25, 25, 800, 600);
+
 
         /*
          * 设置一个输入文本框以及一个按钮
@@ -173,8 +180,10 @@ public class ChatWindow {
                     new InetSocketAddress(serverHost, serverPort),
                     this
             );
-        } catch (IOException e) {
+            handler.onSucceed();
+        } catch (Exception e) {
             handler.onFailure();
+            //todo 如何只关闭当前ChatWindow
             System.exit(0);
         }
 
@@ -216,6 +225,10 @@ public class ChatWindow {
          * 虽然在执行StyledDocument#insertString的时候已经指定了同样的格式，但是这里还得再刷新一下
          */
         styledDocument.setParagraphAttributes(startPos, endPos - startPos, simpleAttributeSet, true);
+
+        //滚动到最下方
+        JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+        scrollBar.setValue(scrollBar.getMaximum());
     }
 
     private final class MyWindowListener implements WindowListener {

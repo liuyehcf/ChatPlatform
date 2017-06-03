@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.pipe;
 
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 
 import java.nio.channels.Selector;
 import java.util.Set;

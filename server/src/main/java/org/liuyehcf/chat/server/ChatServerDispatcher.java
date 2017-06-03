@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.server;
 
-import org.liuyehcf.chat.common.Service;
-import org.liuyehcf.chat.common.ServiceDescription;
+import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.service.ServiceDescription;
 import org.liuyehcf.chat.interceptor.MessageInterceptor;
 import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;

@@ -1,5 +1,7 @@
 package org.liuyehcf.chat.client;
 
+import org.liuyehcf.chat.handler.WindowHandler;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,7 +27,7 @@ public class LoginWindow {
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
     public LoginWindow() {
-
+        initWindow();
     }
 
 
@@ -124,7 +126,7 @@ public class LoginWindow {
                         serverPort,
                         localId,
                         remoteId,
-                        new LoginHandler() {
+                        new WindowHandler() {
                             @Override
                             public void onSucceed() {
                                 systemLabel.setText("Connection succeed!");
@@ -141,16 +143,8 @@ public class LoginWindow {
         panel.add(connectButton);
     }
 
-    public void start() {
-        initWindow();
-    }
-
-
 
     public static void main(String[] args) {
-
-        new LoginWindow().start();
-
-        while(true);
+        new LoginWindow();
     }
 }

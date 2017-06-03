@@ -1,13 +1,11 @@
 package org.liuyehcf.chat.server;
 
-import org.liuyehcf.chat.common.*;
+import org.liuyehcf.chat.service.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.TextMessage;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.channels.*;
@@ -130,7 +128,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
                             groupServiceMap.put(groupName, groupService);
                         }
                         groupService.addService(service);
-                        String greetContent1 = "欢迎<"
+                        String greetContent1 = "大家欢迎<"
                                 + fromUserName
                                 + ">进入群聊聊天室!!!";
                         groupService.offerMessage(service, ServerUtils.createSystemMessage(
@@ -146,7 +144,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
                                 greetContent2));
                     } else {
                         String greetContent = fromUserName +
-                                "欢迎进入私人聊天室!!!";
+                                "，欢迎进入私人聊天室!!!";
                         service.offerMessage(ServerUtils.createSystemMessage(
                                 false,
                                 fromUserName,

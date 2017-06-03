@@ -1,12 +1,11 @@
 package org.liuyehcf.chat.writer;
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 

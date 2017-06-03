@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.pipe;
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;

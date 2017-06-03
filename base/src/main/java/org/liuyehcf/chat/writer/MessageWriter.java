@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.writer;
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.protocol.Message;
 
 import java.io.IOException;

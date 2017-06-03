@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.reader;
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 

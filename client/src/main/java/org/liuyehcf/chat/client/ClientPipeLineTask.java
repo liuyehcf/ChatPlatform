@@ -1,13 +1,12 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.common.*;
+import org.liuyehcf.chat.service.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.TextMessage;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;

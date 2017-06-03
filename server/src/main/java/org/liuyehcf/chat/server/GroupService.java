@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.server;
 
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.protocol.TextMessage;
 
 import java.util.*;

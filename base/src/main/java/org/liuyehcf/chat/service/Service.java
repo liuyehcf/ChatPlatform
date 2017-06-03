@@ -1,4 +1,4 @@
-package org.liuyehcf.chat.common;
+package org.liuyehcf.chat.service;
 
 import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Message;

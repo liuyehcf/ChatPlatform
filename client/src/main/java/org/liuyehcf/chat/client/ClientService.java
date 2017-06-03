@@ -1,14 +1,10 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.common.*;
-import org.liuyehcf.chat.protocol.Message;
+import org.liuyehcf.chat.service.*;
 import org.liuyehcf.chat.protocol.TextProtocol;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 
-import javax.swing.*;
-import javax.swing.text.*;
-import java.awt.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 

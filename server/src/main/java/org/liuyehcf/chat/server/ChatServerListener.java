@@ -1,6 +1,8 @@
 package org.liuyehcf.chat.server;
 
 
+import org.liuyehcf.chat.handler.WindowHandler;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
@@ -17,32 +19,46 @@ public class ChatServerListener {
     /**
      * 服务器域名或ip
      */
-    private static String serverHost;
+    private String serverHost;
 
     /**
      * 服务器端口号
      */
-    private static int serverPort;
+    private int serverPort;
 
     /**
      * 服务端监听channel
      */
-    private static ServerSocketChannel serverSocketChannel;
+    private ServerSocketChannel serverSocketChannel;
+
+    /**
+     * 回调
+     */
+    private WindowHandler handler;
 
 
-    private static void init() {
+    public ChatServerListener(String serverHost, int serverPort, WindowHandler handler) {
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
+        this.handler = handler;
 
+        start();
+    }
+
+
+    private void init() {
         try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.bind(new InetSocketAddress(serverHost, serverPort));
+            handler.onSucceed();
         } catch (IOException e) {
             e.printStackTrace(System.out);
-            throw new RuntimeException("聊天服务器启动失败");
+            handler.onFailure();
+            System.exit(0);
         }
-
     }
 
-    private static void start() {
+    private void start() {
         init();
         ChatServerDispatcher.LOGGER.info("The server starts");
 
@@ -63,7 +79,7 @@ public class ChatServerListener {
         }
     }
 
-    private static SocketChannel listen() {
+    private SocketChannel listen() {
         SocketChannel socketChannel = null;
         try {
             socketChannel = serverSocketChannel.accept();
@@ -71,19 +87,6 @@ public class ChatServerListener {
             e.printStackTrace(System.out);
         }
         return socketChannel;
-    }
-
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("请输入服务器地址:");
-        serverHost = scanner.next();
-
-        System.out.println("请输入服务器端口:");
-        serverPort = scanner.nextInt();
-
-        ChatServerListener.start();
     }
 }
 

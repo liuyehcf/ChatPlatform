@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.common.Service;
+import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.protocol.TextMessage;
 import org.liuyehcf.chat.protocol.TextProtocol;
 
