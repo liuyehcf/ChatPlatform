@@ -4,8 +4,10 @@ import org.liuyehcf.chat.common.Service;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -53,12 +55,12 @@ public class ChatWindow {
     /**
      * 文本域
      */
-    private JTextArea textArea;
+    private JTextPane textPane;
 
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
-    public JTextArea getTextArea() {
-        return textArea;
+    public JTextPane getTextPane() {
+        return textPane;
     }
 
     public ChatWindow(String serverHost, Integer serverPort, String fromUserName, String toUserName, LoginHandler handler) {
@@ -73,22 +75,44 @@ public class ChatWindow {
         connect();
     }
 
+    /**
+     * 设置JTextPane的对齐方式
+     *
+     * @param editor
+     * @param attr
+     * @param replace
+     */
+    static final void setParagraphAttributes(JEditorPane editor,
+                                       AttributeSet attr,
+                                       boolean replace) {
+        int start = editor.getSelectionStart();
+        int end = editor.getSelectionEnd();
+        StyledDocument doc = getStyledDocument(editor);
+        doc.setParagraphAttributes(start, end - start, attr, replace);
+    }
+
+    static final StyledDocument getStyledDocument(JEditorPane editorPane) {
+        Document document = editorPane.getDocument();
+        if (document instanceof StyledDocument) {
+            return (StyledDocument) document;
+        }
+        throw new IllegalArgumentException("document must be StyledDocument");
+    }
+
+
     private void initWindow() {
         frame = new JFrame();
 
         /*
          * 滚动条显示文本框
          */
-        this.textArea = new JTextArea(10, 16);
-        textArea.setTabSize(4);
-        textArea.setFont(GLOBAL_FONT);
-        textArea.setLineWrap(true);// 激活自动换行功能
-        textArea.setWrapStyleWord(true);// 激活断行不断字功能
-        textArea.setBackground(Color.WHITE);
+        textPane = new JTextPane();
+        textPane.setFont(GLOBAL_FONT);
+        textPane.setBackground(Color.WHITE);
 
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        JScrollPane scrollPane = new JScrollPane(textPane);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setBounds(25,25,800,600);
+        scrollPane.setBounds(25, 25, 800, 600);
 
         /*
          * 设置一个输入文本框以及一个按钮
@@ -158,7 +182,6 @@ public class ChatWindow {
         ClientUtils.sendSystemMessage(service, true, false);
     }
 
-
     private final class MyWindowListener implements WindowListener {
         @Override
         public void windowOpened(WindowEvent e) {
@@ -197,5 +220,10 @@ public class ChatWindow {
         public void windowDeactivated(WindowEvent e) {
 
         }
+    }
+
+
+    public static void main(String[] args){
+        new ChatWindow("1",1,"1","1",null);
     }
 }

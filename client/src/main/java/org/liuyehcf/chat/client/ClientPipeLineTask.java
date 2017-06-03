@@ -89,7 +89,7 @@ public class ClientPipeLineTask extends AbstractPipeLineTask {
             if (((TextMessage) message).getTextControl().isOffLineMessage()) {
                 offLine(service);
             }
-            service.flushOnWindow(message.getDisplayMessageString());
+            service.flushOnWindow(false, message.getDisplayMessageString());
         }
     }
 

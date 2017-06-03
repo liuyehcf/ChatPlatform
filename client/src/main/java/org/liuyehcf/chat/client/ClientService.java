@@ -7,6 +7,8 @@ import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 
 import javax.swing.*;
+import javax.swing.text.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -67,10 +69,34 @@ public class ClientService extends Service {
         ChatClientDispatcher.getSingleton().getServiceMap().put(getServiceDescription(), this);
     }
 
-    public void flushOnWindow(String content) {
-        JTextArea textArea = getBindChatWindow().getTextArea();
-        textArea.append(content);
-        textArea.setCaretPosition(textArea.getText().length());
-        textArea.paintImmediately(textArea.getBounds());
+    public void flushOnWindow(boolean isSend, String content) {
+        JTextPane textPane = getBindChatWindow().getTextPane();
+        if (isSend) {
+            StyledDocument styledDocument = textPane.getStyledDocument();
+
+            MutableAttributeSet mutableAttributeSet = new SimpleAttributeSet();
+            StyleConstants.setAlignment(mutableAttributeSet, StyleConstants.ALIGN_RIGHT);
+            ChatWindow.setParagraphAttributes(textPane, mutableAttributeSet, false);
+
+            StyleConstants.setForeground(mutableAttributeSet, Color.red);
+            try {
+                styledDocument.insertString(styledDocument.getLength(), content + "\n", mutableAttributeSet);
+            } catch (BadLocationException e) {
+
+            }
+        } else {
+            StyledDocument styledDocument = textPane.getStyledDocument();
+
+            MutableAttributeSet mutableAttributeSet = new SimpleAttributeSet();
+            StyleConstants.setAlignment(mutableAttributeSet, StyleConstants.ALIGN_LEFT);
+            ChatWindow.setParagraphAttributes(textPane, mutableAttributeSet, false);
+
+            StyleConstants.setForeground(mutableAttributeSet, Color.black);
+            try {
+                styledDocument.insertString(styledDocument.getLength(), content + "\n", mutableAttributeSet);
+            } catch (BadLocationException e) {
+
+            }
+        }
     }
 }
