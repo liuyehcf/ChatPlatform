@@ -12,31 +12,28 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.sql.Time;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Liuye on 2017/6/3.
  */
 public class Test3 {
+
     /**
      * 聊天界面
      */
     private JFrame frame;
 
 
-    /**
-     * 文本域
-     */
-    private JTextArea textArea;
-
     private JTextPane textPane;
 
     private boolean flag;
 
+    private JButton button;
+
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
-    public JTextArea getTextArea() {
-        return textArea;
-    }
 
     public Test3() {
 
@@ -81,7 +78,6 @@ public class Test3 {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-
                 if (flag) {
 
 
@@ -117,6 +113,46 @@ public class Test3 {
         panel.add(button);
 
 
+        this.button = new JButton();
+        this.button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                if (flag) {
+
+
+                    StyledDocument d = textPane.getStyledDocument();
+
+                    MutableAttributeSet attr = new SimpleAttributeSet();
+                    StyleConstants.setAlignment(attr, StyleConstants.ALIGN_RIGHT);
+                    setParagraphAttributes(textPane, attr, false);
+
+                    StyleConstants.setForeground(attr, Color.red);
+                    try {
+                        d.insertString(d.getLength(), "好呀\n红色右\n", attr);
+                    } catch (Exception e1) {
+
+                    }
+                } else {
+                    StyledDocument d = textPane.getStyledDocument();
+
+                    MutableAttributeSet attr = new SimpleAttributeSet();
+                    StyleConstants.setAlignment(attr, StyleConstants.ALIGN_LEFT);
+                    setParagraphAttributes(textPane, attr, false);
+
+                    StyleConstants.setForeground(attr, Color.red);
+                    try {
+                        d.insertString(d.getLength(), "不好\n黑色左\n", attr);
+                    } catch (Exception e1) {
+
+                    }
+                }
+                flag = !flag;
+            }
+        });
+
+        panel.add(this.button);
+
         frame.add(scrollPane);
         frame.add(panel);
 
@@ -150,6 +186,17 @@ public class Test3 {
     }
 
     public static void main(String[] args) {
-        new Test3();
+        Test3 t = new Test3();
+
+
+        while (true) {
+            t.button.doClick();
+
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+
+            }
+        }
     }
 }
