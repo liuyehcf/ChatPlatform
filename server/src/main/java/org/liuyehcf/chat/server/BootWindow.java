@@ -128,7 +128,6 @@ public class BootWindow {
                                     @Override
                                     public void onFailure() {
                                         systemLabel.setText("Boot failed!");
-                                        //自旋等待线程结束
                                         listenThread = null;
                                     }
                                 });

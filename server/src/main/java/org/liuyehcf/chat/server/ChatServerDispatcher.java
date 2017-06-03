@@ -271,6 +271,7 @@ public class ChatServerDispatcher {
     }
 
     public void stop() {
+        //首先给所有活跃用户发送离线消息
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
             for (Service service : pipeLineTask.getServices()) {
                 service.offerMessage(
@@ -279,6 +280,7 @@ public class ChatServerDispatcher {
                                 service.getServiceDescription().getFromUserName(),
                                 "[很抱歉通知您，服务器已关闭]"
                         ));
+                service.cancel();
             }
         }
 
@@ -297,9 +299,8 @@ public class ChatServerDispatcher {
                     for (Service service : pipeLineTask.getServices()) {
                         if (service.getWriteMessages().isEmpty()) {
                             pipeLineTask.offLine(service);
-                        } else {
-                            service.cancel();//不允许再接受消息了，但是要将尚未发送的Message发送完
                         }
+                        //否则等待剩余消息发送完毕
                     }
                 }
 
