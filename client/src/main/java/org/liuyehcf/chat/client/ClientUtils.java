@@ -12,12 +12,12 @@ class ClientUtils {
     /**
      * 每个线程管理的channel数量的最大值
      */
-    static final int MAX_CONNECTION_PER_TASK = 2;
+    static final int MAX_CONNECTION_PER_TASK = 3;
 
     /**
      * 最大线程数量
      */
-    static final int MAX_THREAD_NUM = 3;
+    static final int MAX_THREAD_NUM = 4;
 
     /**
      * 当每个任务管理的连接数量与每个任务可管理最大连接数量之比

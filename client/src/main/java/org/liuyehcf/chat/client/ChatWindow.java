@@ -6,10 +6,7 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -57,6 +54,16 @@ public class ChatWindow {
      */
     private JTextPane textPane;
 
+    /**
+     * 输入框
+     */
+    private JTextField textField;
+
+    /**
+     * 发送按钮
+     */
+    private JButton button;
+
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
     public JTextPane getTextPane() {
@@ -97,14 +104,32 @@ public class ChatWindow {
         panel.setLayout(null);//这行必须，否则会很诡异
 
         //输入框
-        JTextField textField = new JTextField();
+        textField = new JTextField();
         textField.setBounds(25, 650, 700, 100);
         textField.setBorder(new LineBorder(new Color(127, 157, 185), 1, false));
         textField.setFont(GLOBAL_FONT);
+        textField.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                //响应回车键
+                if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                    button.doClick();
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
         panel.add(textField);
 
         //按钮
-        JButton button = new JButton();
+        button = new JButton();
         button.setText("SEND");
         button.setBounds(725, 650, 100, 100);
         button.setFont(GLOBAL_FONT);
@@ -233,6 +258,13 @@ public class ChatWindow {
         }
     }
 
+
+    private static final class EnterListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+        }
+    }
 
     public static void main(String[] args) {
         new ChatWindow("1", 1, "1", "1", null);
