@@ -54,7 +54,7 @@ public class ChatServerListener {
             handler.onSucceed();
             initSuccessful = true;
         } catch (IOException e) {
-            e.printStackTrace(System.out);
+            ChatServerDispatcher.LOGGER.info("The Server starts failed!");
             handler.onFailure();
             initSuccessful = false;
         }
@@ -96,7 +96,7 @@ public class ChatServerListener {
         try {
             socketChannel = serverSocketChannel.accept();
         } catch (IOException e) {
-            ChatServerDispatcher.LOGGER.info("The ServerListener thread is interrupted");
+            ChatServerDispatcher.LOGGER.info("The ChatServerListener thread is interrupted");
         }
         return socketChannel;
     }

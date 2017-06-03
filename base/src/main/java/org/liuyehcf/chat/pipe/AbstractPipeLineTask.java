@@ -67,8 +67,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
             readSelector = Selector.open();
             writeSelector = Selector.open();
         } catch (IOException e) {
-            e.printStackTrace(System.out);
-            throw new RuntimeException("read selector启动失败");
+            throw new RuntimeException("read selector init failed!");
         }
     }
 

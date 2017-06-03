@@ -42,8 +42,7 @@ public class MessageWriterImpl implements MessageWriter {
         try {
             messageBytes = messageString.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.out);
-            throw new RuntimeException("UTF-8编码失败");
+            throw new RuntimeException("String encoding failed!");
         }
         byteBuffer.clear();
         for (int i = 1; ; i++) {

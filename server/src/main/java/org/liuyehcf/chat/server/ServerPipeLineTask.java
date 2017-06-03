@@ -67,8 +67,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
         try {
             readReadyNum = getReadSelector().selectNow();
         } catch (IOException e) {
-            e.printStackTrace(System.out);
-            throw new RuntimeException("selectNow失败");
+            throw new RuntimeException("selectNow invoke failed");
         }
 
         if (readReadyNum <= 0) return;
@@ -204,8 +203,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
         try {
             readyWriteNum = getWriteSelector().selectNow();
         } catch (IOException e) {
-            e.printStackTrace(System.out);
-            throw new RuntimeException("selectNow失败");
+            throw new RuntimeException("selectNow invoke failed!");
         }
 
         if (readyWriteNum <= 0) return;
@@ -279,7 +277,6 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
             try {
                 socketChannel.finishConnect();
             } catch (IOException e) {
-                e.printStackTrace(System.out);
             }
         }
 
@@ -287,7 +284,6 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
             try {
                 socketChannel.close();
             } catch (IOException e) {
-                e.printStackTrace(System.out);
             }
         }
 

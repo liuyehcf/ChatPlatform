@@ -182,8 +182,7 @@ public abstract class Service {
             this.socketChannel.register(selector, ops, this);
             this.selectors.add(selector);
         } catch (IOException e) {
-            e.printStackTrace(System.out);
-            throw new RuntimeException("SocketChannel注册失败");
+            throw new RuntimeException("SocketChannel register failed");
         }
     }
 

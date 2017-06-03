@@ -307,8 +307,7 @@ public class TextProtocol implements Protocol {
                     try {
                         endBytes = TextProtocol.MESSAGE_PREFIX.getBytes("UTF-8");
                     } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace(System.out);
-                        throw new RuntimeException("字符串编码失败");
+                        throw new RuntimeException("String encoding failed!");
                     }
                 }
             }

@@ -95,8 +95,7 @@ public class MessageBuffer {
         try {
             return new String(contentBytes, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(System.out);
-            throw new RuntimeException("UTF-8编码失败");
+            throw new RuntimeException("String encoding failed");
         }
     }
 
