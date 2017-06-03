@@ -133,7 +133,7 @@ public class ChatClientDispatcher {
 
                 } else {
                     PipeLineTask newPipeLineTask = new ClientPipeLineTask();
-                    LOGGER.info("Add a new connection to a clientPipeLineTask {}", newPipeLineTask);
+                    LOGGER.info("Add a new connection to {}", newPipeLineTask);
 
                     newPipeLineTask.registerService(service);
 
@@ -141,7 +141,7 @@ public class ChatClientDispatcher {
                 }
             } else {
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
-                LOGGER.info("Add a new connection to an existing clientPipeLineTask {}", pipeLineTask);
+                LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
 
                 pipeLineTask.registerService(service);
             }

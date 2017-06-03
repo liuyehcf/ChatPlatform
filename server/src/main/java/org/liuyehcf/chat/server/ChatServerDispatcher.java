@@ -157,7 +157,7 @@ public class ChatServerDispatcher {
                     newService.cancel();
                 } else {
                     PipeLineTask newPipeLineTask = new ServerPipeLineTask(serviceMap, groupServiceMap);
-                    LOGGER.info("Add a new connection to a new serverPipeLineTask {}", newPipeLineTask);
+                    LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
 
                     Service newService = new ServerService(
                             "",
@@ -172,7 +172,7 @@ public class ChatServerDispatcher {
                 }
             } else {
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
-                LOGGER.info("Add a new connection to an existing serverPipeLineTask {}", pipeLineTask);
+                LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
 
                 Service newService = new ServerService(
                         "",

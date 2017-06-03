@@ -57,7 +57,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
                 getBindThread().interrupt();
             }
         }
-        ChatServerDispatcher.LOGGER.info("This pipeLineTask {} is finished", this);
+        ChatServerDispatcher.LOGGER.info("{} is finished", this);
         ChatServerDispatcher.getSingleton().getPipeLineTasks().remove(this);
     }
 
@@ -166,7 +166,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
             }
             //客户端要求断开连接
             else if (textMessage.getTextControl().isOffLineMessage()) {
-                ChatServerDispatcher.LOGGER.info("The client{} request goes offline");
+                ChatServerDispatcher.LOGGER.info("The client {} request goes offline", fromUserName);
 
                 offLine(service);
             }
@@ -267,7 +267,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
      */
     @Override
     public void offLine(Service service) {
-        ChatServerDispatcher.LOGGER.info("Service {} is getOff from PipeLineTask {}", service, this);
+        ChatServerDispatcher.LOGGER.info("Service {} is getOff from {}", service, this);
 
         SocketChannel socketChannel = service.getSocketChannel();
 

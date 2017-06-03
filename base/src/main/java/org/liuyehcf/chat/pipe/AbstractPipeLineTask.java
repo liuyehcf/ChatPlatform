@@ -124,7 +124,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
     @Override
     final public String toString() {
-        return "ServerPipeLineTask{" + this.id + "}";
+        return "PipeLineTask{" + this.id + "}";
     }
 
 }

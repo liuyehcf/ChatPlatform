@@ -44,7 +44,7 @@ public class ClientPipeLineTask extends AbstractPipeLineTask {
                 getBindThread().interrupt();
             }
         }
-        ChatClientDispatcher.LOGGER.info("This pipeLineTask {} is finished", this);
+        ChatClientDispatcher.LOGGER.info("{} is finished", this);
         ChatClientDispatcher.getSingleton().getPipeLineTasks().remove(this);
     }
 
@@ -143,7 +143,7 @@ public class ClientPipeLineTask extends AbstractPipeLineTask {
      */
     @Override
     public void offLine(Service service) {
-        ChatClientDispatcher.LOGGER.info("Service {} is getOff from PipeLineTask {}", service, this);
+        ChatClientDispatcher.LOGGER.info("Service {} is getOff from {}", service, this);
 
         SocketChannel socketChannel = service.getSocketChannel();
 
