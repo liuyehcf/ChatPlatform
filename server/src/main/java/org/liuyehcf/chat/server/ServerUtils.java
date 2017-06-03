@@ -54,6 +54,7 @@ class ServerUtils {
 
         message.getTextControl().setOffLineMessage(isOffLine);
 
+        message.getTextControl().setSystemMessage(true);
         message.getTextHeader().setFromUserName(TextProtocol.SERVER_USER_NAME);
         message.getTextHeader().setToUserName(notifyUserName);
 

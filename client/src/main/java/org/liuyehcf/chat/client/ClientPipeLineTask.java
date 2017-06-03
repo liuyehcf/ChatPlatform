@@ -85,11 +85,15 @@ public class ClientPipeLineTask extends AbstractPipeLineTask {
         }
 
         for (Message message : messages) {
+
+            TextMessage textMessage = (TextMessage) message;
+
             //服务器告知下线
-            if (((TextMessage) message).getTextControl().isOffLineMessage()) {
+            if (textMessage.getTextControl().isOffLineMessage()) {
                 offLine(service);
             }
-            service.flushOnWindow(false, message.getDisplayMessageString());
+
+            service.getBindChatWindow().flushOnWindow(false, textMessage.getTextControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 

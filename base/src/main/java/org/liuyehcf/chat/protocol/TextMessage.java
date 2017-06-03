@@ -56,8 +56,8 @@ public class TextMessage implements Message {
     public String getDisplayMessageString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(String.format("%-20s", getTextHeader().getFromUserName()))
-                .append(SIMPLE_DATE_FORMAT.format(new Date()))
+        sb.append(SIMPLE_DATE_FORMAT.format(new Date()))
+                .append("   " + getTextHeader().getFromUserName())
                 .append("\n")
                 .append(getTextBody().getContent())
                 .append("\n");

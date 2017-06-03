@@ -85,7 +85,7 @@ public class Test3 {
 
                     MutableAttributeSet attr = new SimpleAttributeSet();
                     StyleConstants.setAlignment(attr, StyleConstants.ALIGN_RIGHT);
-                    setParagraphAttributes(textPane, attr, false);
+                    setParagraphAttributes(textPane, attr, true);
 
                     StyleConstants.setForeground(attr, Color.red);
                     try {
@@ -98,7 +98,7 @@ public class Test3 {
 
                     MutableAttributeSet attr = new SimpleAttributeSet();
                     StyleConstants.setAlignment(attr, StyleConstants.ALIGN_LEFT);
-                    setParagraphAttributes(textPane, attr, false);
+                    setParagraphAttributes(textPane, attr, true);
 
                     StyleConstants.setForeground(attr, Color.red);
                     try {
@@ -121,31 +121,57 @@ public class Test3 {
                 if (flag) {
 
 
-                    StyledDocument d = textPane.getStyledDocument();
+                    StyledDocument styledDocument = textPane.getStyledDocument();
 
-                    MutableAttributeSet attr = new SimpleAttributeSet();
-                    StyleConstants.setAlignment(attr, StyleConstants.ALIGN_RIGHT);
-                    setParagraphAttributes(textPane, attr, false);
+                    int startPos = styledDocument.getLength();
 
-                    StyleConstants.setForeground(attr, Color.red);
+                    SimpleAttributeSet simpleAttributeSet = new SimpleAttributeSet();
+                    StyleConstants.setAlignment(simpleAttributeSet, StyleConstants.ALIGN_RIGHT);
+                    StyleConstants.setFontSize(simpleAttributeSet, 20);
+                    StyleConstants.setBold(simpleAttributeSet, true);
+                    StyleConstants.setForeground(simpleAttributeSet, Color.red);
                     try {
-                        d.insertString(d.getLength(), "好呀\n红色右\n", attr);
+                        System.out.println(styledDocument.getLength());
+                        styledDocument.insertString(styledDocument.getLength(), "好呀\n红色右\n", simpleAttributeSet);
                     } catch (Exception e1) {
 
                     }
+
+                    int end = styledDocument.getLength();
+
+                    /*
+                     * 虽然在执行StyledDocument#insertString的时候已经指定了同样的格式，但是这里还得再刷新一下
+                     */
+                    styledDocument.setParagraphAttributes(startPos, end - startPos, simpleAttributeSet, true);
+
+
                 } else {
-                    StyledDocument d = textPane.getStyledDocument();
 
-                    MutableAttributeSet attr = new SimpleAttributeSet();
-                    StyleConstants.setAlignment(attr, StyleConstants.ALIGN_LEFT);
-                    setParagraphAttributes(textPane, attr, false);
+                    StyledDocument styledDocument = textPane.getStyledDocument();
 
-                    StyleConstants.setForeground(attr, Color.red);
+                    int startPos = styledDocument.getLength();
+
+                    SimpleAttributeSet simpleAttributeSet = new SimpleAttributeSet();
+                    StyleConstants.setAlignment(simpleAttributeSet, StyleConstants.ALIGN_LEFT);
+                    StyleConstants.setFontSize(simpleAttributeSet, 20);
+                    StyleConstants.setBold(simpleAttributeSet, true);
+                    StyleConstants.setForeground(simpleAttributeSet, Color.black);
                     try {
-                        d.insertString(d.getLength(), "不好\n黑色左\n", attr);
+                        System.out.println(styledDocument.getLength());
+                        styledDocument.insertString(styledDocument.getLength(), "好呀\n黑色左\n", simpleAttributeSet);
                     } catch (Exception e1) {
 
                     }
+
+                    int end = styledDocument.getLength();
+
+                    /*
+                     * 虽然在执行StyledDocument#insertString的时候已经指定了同样的格式，但是这里还得再刷新一下
+                     */
+                    styledDocument.setParagraphAttributes(startPos, end - startPos, simpleAttributeSet, true);
+
+
+
                 }
                 flag = !flag;
             }

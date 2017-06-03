@@ -129,7 +129,7 @@ public class ChatClientDispatcher {
                     LOGGER.info("Client is overload");
                     //todo 客户端负载过高,直接拒绝新连接
                     ChatWindow chatWindow = ((ClientService) service).getBindChatWindow();
-                    ((ClientService) service).flushOnWindow(false, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
+                    ((ClientService) service).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
 
                 } else {
                     LOGGER.debug("Add a new connection to a clientPipeLineTask");
@@ -246,7 +246,7 @@ public class ChatClientDispatcher {
             } catch (IOException e) {
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
                 ClientService service = (ClientService) proxyMethodInvocation.getArguments()[0];
-                service.flushOnWindow(false, "[已失去与服务器的连接]");
+                service.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
                 service.getBindPipeLineTask().offLine(service);
                 throw e;
             }
@@ -267,7 +267,7 @@ public class ChatClientDispatcher {
             } catch (IOException e) {
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
                 ClientService service = (ClientService) proxyMethodInvocation.getArguments()[1];
-                service.flushOnWindow(false, "[已失去与服务器的连接]");
+                service.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
                 service.getBindPipeLineTask().offLine(service);
                 throw e;
             }
@@ -275,7 +275,7 @@ public class ChatClientDispatcher {
             ClientService service = (ClientService) proxyMethodInvocation.getArguments()[1];
             TextMessage message = (TextMessage) proxyMethodInvocation.getArguments()[0];
             if (!message.getTextControl().isHelloMessage() && !message.getTextControl().isOffLineMessage())
-                service.flushOnWindow(true, message.getDisplayMessageString());
+                service.getBindChatWindow().flushOnWindow(true, false, message.getDisplayMessageString());
             if (message.getTextControl().isOffLineMessage()) {
                 service.getBindPipeLineTask().offLine(service);
             }

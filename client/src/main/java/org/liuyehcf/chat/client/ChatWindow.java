@@ -75,30 +75,6 @@ public class ChatWindow {
         connect();
     }
 
-    /**
-     * 设置JTextPane的对齐方式
-     *
-     * @param editor
-     * @param attr
-     * @param replace
-     */
-    static final void setParagraphAttributes(JEditorPane editor,
-                                       AttributeSet attr,
-                                       boolean replace) {
-        int start = editor.getSelectionStart();
-        int end = editor.getSelectionEnd();
-        StyledDocument doc = getStyledDocument(editor);
-        doc.setParagraphAttributes(start, end - start, attr, replace);
-    }
-
-    static final StyledDocument getStyledDocument(JEditorPane editorPane) {
-        Document document = editorPane.getDocument();
-        if (document instanceof StyledDocument) {
-            return (StyledDocument) document;
-        }
-        throw new IllegalArgumentException("document must be StyledDocument");
-    }
-
 
     private void initWindow() {
         frame = new JFrame();
@@ -182,6 +158,42 @@ public class ChatWindow {
         ClientUtils.sendSystemMessage(service, true, false);
     }
 
+    public void flushOnWindow(boolean isSent, boolean isSystem, String content) {
+
+        StyledDocument styledDocument = textPane.getStyledDocument();
+
+        int startPos = styledDocument.getLength();
+
+        SimpleAttributeSet simpleAttributeSet = new SimpleAttributeSet();
+
+        if (isSent)
+            StyleConstants.setAlignment(simpleAttributeSet, StyleConstants.ALIGN_RIGHT);
+        else
+            StyleConstants.setAlignment(simpleAttributeSet, StyleConstants.ALIGN_LEFT);
+
+        if (isSystem)
+            StyleConstants.setForeground(simpleAttributeSet, Color.red);
+        else
+            StyleConstants.setForeground(simpleAttributeSet, Color.black);
+
+        StyleConstants.setFontSize(simpleAttributeSet, 20);
+        StyleConstants.setBold(simpleAttributeSet, true);
+
+        try {
+            System.out.println(styledDocument.getLength());
+            styledDocument.insertString(styledDocument.getLength(), content + "\n", simpleAttributeSet);
+        } catch (Exception e) {
+
+        }
+
+        int endPos = styledDocument.getLength();
+
+        /*
+         * 虽然在执行StyledDocument#insertString的时候已经指定了同样的格式，但是这里还得再刷新一下
+         */
+        styledDocument.setParagraphAttributes(startPos, endPos - startPos, simpleAttributeSet, true);
+    }
+
     private final class MyWindowListener implements WindowListener {
         @Override
         public void windowOpened(WindowEvent e) {
@@ -223,7 +235,7 @@ public class ChatWindow {
     }
 
 
-    public static void main(String[] args){
-        new ChatWindow("1",1,"1","1",null);
+    public static void main(String[] args) {
+        new ChatWindow("1", 1, "1", "1", null);
     }
 }

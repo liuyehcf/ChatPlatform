@@ -38,6 +38,7 @@ class ClientUtils {
         message.setTextHeader(((ClientService) service).getTextHeader());
         message.setTextBody(new TextProtocol.TextBody());
 
+        message.getTextControl().setSystemMessage(true);
         message.getTextControl().setHelloMessage(isHelloMessage);
         message.getTextControl().setOffLineMessage(isOffLineMessage);
 

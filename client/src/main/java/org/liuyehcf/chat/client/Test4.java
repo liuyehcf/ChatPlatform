@@ -3,9 +3,7 @@ package org.liuyehcf.chat.client;
 /**
  * Created by Liuye on 2017/6/3.
  */
-import java.awt.BorderLayout;
-
-import java.awt.Container;
+import java.awt.*;
 
 import javax.swing.JFrame;
 
@@ -34,111 +32,43 @@ import javax.swing.text.StyledDocument;
 
 public class Test4 {
 
-//TODO 修改代码
+    public Test4()
+    {
+        String text = "To refer to locations within the sequence, the " +
+                "coordinates used are the location between two " +
+                "characters.\nAs the diagram below shows, a location " +
+                "in a text document can be referred to as a position, " +
+                "or an offset. This position is zero-based.";
 
-    private static String message = "<p align='left'>In the beginning, there was COBOL, </p>"
+        SimpleAttributeSet aSet = new SimpleAttributeSet();
+        StyleConstants.setForeground(aSet, Color.blue);
+        StyleConstants.setBackground(aSet, Color.orange);
+        StyleConstants.setFontFamily(aSet, "lucida bright italic");
+        StyleConstants.setFontSize(aSet, 18);
 
-            + "<p align='center'>then there was FORTRAN, </p>"
+        SimpleAttributeSet bSet = new SimpleAttributeSet();
+        StyleConstants.setAlignment(bSet, StyleConstants.ALIGN_CENTER);
+        StyleConstants.setUnderline(bSet, true);
+        StyleConstants.setFontFamily(bSet, "lucida typewriter bold");
+        StyleConstants.setFontSize(bSet, 24);
 
-            + "<p align='right'>then there was BASIC, ... </p>"
+        JTextPane textPane = new JTextPane();
+        textPane.setText(text);
+        StyledDocument doc = textPane.getStyledDocument();
+        doc.setCharacterAttributes(105, doc.getLength()-105, aSet, false);
+        doc.setParagraphAttributes(0, 104, bSet, false);
 
-            + "and now there is Java.\n";
+        JFrame f = new JFrame();
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.add(new JScrollPane(textPane));
+        f.setSize(400,400);
+        f.setLocation(200,200);
+        f.setVisible(true);
+    }
 
-
-    public static void main(String[] args) {
-
-        String title = (args.length == 0 ? "JTextPane Example" : args[0]);
-
-
-        JFrame frame = new JFrame(title);
-
-        Container content = frame.getContentPane();
-
-
-        StyleContext context = new StyleContext();
-
-        StyledDocument document = new DefaultStyledDocument(context);
-
-
-        Style style = context.getStyle(StyleContext.DEFAULT_STYLE);
-
-        StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT);// 左对齐
-
-
-        try {
-
-            document.insertString(document.getLength(), message, style);
-
-        }
-
-        catch (BadLocationException badLocationException) {
-
-            System.err.println("Oops");
-
-        }
-
-
-        SimpleAttributeSet attributes = new SimpleAttributeSet();
-
-        StyleConstants.setAlignment(attributes, StyleConstants.ALIGN_RIGHT);//右对齐
-
-        document.setParagraphAttributes(0, document.getLength(), style, true);
-
-        try {//为什么没有右对齐呀
-
-            document.insertString(document.getLength(), "Hello Java",
-
-                    attributes);
-
-        }
-
-        catch (BadLocationException badLocationException) {
-
-        }
-
-
-        JTextPane textarea = new JTextPane();
-
-//TODO 新增代码开始
-
-        textarea.setContentType("text/html");
-
-        textarea.setText(message);
-
-//TODO 新增代码结束
-
-
-        textarea.setEditable(false);
-
-//TODO 被注释代码
-
-/*
-
-textarea.setBackground(UIManager.getColor("label.background"));
-
-textarea.setFont(UIManager.getFont("label"));
-
-textarea.setDocument(document);
-
-*/
-
-
-        JScrollPane textAreascrollPane = new JScrollPane(textarea);
-
-        content.add(textAreascrollPane, BorderLayout.CENTER);
-
-        JLabel AliasNameLabel = new JLabel("Local Name: ");
-
-        content.add(AliasNameLabel, BorderLayout.SOUTH);
-
-        frame.setSize(300, 200);
-
-        frame.setVisible(true);
-
-        frame.setLocationRelativeTo(null);
-
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
+    public static void main(String[] args)
+    {
+        new Test4();
     }
 
 }

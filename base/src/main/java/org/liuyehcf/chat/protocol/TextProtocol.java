@@ -23,10 +23,8 @@ public class TextProtocol implements Protocol {
     public static final String SERVER_USER_NAME = "SYSTEM";
 
     /**
-     * 日期格式化
+     * 控制信息
      */
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
     public static final class TextControl {
         /**
          * 系统消息前缀字符串
@@ -44,9 +42,19 @@ public class TextProtocol implements Protocol {
         private static final String CONTROL_REGEX = "<([01]+?)>";
         private static final Pattern CONTROL_PATTERN = Pattern.compile(CONTROL_REGEX);
 
+        private boolean isSystemMessage;
+
         private boolean isHelloMessage;
 
         private boolean isOffLineMessage;
+
+        public boolean isSystemMessage() {
+            return isSystemMessage;
+        }
+
+        public void setSystemMessage(boolean systemMessage) {
+            isSystemMessage = systemMessage;
+        }
 
         public boolean isHelloMessage() {
             return isHelloMessage;
@@ -66,6 +74,7 @@ public class TextProtocol implements Protocol {
 
         public String getControlString() {
             return CONTROL_PREFIX
+                    + (isSystemMessage ? "1" : "0")
                     + (isHelloMessage ? "1" : "0")
                     + (isOffLineMessage ? "1" : "0")
                     + CONTROL_SUFFIX;
@@ -76,13 +85,17 @@ public class TextProtocol implements Protocol {
             TextControl textControl = new TextControl();
             if (m.find()) {
                 String controlString = m.group(1);
-                textControl.setHelloMessage(controlString.charAt(0) == '1');
-                textControl.setOffLineMessage(controlString.charAt(1) == '1');
+                textControl.setSystemMessage(controlString.charAt(0) == '1');
+                textControl.setHelloMessage(controlString.charAt(1) == '1');
+                textControl.setOffLineMessage(controlString.charAt(2) == '1');
             }
             return textControl;
         }
     }
 
+    /**
+     * 信息头
+     */
     public static final class TextHeader {
         /**
          * 消息头前缀字符串
@@ -155,6 +168,9 @@ public class TextProtocol implements Protocol {
         }
     }
 
+    /**
+     * 信息内容
+     */
     public static final class TextBody {
         /**
          * 消息内容前缀字符串
