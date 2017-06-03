@@ -70,11 +70,7 @@ public class ClientService extends Service {
     public void flushOnWindow(String content) {
         JTextArea textArea = getBindChatWindow().getTextArea();
         textArea.append(content);
-
-        textArea.selectAll();
         textArea.setCaretPosition(textArea.getText().length());
-        textArea.requestFocus();
-
         textArea.paintImmediately(textArea.getBounds());
     }
 }
