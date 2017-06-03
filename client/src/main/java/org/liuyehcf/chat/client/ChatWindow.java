@@ -180,7 +180,6 @@ public class ChatWindow {
         StyleConstants.setBold(simpleAttributeSet, true);
 
         try {
-            System.out.println(styledDocument.getLength());
             styledDocument.insertString(styledDocument.getLength(), content + "\n", simpleAttributeSet);
         } catch (Exception e) {
 

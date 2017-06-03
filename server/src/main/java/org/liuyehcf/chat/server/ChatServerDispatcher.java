@@ -156,8 +156,9 @@ public class ChatServerDispatcher {
                     newService.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
                     newService.cancel();
                 } else {
-                    LOGGER.debug("Add a new connection to a new serverPipeLineTask");
                     PipeLineTask newPipeLineTask = new ServerPipeLineTask(serviceMap, groupServiceMap);
+                    LOGGER.info("Add a new connection to a new serverPipeLineTask {}", newPipeLineTask);
+
                     Service newService = new ServerService(
                             "",
                             "",
@@ -170,8 +171,9 @@ public class ChatServerDispatcher {
                     executorService.execute(newPipeLineTask);
                 }
             } else {
-                LOGGER.debug("Add a new connection to an existing serverPipeLineTask");
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
+                LOGGER.info("Add a new connection to an existing serverPipeLineTask {}", pipeLineTask);
+
                 Service newService = new ServerService(
                         "",
                         "",

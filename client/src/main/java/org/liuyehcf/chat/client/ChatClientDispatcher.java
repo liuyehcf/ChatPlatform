@@ -132,16 +132,16 @@ public class ChatClientDispatcher {
                     ((ClientService) service).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
 
                 } else {
-                    LOGGER.debug("Add a new connection to a clientPipeLineTask");
                     PipeLineTask newPipeLineTask = new ClientPipeLineTask();
+                    LOGGER.info("Add a new connection to a clientPipeLineTask {}", newPipeLineTask);
 
                     newPipeLineTask.registerService(service);
 
                     executorService.execute(newPipeLineTask);
                 }
             } else {
-                LOGGER.debug("Add a new connection to an existing clientPipeLineTask");
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
+                LOGGER.info("Add a new connection to an existing clientPipeLineTask {}", pipeLineTask);
 
                 pipeLineTask.registerService(service);
             }

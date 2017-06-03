@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 服务端监听器
  * Created by Liuye on 2017/5/29.
  */
 public class ChatServerListener {
@@ -43,13 +44,13 @@ public class ChatServerListener {
 
     private static void start() {
         init();
-        ChatServerDispatcher.LOGGER.debug("The server starts");
+        ChatServerDispatcher.LOGGER.info("The server starts");
 
         while (!Thread.currentThread().isInterrupted()) {
 
             SocketChannel socketChannel = listen();
 
-            ChatServerDispatcher.LOGGER.debug("Listen to new connections");
+            ChatServerDispatcher.LOGGER.info("Listen to new connections");
 
             ChatServerDispatcher.getSingleton().dispatch(socketChannel);
 

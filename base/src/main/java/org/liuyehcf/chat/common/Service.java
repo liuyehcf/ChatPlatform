@@ -196,4 +196,9 @@ public abstract class Service {
     public void activeNow() {
         recentActiveTimeStamp = System.currentTimeMillis();
     }
+
+    @Override
+    public String toString() {
+        return getServiceDescription().toString();
+    }
 }

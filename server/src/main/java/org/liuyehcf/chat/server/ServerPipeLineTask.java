@@ -15,14 +15,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 服务端PipeLineTask实现类
  * Created by Liuye on 2017/5/29.
  */
 public class ServerPipeLineTask extends AbstractPipeLineTask {
-    /**
-     * 日志
-     */
-    private static Logger LOGGER = LoggerFactory.getLogger(ServerPipeLineTask.class);
-
     /**
      * 用户名到Service的映射，多个PipeLineTask共享
      */
@@ -61,7 +57,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
                 getBindThread().interrupt();
             }
         }
-        LOGGER.debug("This pipeLineTask {} is finished", this);
+        ChatServerDispatcher.LOGGER.info("This pipeLineTask {} is finished", this);
         ChatServerDispatcher.getSingleton().getPipeLineTasks().remove(this);
     }
 
@@ -112,16 +108,16 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
 
             //是否是Hello消息
             if (textMessage.getTextControl().isHelloMessage()) {
-                LOGGER.debug("Client {} is accessing the server", fromUserName);
+                ChatServerDispatcher.LOGGER.info("Client {} is accessing the server", fromUserName);
 
                 service.setServiceDescription(new ServiceDescription(fromUserName, toUserName));
 
                 if (!serviceMap.containsKey(service.getServiceDescription())) {
                     serviceMap.put(service.getServiceDescription(), service);
-                    LOGGER.debug("Client {} accesses the server successfully", fromUserName);
+                    ChatServerDispatcher.LOGGER.info("Client {} accesses the server successfully", fromUserName);
 
                     if (isGroupChat(message)) {
-                        LOGGER.debug("This connection is a group chat");
+                        ChatServerDispatcher.LOGGER.info("This connection is a group chat");
 
                         service.setGroupChat(true);
                         String groupName = service.getServiceDescription().getToUserName();
@@ -158,7 +154,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
 
                     }
                 } else {
-                    LOGGER.info("The name of client {} is already exists", fromUserName);
+                    ChatServerDispatcher.LOGGER.info("The name of client {} is already exists", fromUserName);
 
                     String greetContent = fromUserName +
                             "名字重复，登录失败";
@@ -170,7 +166,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
             }
             //客户端要求断开连接
             else if (textMessage.getTextControl().isOffLineMessage()) {
-                LOGGER.debug("The client{} request goes offline");
+                ChatServerDispatcher.LOGGER.info("The client{} request goes offline");
 
                 offLine(service);
             }
@@ -271,6 +267,8 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
      */
     @Override
     public void offLine(Service service) {
+        ChatServerDispatcher.LOGGER.info("Service {} is getOff from PipeLineTask {}", service, this);
+
         SocketChannel socketChannel = service.getSocketChannel();
 
         for (Selector selector : service.getSelectors()) {
