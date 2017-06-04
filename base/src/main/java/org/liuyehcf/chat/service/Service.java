@@ -35,14 +35,14 @@ public abstract class Service {
     protected SocketChannel socketChannel;
 
     /**
-     * 消息读取器工厂
+     * 当前Service下socketChannel所关联的Selector
      */
-    private MessageReaderFactory messageReaderFactory;
+    private List<Selector> selectors;
 
     /**
-     * 消息写入器工厂
+     * 当期Service所关联的PipeLineTask
      */
-    private MessageWriterFactory messageWriterFactory;
+    private PipeLineTask pipeLineTask;
 
     /**
      * 消息读取器
@@ -58,16 +58,6 @@ public abstract class Service {
      * 等待被写入该Service关联Channel的Message
      */
     private Queue<Message> writeMessages;
-
-    /**
-     * 当期Service所关联的PipeLineTask
-     */
-    private PipeLineTask pipeLineTask;
-
-    /**
-     * 当前Service下socketChannel所关联的Selector
-     */
-    private List<Selector> selectors;
 
     /**
      * 状态
@@ -109,12 +99,8 @@ public abstract class Service {
         return socketChannel;
     }
 
-    public MessageReader getMessageReader() {
-        return messageReader;
-    }
-
-    public MessageWriter getMessageWriter() {
-        return messageWriter;
+    public List<Selector> getSelectors() {
+        return selectors;
     }
 
     public void bindPipeLineTask(PipeLineTask pipeLineTask) {
@@ -125,16 +111,20 @@ public abstract class Service {
         return pipeLineTask;
     }
 
-    public List<Selector> getSelectors() {
-        return selectors;
+    public MessageReader getMessageReader() {
+        return messageReader;
     }
 
-    public long getRecentActiveTimeStamp() {
-        return recentActiveTimeStamp;
+    public MessageWriter getMessageWriter() {
+        return messageWriter;
     }
 
     public Queue<Message> getWriteMessages() {
         return writeMessages;
+    }
+
+    public long getRecentActiveTimeStamp() {
+        return recentActiveTimeStamp;
     }
 
     public Service(
@@ -143,11 +133,10 @@ public abstract class Service {
             MessageReaderFactory messageReaderFactory,
             MessageWriterFactory messageWriterFactory) {
         serviceDescription = new ServiceDescription(fromUserName, toUserName);
-        this.messageReaderFactory = messageReaderFactory;
-        this.messageWriterFactory = messageWriterFactory;
 
-        messageReader = this.messageReaderFactory.build();
-        messageWriter = this.messageWriterFactory.build();
+
+        messageReader = messageReaderFactory.build();
+        messageWriter = messageWriterFactory.build();
 
         writeMessages = new LinkedList<Message>();
         selectors = new ArrayList<Selector>();

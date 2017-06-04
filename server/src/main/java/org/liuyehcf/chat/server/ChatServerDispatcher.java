@@ -86,32 +86,13 @@ public class ChatServerDispatcher {
      */
     private Map<String, GroupService> groupServiceMap;
 
+    /**
+     * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
+     */
+    private long nextLoadBalancingTimeStamp = 0;
+
     public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
-    }
-
-    public ReentrantLock getLoadBalancingLock() {
-        return loadBalancingLock;
-    }
-
-    public MessageReaderFactory getMessageReaderFactory() {
-        return messageReaderFactory;
-    }
-
-    public MessageWriterFactory getMessageWriterFactory() {
-        return messageWriterFactory;
-    }
-
-    public ExecutorService getExecutorService() {
-        return executorService;
-    }
-
-    public Map<ServiceDescription, Service> getServiceMap() {
-        return serviceMap;
-    }
-
-    public Map<String, GroupService> getGroupServiceMap() {
-        return groupServiceMap;
     }
 
     private ChatServerDispatcher() {
@@ -134,47 +115,31 @@ public class ChatServerDispatcher {
     /**
      * 将监听到的任务分配给PipeLineTask
      * 该任务必须加负载均衡锁，必须保证在做负载均衡时，该函数不能执行
+     * 由于新连接必进频率非常低，因此加锁性能不会有太大起伏
      */
     public void dispatch(SocketChannel socketChannel) {
-        try {
-            loadBalancingLock.lock();
+        //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
+        if (System.currentTimeMillis() < nextLoadBalancingTimeStamp) {
+            doDispatcher(socketChannel);
+        } else {
+            //如果需要做负载均衡，则必须加锁，保证负载均衡时所有线程处于安全点
+            try {
+                loadBalancingLock.lock();
+                doDispatcher(socketChannel);
+            } finally {
+                loadBalancingLock.unlock();
+            }
+        }
+    }
 
-            if (pipeLineTasks.isEmpty() ||
-                    getIdlePipeLineTask().getServiceNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
-                if (pipeLineTasks.size() >= ServerUtils.MAX_THREAD_NUM) {
-                    LOGGER.info("Server is overload");
-                    //todo 服务器负载过高,发送一条系统消息后断开连接
+    private void doDispatcher(SocketChannel socketChannel) {
+        if (pipeLineTasks.isEmpty() ||
+                getIdlePipeLineTask().getServiceNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
+            if (pipeLineTasks.size() >= ServerUtils.MAX_THREAD_NUM) {
+                LOGGER.info("Server is overload");
 
-                    PipeLineTask pipeLineTask = getIdlePipeLineTask();
-                    Service newService = new ServerService(
-                            "",
-                            "",
-                            messageReaderFactory,
-                            messageWriterFactory,
-                            socketChannel);
-
-                    pipeLineTask.registerService(newService);
-                    newService.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
-                    newService.cancel();
-                } else {
-                    PipeLineTask newPipeLineTask = new ServerPipeLineTask(serviceMap, groupServiceMap);
-                    LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
-
-                    Service newService = new ServerService(
-                            "",
-                            "",
-                            messageReaderFactory,
-                            messageWriterFactory,
-                            socketChannel);
-
-                    newPipeLineTask.registerService(newService);
-
-                    executorService.execute(newPipeLineTask);
-                }
-            } else {
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
-                LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
-
+                //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
                 Service newService = new ServerService(
                         "",
                         "",
@@ -183,9 +148,38 @@ public class ChatServerDispatcher {
                         socketChannel);
 
                 pipeLineTask.registerService(newService);
+                newService.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
+                //该链接不再接受任何消息
+                newService.cancel();
+            } else {
+                PipeLineTask newPipeLineTask = new ServerPipeLineTask(serviceMap, groupServiceMap);
+                LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
+
+                //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
+                Service newService = new ServerService(
+                        "",
+                        "",
+                        messageReaderFactory,
+                        messageWriterFactory,
+                        socketChannel);
+
+                newPipeLineTask.registerService(newService);
+
+                executorService.execute(newPipeLineTask);
             }
-        } finally {
-            loadBalancingLock.unlock();
+        } else {
+            PipeLineTask pipeLineTask = getIdlePipeLineTask();
+            LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
+
+            //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
+            Service newService = new ServerService(
+                    "",
+                    "",
+                    messageReaderFactory,
+                    messageWriterFactory,
+                    socketChannel);
+
+            pipeLineTask.registerService(newService);
         }
     }
 
@@ -210,8 +204,14 @@ public class ChatServerDispatcher {
      * 负载均衡
      */
     public void checkLoadBalancing() {
-        //尝试获取锁，如果成功，那么即由当前线程来做检查
+        //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
+        if (System.currentTimeMillis() < nextLoadBalancingTimeStamp)
+            return;
+
+        //如果需要做负载均衡，则尝试获取锁
         if (loadBalancingLock.tryLock()) {
+            //如果成功，那么即由当前线程来做检查
+            LOGGER.info("{} is doing the load balancing!", Thread.currentThread());
             try {
                 /*
                  * 自旋等待所有其他线程进入安全点
@@ -224,15 +224,21 @@ public class ChatServerDispatcher {
                 for (PipeLineTask pipeLineTask : pipeLineTasks) {
                     totalServiceNum += pipeLineTask.getServiceNum();
                 }
+
+                /*
+                 * 计算当前负载因子
+                 */
                 double curLoadFactory = (double) totalServiceNum / (double) pipeLineTasks.size() / (double) ServerUtils.MAX_CONNECTION_PER_TASK;
 
                 if (curLoadFactory <= ServerUtils.LOAD_FACTORY_THRESHOLD)
                     doLoadBalancing(totalServiceNum);
+
+                nextLoadBalancingTimeStamp = System.currentTimeMillis() + ServerUtils.LOAD_BALANCE_FREQUENCY * 60 * 1000;
             } finally {
                 loadBalancingLock.unlock();
             }
         } else {
-            //正在做负载均衡，等待负载均衡完成，或者排队通过
+            //当前可能有其他线程正在做负载均衡，等待负载均衡完成
             queuedForLoadBalancing();
         }
     }
@@ -255,8 +261,10 @@ public class ChatServerDispatcher {
 
         for (PipeLineTask pipeLineTask : dropPipeLineTasks) {
             for (Service service : pipeLineTask.getServices()) {
+                //从原PipeLineTask中移除
                 pipeLineTask.removeService(service);
 
+                //注册到新的PipeLineTask中
                 getIdlePipeLineTask().registerService(service);
             }
         }

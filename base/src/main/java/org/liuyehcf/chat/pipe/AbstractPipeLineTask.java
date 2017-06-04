@@ -119,6 +119,9 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
         start();
     }
 
+    /**
+     * 在run中执行的方法，交给子类实现
+     */
     protected abstract void start();
 
     @Override

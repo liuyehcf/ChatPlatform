@@ -30,6 +30,10 @@ class ClientUtils {
      */
     static final double LOAD_FACTORY_BALANCED = 0.8;
 
+    /**
+     * 做负载均衡的频率，1分钟一次
+     */
+    static final int LOAD_BALANCE_FREQUENCY = 1;
 
     static void sendSystemMessage(Service service, boolean isHelloMessage, boolean isOffLineMessage) {
         TextMessage message = new TextMessage();

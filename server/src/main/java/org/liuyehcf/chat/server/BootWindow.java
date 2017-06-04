@@ -96,8 +96,6 @@ public class BootWindow {
             public void actionPerformed(ActionEvent actionEvent) {
                 String serverHost;
                 Integer serverPort;
-                String localId;
-                String remoteId;
                 try {
                     serverHost = hostField.getText();
                     serverPort = Integer.parseInt(portField.getText());

@@ -45,31 +45,23 @@ public class ChatServerListener {
         start();
     }
 
-
-    private boolean init() {
-        boolean initSuccessful;
+    private void start() {
         try {
+            //阻塞模式的ServerSocketChannel
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.bind(new InetSocketAddress(serverHost, serverPort));
-            handler.onSucceed();
-            initSuccessful = true;
         } catch (IOException e) {
-            ChatServerDispatcher.LOGGER.info("The Server starts failed!");
-            handler.onFailure();
-            initSuccessful = false;
-        }
-        return initSuccessful;
-    }
-
-    private void start() {
-        if (!init()) {
             ChatServerDispatcher.LOGGER.info("The server starts failed!");
+            handler.onFailure();
             return;
         }
+        handler.onSucceed();
+
         ChatServerDispatcher.LOGGER.info("The server starts successfully!");
 
         while (!Thread.currentThread().isInterrupted()) {
 
+            //监听新连接
             SocketChannel socketChannel = listen();
 
             //由于当前线程可能被中断，listen()方法会阻塞直到检测到新的连接或者被中断，被中断时返回null，并且此时中断标志位未被置位置
@@ -77,6 +69,7 @@ public class ChatServerListener {
 
             ChatServerDispatcher.LOGGER.info("Listen to new connections");
 
+            //分发新连接
             ChatServerDispatcher.getSingleton().dispatch(socketChannel);
 
             try {

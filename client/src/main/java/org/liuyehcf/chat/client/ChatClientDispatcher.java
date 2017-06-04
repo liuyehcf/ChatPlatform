@@ -77,6 +77,10 @@ public class ChatClientDispatcher {
      */
     private Map<ServiceDescription, Service> serviceMap;
 
+    /**
+     * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
+     */
+    private long nextLoadBalancingTimeStamp = 0;
 
     public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
@@ -120,33 +124,42 @@ public class ChatClientDispatcher {
     }
 
     public void dispatch(Service service) {
-        try {
-            loadBalancingLock.lock();
-
-            if (pipeLineTasks.isEmpty() ||
-                    getIdlePipeLineTask().getServiceNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
-                if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
-                    LOGGER.info("Client is overload");
-                    //todo 客户端负载过高,直接拒绝新连接
-                    ChatWindow chatWindow = ((ClientService) service).getBindChatWindow();
-                    ((ClientService) service).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
-
-                } else {
-                    PipeLineTask newPipeLineTask = new ClientPipeLineTask();
-                    LOGGER.info("Add a new connection to {}", newPipeLineTask);
-
-                    newPipeLineTask.registerService(service);
-
-                    executorService.execute(newPipeLineTask);
-                }
-            } else {
-                PipeLineTask pipeLineTask = getIdlePipeLineTask();
-                LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
-
-                pipeLineTask.registerService(service);
+        //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
+        if (System.currentTimeMillis() < nextLoadBalancingTimeStamp) {
+            doDispatcher(service);
+        } else {
+            //如果需要做负载均衡，则必须加锁，保证负载均衡时所有线程处于安全点
+            try {
+                loadBalancingLock.lock();
+                doDispatcher(service);
+            } finally {
+                loadBalancingLock.unlock();
             }
-        } finally {
-            loadBalancingLock.unlock();
+        }
+    }
+
+    private void doDispatcher(Service service) {
+        if (pipeLineTasks.isEmpty() ||
+                getIdlePipeLineTask().getServiceNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
+            if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
+                LOGGER.info("Client is overload");
+                //todo 客户端负载过高,直接拒绝新连接
+                ChatWindow chatWindow = ((ClientService) service).getBindChatWindow();
+                ((ClientService) service).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
+
+            } else {
+                PipeLineTask newPipeLineTask = new ClientPipeLineTask();
+                LOGGER.info("Add a new connection to {}", newPipeLineTask);
+
+                newPipeLineTask.registerService(service);
+
+                executorService.execute(newPipeLineTask);
+            }
+        } else {
+            PipeLineTask pipeLineTask = getIdlePipeLineTask();
+            LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
+
+            pipeLineTask.registerService(service);
         }
     }
 
@@ -172,8 +185,13 @@ public class ChatClientDispatcher {
      * 负载均衡
      */
     public void checkLoadBalancing() {
-        //尝试获取锁，如果成功，那么即由当前线程来做检查
+        //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
+        if (System.currentTimeMillis() < nextLoadBalancingTimeStamp)
+            return;
+
         if (loadBalancingLock.tryLock()) {
+            //尝试获取锁，如果成功，那么即由当前线程来做检查
+            LOGGER.info("{} is doing the load balancing!", Thread.currentThread());
             try {
                 /*
                  * 自旋等待所有其他线程进入安全点
@@ -186,10 +204,16 @@ public class ChatClientDispatcher {
                 for (PipeLineTask pipeLineTask : pipeLineTasks) {
                     totalServiceNum += pipeLineTask.getServiceNum();
                 }
+
+                /*
+                 * 计算当前负载因子
+                 */
                 double curLoadFactory = (double) totalServiceNum / (double) pipeLineTasks.size() / (double) ClientUtils.MAX_CONNECTION_PER_TASK;
 
                 if (curLoadFactory <= ClientUtils.LOAD_FACTORY_THRESHOLD)
                     doLoadBalancing(totalServiceNum);
+
+                nextLoadBalancingTimeStamp = System.currentTimeMillis() + ClientUtils.LOAD_BALANCE_FREQUENCY * 60 * 1000;
             } finally {
                 loadBalancingLock.unlock();
             }
@@ -217,8 +241,10 @@ public class ChatClientDispatcher {
 
         for (PipeLineTask pipeLineTask : dropPipeLineTasks) {
             for (Service service : pipeLineTask.getServices()) {
+                //从原PipeLineTask中移除
                 pipeLineTask.removeService(service);
 
+                //注册到新的PipeLineTask中
                 getIdlePipeLineTask().registerService(service);
             }
         }
