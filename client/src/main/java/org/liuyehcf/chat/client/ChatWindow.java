@@ -189,8 +189,6 @@ public class ChatWindow {
         }
 
         ChatClientDispatcher.getSingleton().dispatch(service);
-
-        ClientUtils.sendSystemMessage(service, true, false);
     }
 
     public void flushOnWindow(boolean isSent, boolean isSystem, String content) {

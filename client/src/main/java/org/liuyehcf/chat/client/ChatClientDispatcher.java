@@ -161,6 +161,7 @@ public class ChatClientDispatcher {
 
             pipeLineTask.registerService(service);
         }
+        ClientUtils.sendSystemMessage(service, true, false);
     }
 
     /**
