@@ -151,7 +151,7 @@ public class BootWindow {
                     systemLabel.setText("SYSTEM: Server is stopping!");
                     while (listenThread.isAlive()) {
                         try {
-                            TimeUnit.SECONDS.sleep(1);
+                            TimeUnit.MILLISECONDS.sleep(100);
                         } catch (InterruptedException e) {
 
                         }
