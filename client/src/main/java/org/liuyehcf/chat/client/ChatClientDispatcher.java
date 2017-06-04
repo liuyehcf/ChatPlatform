@@ -48,7 +48,7 @@ public class ChatClientDispatcher {
     }
 
     /**
-     * 保存着所有的ServerPipeLineTask，用于客户端负载均衡
+     * 保存着所有的ClientPipeLineTask，用于客户端负载均衡
      */
     private List<PipeLineTask> pipeLineTasks;
 
