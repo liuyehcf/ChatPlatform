@@ -37,7 +37,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 关联的连接
      */
-    private ClientMainConnection listService;
+    private ClientMainConnection mainConnection;
 
     /**
      * 登录回调
@@ -135,7 +135,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
     private void connect() {
         try {
-            listService = new ClientMainConnection(
+            mainConnection = new ClientMainConnection(
                     account,
                     Protocol.SERVER_USER_NAME,
                     new InetSocketAddress(serverHost, serverPort),
@@ -149,7 +149,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             return;
         }
 
-        ClientConnectionDispatcher.getSingleton().startListTask(listService, account, password);
+        ClientConnectionDispatcher.getSingleton().startListTask(mainConnection, account, password);
     }
 
 

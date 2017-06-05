@@ -33,31 +33,31 @@ public interface PipeLineTask extends Runnable {
     Selector getWriteSelector();
 
     /**
-     * 将Service注册到当前PipeLineTask中
+     * 将Connection注册到当前PipeLineTask中
      */
-    void registerService(Connection connection);
+    void registerConnection(Connection connection);
 
     /**
-     * 让指定Service断开连接
+     * 让指定Connection断开连接
      */
     void offLine(Connection connection);
 
     /**
-     * 移除Service，用于服务端做负载均衡
+     * 移除Connection，与offLine不同，不会关闭Connection，仅仅将其移出当前PipeLine的管理
      */
-    void removeService(Connection connection);
+    void removeConnection(Connection connection);
 
     /**
-     * 返回当前PipeLineTask管理的Service
+     * 返回当前PipeLineTask管理的Connection
      *
      * @return
      */
-    Set<Connection> getServices();
+    Set<Connection> getConnections();
 
     /**
-     * 返回当前PipeLine处理的Service数量
+     * 返回当前PipeLine处理的Connection数量
      *
      * @return
      */
-    int getServiceNum();
+    int getConnectionNum();
 }

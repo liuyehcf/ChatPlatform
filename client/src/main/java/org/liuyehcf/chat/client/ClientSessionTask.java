@@ -30,9 +30,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
 
             writeMessage();
 
-            /*
-             * 负载均衡
-             */
+            //负载均衡
             ClientConnectionDispatcher.getSingleton().checkLoadBalancing();
 
             try {
@@ -62,20 +60,20 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         while (iterator.hasNext()) {
             SelectionKey selectionKey = iterator.next();
 
-            readMessageFromService(selectionKey);
+            readMessageFromConnection(selectionKey);
 
             iterator.remove();
         }
 
     }
 
-    private void readMessageFromService(SelectionKey selectionKey) {
-        ClientConnection service = (ClientConnection) selectionKey.attachment();
+    private void readMessageFromConnection(SelectionKey selectionKey) {
+        ClientConnection connection = (ClientConnection) selectionKey.attachment();
 
-        MessageReader messageReader = service.getMessageReader();
+        MessageReader messageReader = connection.getMessageReader();
         List<Message> messages;
         try {
-            messages = messageReader.read(service);
+            messages = messageReader.read(connection);
         } catch (IOException e) {
             //由于已经添加了拦截器，这里不做处理
             return;
@@ -85,10 +83,10 @@ public class ClientSessionTask extends AbstractPipeLineTask {
 
             //服务器告知下线
             if (message.getControl().isOffLineMessage()) {
-                offLine(service);
+                offLine(connection);
             }
 
-            service.getBindChatWindow().flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
+            connection.getBindChatWindow().flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 
@@ -108,21 +106,21 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         while (iterator.hasNext()) {
             SelectionKey selectionKey = iterator.next();
 
-            writeMessageToService(selectionKey);
+            writeMessageToConnection(selectionKey);
 
             iterator.remove();
         }
     }
 
-    private void writeMessageToService(SelectionKey selectionKey) {
-        ClientConnection service = (ClientConnection) selectionKey.attachment();
+    private void writeMessageToConnection(SelectionKey selectionKey) {
+        ClientConnection connection = (ClientConnection) selectionKey.attachment();
 
-        Message message = service.pollMessage();
+        Message message = connection.pollMessage();
         if (message != null) {
-            MessageWriter messageWriter = service.getMessageWriter();
+            MessageWriter messageWriter = connection.getMessageWriter();
 
             try {
-                messageWriter.write(message, service);
+                messageWriter.write(message, connection);
             } catch (IOException e) {
                 //由于已经添加了拦截器，这里不做处理
                 return;
@@ -161,10 +159,10 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             }
         }
 
-        ClientConnectionDispatcher.getSingleton().getServiceMap().remove(connection.getConnectionDescription());
+        ClientConnectionDispatcher.getSingleton().getConnectionMap().remove(connection.getConnectionDescription());
 
-        getServices().remove(connection);
-        if (getServiceNum() <= 0)
+        getConnections().remove(connection);
+        if (getConnectionNum() <= 0)
             getBindThread().interrupt();
     }
 }

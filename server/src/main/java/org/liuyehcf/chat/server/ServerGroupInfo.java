@@ -16,7 +16,7 @@ public class ServerGroupInfo {
     private String groupName;
 
     /**
-     * Service集合
+     * 当前群聊的Connection集合
      */
     private Set<Connection> connections;
 
@@ -32,13 +32,13 @@ public class ServerGroupInfo {
         connections = new HashSet<Connection>();
     }
 
-    public boolean addService(Connection connection) {
+    public boolean addConnection(Connection connection) {
         synchronized (connections) {
             return connections.add(connection);
         }
     }
 
-    public boolean removeService(Connection connection) {
+    public boolean removeConnection(Connection connection) {
         synchronized (connections) {
             return connections.remove(connection);
         }

@@ -82,9 +82,9 @@ public class ClientConnectionDispatcher {
     private ExecutorService executorService;
 
     /**
-     * Service描述符到Service的映射，多个PipeLineTask共享
+     * Connection描述符到Connection的映射，多个PipeLineTask共享
      */
-    private Map<ConnectionDescription, Connection> serviceMap;
+    private Map<ConnectionDescription, Connection> connectionMap;
 
     /**
      * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
@@ -119,8 +119,8 @@ public class ClientConnectionDispatcher {
         return executorService;
     }
 
-    public Map<ConnectionDescription, Connection> getServiceMap() {
-        return serviceMap;
+    public Map<ConnectionDescription, Connection> getConnectionMap() {
+        return connectionMap;
     }
 
     private ClientConnectionDispatcher() {
@@ -136,7 +136,7 @@ public class ClientConnectionDispatcher {
 
         executorService = Executors.newCachedThreadPool();
 
-        serviceMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
+        connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
 
     }
 
@@ -148,7 +148,7 @@ public class ClientConnectionDispatcher {
         clientMainTask = new ClientMainTask();
         LOGGER.info("Start the list Task {}", clientMainTask);
 
-        clientMainTask.registerService(connection);
+        clientMainTask.registerConnection(connection);
 
         executorService.execute(clientMainTask);
 
@@ -173,7 +173,7 @@ public class ClientConnectionDispatcher {
 
     private void doDispatcher(Connection connection) {
         if (pipeLineTasks.isEmpty() ||
-                getIdlePipeLineTask().getServiceNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
+                getIdlePipeLineTask().getConnectionNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
             if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
                 LOGGER.info("Client is overload");
                 //todo 客户端负载过高,直接拒绝新连接
@@ -184,7 +184,7 @@ public class ClientConnectionDispatcher {
                 PipeLineTask newPipeLineTask = new ClientSessionTask();
                 LOGGER.info("Add a new connection to {}", newPipeLineTask);
 
-                newPipeLineTask.registerService(connection);
+                newPipeLineTask.registerConnection(connection);
 
                 executorService.execute(newPipeLineTask);
             }
@@ -192,7 +192,7 @@ public class ClientConnectionDispatcher {
             PipeLineTask pipeLineTask = getIdlePipeLineTask();
             LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
 
-            pipeLineTask.registerService(connection);
+            pipeLineTask.registerConnection(connection);
         }
         ClientUtils.sendSystemMessage(connection, true, false);
     }
@@ -206,8 +206,8 @@ public class ClientConnectionDispatcher {
         PipeLineTask idlePipeLineTask = null;
         int minSize = Integer.MAX_VALUE;
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
-            if (pipeLineTask.getServiceNum() < minSize) {
-                minSize = pipeLineTask.getServiceNum();
+            if (pipeLineTask.getConnectionNum() < minSize) {
+                minSize = pipeLineTask.getConnectionNum();
                 idlePipeLineTask = pipeLineTask;
             }
         }
@@ -234,18 +234,18 @@ public class ClientConnectionDispatcher {
                  */
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size() - 1) ;
 
-                int totalServiceNum = 0;
+                int totalConnectionNum = 0;
                 for (PipeLineTask pipeLineTask : pipeLineTasks) {
-                    totalServiceNum += pipeLineTask.getServiceNum();
+                    totalConnectionNum += pipeLineTask.getConnectionNum();
                 }
 
                 /*
                  * 计算当前负载因子
                  */
-                double curLoadFactory = (double) totalServiceNum / (double) pipeLineTasks.size() / (double) ClientUtils.MAX_CONNECTION_PER_TASK;
+                double curLoadFactory = (double) totalConnectionNum / (double) pipeLineTasks.size() / (double) ClientUtils.MAX_CONNECTION_PER_TASK;
 
                 if (curLoadFactory <= ClientUtils.LOAD_FACTORY_THRESHOLD)
-                    doLoadBalancing(totalServiceNum);
+                    doLoadBalancing(totalConnectionNum);
 
                 nextLoadBalancingTimeStamp = System.currentTimeMillis() + ClientUtils.LOAD_BALANCE_FREQUENCY * 60 * 1000;
             } finally {
@@ -257,8 +257,8 @@ public class ClientConnectionDispatcher {
         }
     }
 
-    private void doLoadBalancing(int totalServiceNum) {
-        int remainTaskNum = (int) Math.ceil((double) totalServiceNum / (ClientUtils.LOAD_FACTORY_BALANCED * ClientUtils.MAX_CONNECTION_PER_TASK));
+    private void doLoadBalancing(int totalConnectionNum) {
+        int remainTaskNum = (int) Math.ceil((double) totalConnectionNum / (ClientUtils.LOAD_FACTORY_BALANCED * ClientUtils.MAX_CONNECTION_PER_TASK));
         if (remainTaskNum >= pipeLineTasks.size() || remainTaskNum < 1) {
             return;
         }
@@ -274,12 +274,12 @@ public class ClientConnectionDispatcher {
         }
 
         for (PipeLineTask pipeLineTask : dropPipeLineTasks) {
-            for (Connection connection : pipeLineTask.getServices()) {
+            for (Connection connection : pipeLineTask.getConnections()) {
                 //从原PipeLineTask中移除
-                pipeLineTask.removeService(connection);
+                pipeLineTask.removeConnection(connection);
 
                 //注册到新的PipeLineTask中
-                getIdlePipeLineTask().registerService(connection);
+                getIdlePipeLineTask().registerConnection(connection);
             }
         }
     }
@@ -305,9 +305,9 @@ public class ClientConnectionDispatcher {
                 messages = (List<Message>) messageInvocation.process();
             } catch (IOException e) {
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                ClientConnection service = (ClientConnection) proxyMethodInvocation.getArguments()[0];
-                service.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
-                service.getBindPipeLineTask().offLine(service);
+                ClientConnection connection = (ClientConnection) proxyMethodInvocation.getArguments()[0];
+                connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
+                connection.getBindPipeLineTask().offLine(connection);
                 throw e;
             }
             return messages;
@@ -326,18 +326,18 @@ public class ClientConnectionDispatcher {
                 result = messageInvocation.process();
             } catch (IOException e) {
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                ClientConnection service = (ClientConnection) proxyMethodInvocation.getArguments()[1];
-                service.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
-                service.getBindPipeLineTask().offLine(service);
+                ClientConnection connection = (ClientConnection) proxyMethodInvocation.getArguments()[1];
+                connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
+                connection.getBindPipeLineTask().offLine(connection);
                 throw e;
             }
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-            ClientConnection service = (ClientConnection) proxyMethodInvocation.getArguments()[1];
+            ClientConnection connection = (ClientConnection) proxyMethodInvocation.getArguments()[1];
             Message message = (Message) proxyMethodInvocation.getArguments()[0];
             if (!message.getControl().isHelloMessage() && !message.getControl().isOffLineMessage())
-                service.getBindChatWindow().flushOnWindow(true, false, message.getDisplayMessageString());
+                connection.getBindChatWindow().flushOnWindow(true, false, message.getDisplayMessageString());
             if (message.getControl().isOffLineMessage()) {
-                service.getBindPipeLineTask().offLine(service);
+                connection.getBindPipeLineTask().offLine(connection);
             }
             return result;
         }

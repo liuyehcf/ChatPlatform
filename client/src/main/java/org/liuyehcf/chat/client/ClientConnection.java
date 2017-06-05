@@ -62,7 +62,7 @@ public class ClientConnection extends Connection {
         header.setParam1(source);
         header.setParam2(destination);
 
-        ClientConnectionDispatcher.getSingleton().getServiceMap().put(getConnectionDescription(), this);
+        ClientConnectionDispatcher.getSingleton().getConnectionMap().put(getConnectionDescription(), this);
     }
 
 }

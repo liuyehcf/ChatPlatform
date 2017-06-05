@@ -63,13 +63,13 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
 
     @Override
-    public void registerService(Connection connection) {
+    public void registerConnection(Connection connection) {
         connection.getSelectors().clear();
         connection.bindPipeLineTask(this);
 
         connection.registerSelector(getReadSelector(), SelectionKey.OP_READ);
         connection.registerSelector(getWriteSelector(), SelectionKey.OP_WRITE);
-        getServices().add(connection);
+        getConnections().add(connection);
     }
 
     @Override
@@ -79,7 +79,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
 
     @Override
-    final public void removeService(Connection connection) {
+    final public void removeConnection(Connection connection) {
         List<Selector> selectors = connection.getSelectors();
         for (Selector selector : selectors) {
             SelectionKey selectionKey = connection.getSocketChannel().keyFor(selector);
@@ -89,20 +89,20 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
         }
         connection.getSelectors().clear();
 
-        getServices().remove(connection);
+        getConnections().remove(connection);
 
-        if (getServices().isEmpty()) {
+        if (getConnections().isEmpty()) {
             getBindThread().interrupt();
         }
     }
 
     @Override
-    final public Set<Connection> getServices() {
+    final public Set<Connection> getConnections() {
         return localConnections;
     }
 
     @Override
-    final public int getServiceNum() {
+    final public int getConnectionNum() {
         return localConnections.size();
     }
 

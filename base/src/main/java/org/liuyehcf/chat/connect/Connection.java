@@ -35,12 +35,12 @@ public abstract class Connection {
     protected SocketChannel socketChannel;
 
     /**
-     * 当前Service下socketChannel所关联的Selector
+     * 当前Connection下socketChannel所关联的Selector
      */
     private List<Selector> selectors;
 
     /**
-     * 当期Service所关联的PipeLineTask
+     * 当期Connection所关联的PipeLineTask
      */
     private PipeLineTask pipeLineTask;
 
@@ -55,7 +55,7 @@ public abstract class Connection {
     private MessageWriter messageWriter;
 
     /**
-     * 等待被写入该Service关联Channel的Message
+     * 等待被写入该Connection关联Channel的Message
      */
     private Queue<Message> writeMessages;
 

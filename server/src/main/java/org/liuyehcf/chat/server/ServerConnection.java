@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel;
 
 
 /**
- * 每个客户端连接对应一个Service，用于封装一些组件
+ * 每个客户端连接对应一个Connection，用于封装一些组件
  */
 public class ServerConnection extends Connection {
 

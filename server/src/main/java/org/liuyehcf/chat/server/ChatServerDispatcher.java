@@ -77,17 +77,17 @@ public class ChatServerDispatcher {
     /**
      * 主界面连接映射
      */
-    private Map<String, Connection> listServiceMap;
+    private Map<String, Connection> mainConnectionMap;
 
     /**
-     * Service描述符到Service的映射
+     * Connection描述符到Connection的映射
      */
-    private Map<ConnectionDescription, Connection> serviceMap;
+    private Map<ConnectionDescription, Connection> connectionMap;
 
     /**
-     * 用户组名到GroupService的映射
+     * 用户组名到ServerGroupInfo的映射
      */
-    private Map<String, ServerGroupInfo> groupServiceMap;
+    private Map<String, ServerGroupInfo> groupInfoMap;
 
     /**
      * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
@@ -111,9 +111,9 @@ public class ChatServerDispatcher {
         messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
                 .addInterceptor(new ServerMessageWriteInterceptor());
 
-        listServiceMap = new ConcurrentHashMap<String, Connection>();
-        serviceMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
-        groupServiceMap = new ConcurrentHashMap<String, ServerGroupInfo>();
+        mainConnectionMap = new ConcurrentHashMap<String, Connection>();
+        connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
+        groupInfoMap = new ConcurrentHashMap<String, ServerGroupInfo>();
     }
 
     /**
@@ -138,7 +138,7 @@ public class ChatServerDispatcher {
 
     private void doDispatcher(SocketChannel socketChannel) {
         if (pipeLineTasks.isEmpty() ||
-                getIdlePipeLineTask().getServiceNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
+                getIdlePipeLineTask().getConnectionNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
             if (pipeLineTasks.size() >= ServerUtils.MAX_THREAD_NUM) {
                 LOGGER.info("Server is overload");
 
@@ -151,12 +151,12 @@ public class ChatServerDispatcher {
                         messageWriterFactory,
                         socketChannel);
 
-                pipeLineTask.registerService(newConnection);
+                pipeLineTask.registerConnection(newConnection);
                 newConnection.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
                 //该链接不再接受任何消息
                 newConnection.cancel();
             } else {
-                PipeLineTask newPipeLineTask = new ServerSessionTask(listServiceMap, serviceMap, groupServiceMap);
+                PipeLineTask newPipeLineTask = new ServerSessionTask(mainConnectionMap, connectionMap, groupInfoMap);
                 LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
 
                 //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
@@ -167,7 +167,7 @@ public class ChatServerDispatcher {
                         messageWriterFactory,
                         socketChannel);
 
-                newPipeLineTask.registerService(newConnection);
+                newPipeLineTask.registerConnection(newConnection);
 
                 executorService.execute(newPipeLineTask);
             }
@@ -183,7 +183,7 @@ public class ChatServerDispatcher {
                     messageWriterFactory,
                     socketChannel);
 
-            pipeLineTask.registerService(newConnection);
+            pipeLineTask.registerConnection(newConnection);
         }
     }
 
@@ -196,8 +196,8 @@ public class ChatServerDispatcher {
         PipeLineTask idlePipeLineTask = null;
         int minSize = Integer.MAX_VALUE;
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
-            if (pipeLineTask.getServiceNum() < minSize) {
-                minSize = pipeLineTask.getServiceNum();
+            if (pipeLineTask.getConnectionNum() < minSize) {
+                minSize = pipeLineTask.getConnectionNum();
                 idlePipeLineTask = pipeLineTask;
             }
         }
@@ -224,18 +224,18 @@ public class ChatServerDispatcher {
                  */
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size() - 1) ;
 
-                int totalServiceNum = 0;
+                int totalConnectionNum = 0;
                 for (PipeLineTask pipeLineTask : pipeLineTasks) {
-                    totalServiceNum += pipeLineTask.getServiceNum();
+                    totalConnectionNum += pipeLineTask.getConnectionNum();
                 }
 
                 /*
                  * 计算当前负载因子
                  */
-                double curLoadFactory = (double) totalServiceNum / (double) pipeLineTasks.size() / (double) ServerUtils.MAX_CONNECTION_PER_TASK;
+                double curLoadFactory = (double) totalConnectionNum / (double) pipeLineTasks.size() / (double) ServerUtils.MAX_CONNECTION_PER_TASK;
 
                 if (curLoadFactory <= ServerUtils.LOAD_FACTORY_THRESHOLD)
-                    doLoadBalancing(totalServiceNum);
+                    doLoadBalancing(totalConnectionNum);
 
                 nextLoadBalancingTimeStamp = System.currentTimeMillis() + ServerUtils.LOAD_BALANCE_FREQUENCY * 60 * 1000;
             } finally {
@@ -247,8 +247,8 @@ public class ChatServerDispatcher {
         }
     }
 
-    private void doLoadBalancing(int totalServiceNum) {
-        int remainTaskNum = (int) Math.ceil((double) totalServiceNum / (ServerUtils.LOAD_FACTORY_BALANCED * ServerUtils.MAX_CONNECTION_PER_TASK));
+    private void doLoadBalancing(int totalConnectionNum) {
+        int remainTaskNum = (int) Math.ceil((double) totalConnectionNum / (ServerUtils.LOAD_FACTORY_BALANCED * ServerUtils.MAX_CONNECTION_PER_TASK));
         if (remainTaskNum >= pipeLineTasks.size() || remainTaskNum < 1) {
             return;
         }
@@ -264,12 +264,12 @@ public class ChatServerDispatcher {
         }
 
         for (PipeLineTask pipeLineTask : dropPipeLineTasks) {
-            for (Connection connection : pipeLineTask.getServices()) {
+            for (Connection connection : pipeLineTask.getConnections()) {
                 //从原PipeLineTask中移除
-                pipeLineTask.removeService(connection);
+                pipeLineTask.removeConnection(connection);
 
                 //注册到新的PipeLineTask中
-                getIdlePipeLineTask().registerService(connection);
+                getIdlePipeLineTask().registerConnection(connection);
             }
         }
     }
@@ -285,7 +285,7 @@ public class ChatServerDispatcher {
     public void stop() {
         //首先给所有活跃用户发送离线消息
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
-            for (Connection connection : pipeLineTask.getServices()) {
+            for (Connection connection : pipeLineTask.getConnections()) {
                 connection.offerMessage(
                         ServerUtils.createSystemMessage(
                                 true,
@@ -308,7 +308,7 @@ public class ChatServerDispatcher {
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size()) ;
 
                 for (PipeLineTask pipeLineTask : pipeLineTasks) {
-                    for (Connection connection : pipeLineTask.getServices()) {
+                    for (Connection connection : pipeLineTask.getConnections()) {
                         if (connection.getWriteMessages().isEmpty()) {
                             pipeLineTask.offLine(connection);
                         }
