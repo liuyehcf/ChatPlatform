@@ -64,7 +64,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
     @Override
     public void offLine(Service service) {
-
+        throw new UnsupportedOperationException();
     }
 
     public AbstractPipeLineTask() {

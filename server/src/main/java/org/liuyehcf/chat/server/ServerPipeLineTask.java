@@ -16,6 +16,13 @@ import java.util.concurrent.TimeUnit;
  * Created by Liuye on 2017/5/29.
  */
 public class ServerPipeLineTask extends AbstractMultiServicePipeLineTask {
+
+    /**
+     * 客户端主界面连接的映射
+     */
+    private Map<String, Service> listServiceMap;
+
+
     /**
      * 用户名到Service的映射，多个PipeLineTask共享
      */
@@ -26,7 +33,11 @@ public class ServerPipeLineTask extends AbstractMultiServicePipeLineTask {
      */
     private Map<String, GroupService> groupServiceMap;
 
-    public ServerPipeLineTask(Map<ServiceDescription, Service> serviceMap, Map<String, GroupService> groupServiceMap) {
+    public ServerPipeLineTask(
+            Map<String, Service> listServiceMap,
+            Map<ServiceDescription, Service> serviceMap,
+            Map<String, GroupService> groupServiceMap) {
+        this.listServiceMap = listServiceMap;
         this.serviceMap = serviceMap;
         this.groupServiceMap = groupServiceMap;
 
@@ -101,8 +112,20 @@ public class ServerPipeLineTask extends AbstractMultiServicePipeLineTask {
             String source = message.getHeader().getParam1();
             String destination = message.getHeader().getParam2();
 
+            if (message.getControl().isLoginInMessage()) {
+                String account = message.getHeader().getParam1();
+                if (!listServiceMap.containsKey(account)) {
+                    listServiceMap.put(account, service);
+                    service.offerMessage(ServerUtils.createReplyLoginInMessage(true, account));
+                    //todo 什么时候deny
+                } else {
+                    //todo
+                }
+            } else if (message.getControl().isLoginOutMessage()) {
+                //todo
+            }
             //是否是Hello消息
-            if (message.getControl().isHelloMessage()) {
+            else if (message.getControl().isHelloMessage()) {
                 ChatServerDispatcher.LOGGER.info("Client {} is accessing the server", source);
 
                 service.setServiceDescription(new ServiceDescription(source, destination));

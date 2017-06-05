@@ -1,23 +1,70 @@
 package org.liuyehcf.chat.client;
 
+import org.liuyehcf.chat.handler.WindowHandler;
+import org.liuyehcf.chat.protocol.Protocol;
+
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.event.WindowListener;
+import java.net.InetSocketAddress;
 
 /**
  * Created by Liuye on 2017/6/5.
  */
 public class ListWindow extends JFrame implements TreeSelectionListener {
+    /**
+     * 服务器主机名或IP
+     */
+    private String serverHost;
+
+    /**
+     * 服务器端口
+     */
+    private int serverPort;
+
+    /**
+     * 信源名字
+     */
+    private String account;
+
+    /**
+     * 信宿名字
+     */
+    private String password;
+
+    /**
+     * 关联的连接
+     */
+    private ListService listService;
+
+    /**
+     * 登录回调
+     */
+    private WindowHandler handler;
 
     /**
      * 树组件
      */
     protected JTree jTree;
 
-    public ListWindow() {
+    public ListWindow(String serverHost,
+                      Integer serverPort,
+                      String account,
+                      String password,
+                      WindowHandler handler) {
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
+        this.account = account;
+        this.password = password;
+        this.handler = handler;
+
+        ChatClientDispatcher.getSingleton().setBindListWindow(this);
+
         init();
+        connect();
     }
 
     private void init() {
@@ -84,7 +131,26 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
         this.pack();
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
 
+
+    private void connect() {
+        try {
+            listService = new ListService(
+                    account,
+                    Protocol.SERVER_USER_NAME,
+                    new InetSocketAddress(serverHost, serverPort),
+                    this
+            );
+            handler.onSucceed();
+        } catch (Exception e) {
+            handler.onFailure();
+            //todo 如何只关闭当前ChatWindow
+            this.dispose();
+            return;
+        }
+
+        ChatClientDispatcher.getSingleton().startListTask(listService, account, password);
     }
 
 
@@ -127,15 +193,15 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
 
     public static void main(String[] args) {
 
-//Windows风格
+        //Windows风格
 
-//String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
+        //String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
 
-//Windows Classic风格
+        //Windows Classic风格
 
-//String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel";
+        //String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel";
 
-//系统当前风格
+        //系统当前风格
 
         String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
 
@@ -161,9 +227,9 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
 
         }
 
-        ListWindow demo = new ListWindow();
+        //ListWindow demo = new ListWindow();
 
-        demo.setVisible(true);
+        //demo.setVisible(true);
 
     }
 }

@@ -110,34 +110,32 @@ public class LoginWindow {
             public void actionPerformed(ActionEvent actionEvent) {
                 String serverHost;
                 Integer serverPort;
-                String localId;
-                String remoteId;
+                String account;
+                String password;
                 try {
                     serverHost = hostField.getText();
                     serverPort = Integer.parseInt(portField.getText());
-                    localId = localIdField.getText();
-                    remoteId = remoteIdField.getText();
+                    account = localIdField.getText();
+                    password = remoteIdField.getText();
                 } catch (Throwable e) {
                     systemLabel.setText("SYSTEM: WRONG INPUT!");
                     return;
                 }
 
-//                new ListWindow();
-
-                new ChatWindow(
+                new ListWindow(
                         serverHost,
                         serverPort,
-                        localId,
-                        remoteId,
+                        account,
+                        password,
                         new WindowHandler() {
                             @Override
                             public void onSucceed() {
-                                systemLabel.setText("Connection succeed!");
+                                systemLabel.setText("Login succeed!");
                             }
 
                             @Override
                             public void onFailure() {
-                                systemLabel.setText("Connection failed!");
+                                systemLabel.setText("Login failed!");
                             }
                         }
                 );

@@ -47,6 +47,10 @@ public class ChatClientDispatcher {
         return LazyInitializeSingleton.chatClientDispatcher;
     }
 
+    /**
+     * 列表界面
+     */
+    private ListWindow bindListWindow;
 
     /**
      * 界面线程
@@ -87,6 +91,14 @@ public class ChatClientDispatcher {
      * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
      */
     private long nextLoadBalancingTimeStamp = 0;
+
+    public void setBindListWindow(ListWindow bindListWindow) {
+        this.bindListWindow = bindListWindow;
+    }
+
+    public ListWindow getBindListWindow() {
+        return bindListWindow;
+    }
 
     public List<MultiServicePipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
@@ -130,13 +142,18 @@ public class ChatClientDispatcher {
     }
 
 
-    public void startListTask(Service service) {
+    public void startListTask(Service service, String account, String password) {
         if (listServicePipeLineTask != null) {
             throw new RuntimeException();
         }
         listServicePipeLineTask = new ListServicePipeLineTask();
         LOGGER.info("Start the list Task {}", listServicePipeLineTask);
 
+        listServicePipeLineTask.registerService(service);
+
+        executorService.execute(listServicePipeLineTask);
+
+        ClientUtils.sendLoginMessage(service, account, password);
     }
 
 

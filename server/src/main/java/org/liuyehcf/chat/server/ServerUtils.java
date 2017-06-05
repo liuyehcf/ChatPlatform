@@ -66,4 +66,22 @@ class ServerUtils {
         return message;
     }
 
+    static Message createReplyLoginInMessage(boolean isPermit, String source) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setLoginInMessage(true);
+
+        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getHeader().setParam2(source);
+
+        message.getBody().setContent(isPermit ? "permit" : "deny");
+
+        return message;
+    }
+
 }

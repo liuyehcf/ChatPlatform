@@ -1,8 +1,10 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.protocol.Protocol;
+import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 
 import java.io.IOException;
@@ -24,16 +26,20 @@ public class ListService extends Service {
      */
     private ListWindow bindListWindow;
 
+    public ListWindow getBindListWindow() {
+        return bindListWindow;
+    }
+
     public ListService(String source,
                        String destination,
-                       MessageReaderFactory messageReaderFactory,
-                       MessageWriterFactory messageWriterFactory,
                        InetSocketAddress inetSocketAddress,
                        ListWindow bindListWindow) throws IOException {
+        //todo 为ListService配置工厂
+
         super(source,
                 destination,
-                messageReaderFactory,
-                messageWriterFactory);
+                DefaultMessageReaderProxyFactory.Builder(),
+                DefaultMessageWriterProxyFactory.Builder());
 
         this.bindListWindow = bindListWindow;
 

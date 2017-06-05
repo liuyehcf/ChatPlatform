@@ -60,4 +60,20 @@ class ClientUtils {
 
         service.offerMessage(message);
     }
+
+    static void sendLoginMessage(Service service, String account, String password) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setLoginInMessage(true);
+
+        message.getHeader().setParam1(account);
+        message.getHeader().setParam2(password);
+
+        service.offerMessage(message);
+    }
 }

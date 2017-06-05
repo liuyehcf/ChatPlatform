@@ -76,7 +76,12 @@ public class ChatServerDispatcher {
     private ExecutorService executorService;
 
     /**
-     * 用户名到Service的映射
+     * 主界面连接映射
+     */
+    private Map<String, Service> listServiceMap;
+
+    /**
+     * Service描述符到Service的映射
      */
     private Map<ServiceDescription, Service> serviceMap;
 
@@ -107,6 +112,7 @@ public class ChatServerDispatcher {
         messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
                 .addInterceptor(new ServerMessageWriteInterceptor());
 
+        listServiceMap = new ConcurrentHashMap<String, Service>();
         serviceMap = new ConcurrentHashMap<ServiceDescription, Service>();
         groupServiceMap = new ConcurrentHashMap<String, GroupService>();
     }
@@ -151,7 +157,7 @@ public class ChatServerDispatcher {
                 //该链接不再接受任何消息
                 newService.cancel();
             } else {
-                PipeLineTask newPipeLineTask = new ServerPipeLineTask(serviceMap, groupServiceMap);
+                PipeLineTask newPipeLineTask = new ServerPipeLineTask(listServiceMap, serviceMap, groupServiceMap);
                 LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
 
                 //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
