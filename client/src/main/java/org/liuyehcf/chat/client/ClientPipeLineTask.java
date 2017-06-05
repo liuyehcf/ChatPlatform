@@ -3,7 +3,6 @@ package org.liuyehcf.chat.client;
 import org.liuyehcf.chat.service.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.TextMessage;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
 
@@ -84,14 +83,12 @@ public class ClientPipeLineTask extends AbstractPipeLineTask {
 
         for (Message message : messages) {
 
-            TextMessage textMessage = (TextMessage) message;
-
             //服务器告知下线
-            if (textMessage.getTextControl().isOffLineMessage()) {
+            if (message.getControl().isOffLineMessage()) {
                 offLine(service);
             }
 
-            service.getBindChatWindow().flushOnWindow(false, textMessage.getTextControl().isSystemMessage(), message.getDisplayMessageString());
+            service.getBindChatWindow().flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 

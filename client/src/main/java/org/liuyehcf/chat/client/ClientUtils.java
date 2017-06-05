@@ -1,8 +1,8 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.service.Service;
-import org.liuyehcf.chat.protocol.TextMessage;
-import org.liuyehcf.chat.protocol.TextProtocol;
+import org.liuyehcf.chat.protocol.Message;
+import org.liuyehcf.chat.protocol.Protocol;
 
 /**
  * Created by Liuye on 2017/6/2.
@@ -36,27 +36,27 @@ class ClientUtils {
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
     static void sendSystemMessage(Service service, boolean isHelloMessage, boolean isOffLineMessage) {
-        TextMessage message = new TextMessage();
+        Message message = new Message();
 
-        message.setTextControl(new TextProtocol.TextControl());
-        message.setTextHeader(((ClientService) service).getTextHeader());
-        message.setTextBody(new TextProtocol.TextBody());
+        message.setControl(new Protocol.Control());
+        message.setHeader(((ClientService) service).getHeader());
+        message.setBody(new Protocol.Body());
 
-        message.getTextControl().setSystemMessage(true);
-        message.getTextControl().setHelloMessage(isHelloMessage);
-        message.getTextControl().setOffLineMessage(isOffLineMessage);
+        message.getControl().setSystemMessage(true);
+        message.getControl().setHelloMessage(isHelloMessage);
+        message.getControl().setOffLineMessage(isOffLineMessage);
 
         service.offerMessage(message);
     }
 
     static void sendNormalMessage(Service service, String content) {
-        TextMessage message = new TextMessage();
+        Message message = new Message();
 
-        message.setTextControl(new TextProtocol.TextControl());
-        message.setTextHeader(((ClientService) service).getTextHeader());
-        message.setTextBody(new TextProtocol.TextBody());
+        message.setControl(new Protocol.Control());
+        message.setHeader(((ClientService) service).getHeader());
+        message.setBody(new Protocol.Body());
 
-        message.getTextBody().setContent(content);
+        message.getBody().setContent(content);
 
         service.offerMessage(message);
     }

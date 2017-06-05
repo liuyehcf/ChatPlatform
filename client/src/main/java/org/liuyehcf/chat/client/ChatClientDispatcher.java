@@ -8,7 +8,6 @@ import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.TextMessage;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
@@ -300,10 +299,10 @@ public class ChatClientDispatcher {
             }
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
             ClientService service = (ClientService) proxyMethodInvocation.getArguments()[1];
-            TextMessage message = (TextMessage) proxyMethodInvocation.getArguments()[0];
-            if (!message.getTextControl().isHelloMessage() && !message.getTextControl().isOffLineMessage())
+            Message message = (Message) proxyMethodInvocation.getArguments()[0];
+            if (!message.getControl().isHelloMessage() && !message.getControl().isOffLineMessage())
                 service.getBindChatWindow().flushOnWindow(true, false, message.getDisplayMessageString());
-            if (message.getTextControl().isOffLineMessage()) {
+            if (message.getControl().isOffLineMessage()) {
                 service.getBindPipeLineTask().offLine(service);
             }
             return result;

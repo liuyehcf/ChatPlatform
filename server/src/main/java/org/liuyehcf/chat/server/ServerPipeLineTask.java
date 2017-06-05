@@ -3,7 +3,6 @@ package org.liuyehcf.chat.server;
 import org.liuyehcf.chat.service.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.TextMessage;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
 
@@ -99,25 +98,24 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
         for (Message message : messages) {
             service.activeNow();
 
-            TextMessage textMessage = (TextMessage) message;
-            String fromUserName = textMessage.getTextHeader().getFromUserName();
-            String toUserName = textMessage.getTextHeader().getToUserName();
+            String source = message.getHeader().getParam1();
+            String destination = message.getHeader().getParam2();
 
             //是否是Hello消息
-            if (textMessage.getTextControl().isHelloMessage()) {
-                ChatServerDispatcher.LOGGER.info("Client {} is accessing the server", fromUserName);
+            if (message.getControl().isHelloMessage()) {
+                ChatServerDispatcher.LOGGER.info("Client {} is accessing the server", source);
 
-                service.setServiceDescription(new ServiceDescription(fromUserName, toUserName));
+                service.setServiceDescription(new ServiceDescription(source, destination));
 
                 if (!serviceMap.containsKey(service.getServiceDescription())) {
                     serviceMap.put(service.getServiceDescription(), service);
-                    ChatServerDispatcher.LOGGER.info("Client {} accesses the server successfully", fromUserName);
+                    ChatServerDispatcher.LOGGER.info("Client {} accesses the server successfully", source);
 
                     if (isGroupChat(message)) {
                         ChatServerDispatcher.LOGGER.info("This connection is a group chat");
 
                         service.setGroupChat(true);
-                        String groupName = service.getServiceDescription().getToUserName();
+                        String groupName = service.getServiceDescription().getDestination();
                         GroupService groupService;
                         if (groupServiceMap.containsKey(groupName)) {
                             groupService = groupServiceMap.get(groupName);
@@ -128,48 +126,48 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
                         }
                         groupService.addService(service);
                         String greetContent1 = "大家欢迎<"
-                                + fromUserName
+                                + source
                                 + ">进入群聊聊天室!!!";
                         groupService.offerMessage(service, ServerUtils.createSystemMessage(
                                 false,
-                                fromUserName,
+                                source,
                                 greetContent1));
 
-                        String greetContent2 = fromUserName +
+                        String greetContent2 = source +
                                 "，欢迎进入群聊聊天室!!!";
                         service.offerMessage(ServerUtils.createSystemMessage(
                                 false,
-                                fromUserName,
+                                source,
                                 greetContent2));
                     } else {
-                        String greetContent = fromUserName +
+                        String greetContent = source +
                                 "，欢迎进入私人聊天室!!!";
                         service.offerMessage(ServerUtils.createSystemMessage(
                                 false,
-                                fromUserName,
+                                source,
                                 greetContent));
 
                     }
                 } else {
-                    ChatServerDispatcher.LOGGER.info("The name of client {} is already exists", fromUserName);
+                    ChatServerDispatcher.LOGGER.info("The name of client {} is already exists", source);
 
-                    String greetContent = fromUserName +
+                    String greetContent = source +
                             "名字重复，登录失败";
                     service.offerMessage(ServerUtils.createSystemMessage(
                             true,
-                            fromUserName,
+                            source,
                             greetContent));
                 }
             }
             //客户端要求断开连接
-            else if (textMessage.getTextControl().isOffLineMessage()) {
-                ChatServerDispatcher.LOGGER.info("The client {} request goes offline", fromUserName);
+            else if (message.getControl().isOffLineMessage()) {
+                ChatServerDispatcher.LOGGER.info("The client {} request goes offline", source);
 
                 offLine(service);
             }
             //是否为群聊
             else if (service.isGroupChat()) {
-                String groupName = ((TextMessage) message).getTextHeader().getToUserName();
+                String groupName = ((Message) message).getHeader().getParam2();
                 GroupService groupService = groupServiceMap.get(groupName);
                 groupService.offerMessage(service, message);
             }
@@ -183,11 +181,11 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
                     toService.offerMessage(message);
                 } else {
                     String systemContent = "["
-                            + service.getServiceDescription().getToUserName()
+                            + service.getServiceDescription().getDestination()
                             + "]未上线";
                     service.offerMessage(ServerUtils.createSystemMessage(
                             false,
-                            fromUserName,
+                            source,
                             systemContent
                     ));
                 }
@@ -247,7 +245,7 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
             if (currentStamp - service.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
                 service.offerMessage(ServerUtils.createSystemMessage(
                         true,
-                        service.getServiceDescription().getFromUserName(),
+                        service.getServiceDescription().getSource(),
                         "占着茅坑不拉屎，你可以滚了!!!"
                         )
                 );
@@ -290,17 +288,17 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
         serviceMap.remove(service.getServiceDescription());
 
         if (service.isGroupChat()) {
-            GroupService groupService = groupServiceMap.get(service.getServiceDescription().getToUserName());
+            GroupService groupService = groupServiceMap.get(service.getServiceDescription().getDestination());
             groupService.removeService(service);
             if (groupService.isGroupEmpty()) {
                 groupServiceMap.remove(groupService.getGroupName());
             } else {
                 String systemContent = "["
-                        + service.getServiceDescription().getFromUserName()
+                        + service.getServiceDescription().getSource()
                         + "]已断开连接";
                 groupService.offerMessage(service, ServerUtils.createSystemMessage(
                         false,
-                        service.getServiceDescription().getToUserName(),
+                        service.getServiceDescription().getDestination(),
                         systemContent
                 ));
             }
@@ -310,11 +308,11 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
             if (serviceMap.containsKey(reverseServiceDescription)) {
                 Service toService = serviceMap.get(reverseServiceDescription);
                 String systemContent = "["
-                        + service.getServiceDescription().getFromUserName()
+                        + service.getServiceDescription().getSource()
                         + "]已断开连接";
                 toService.offerMessage(ServerUtils.createSystemMessage(
                         false,
-                        service.getServiceDescription().getToUserName(),
+                        service.getServiceDescription().getDestination(),
                         systemContent
                 ));
             }
@@ -332,7 +330,6 @@ public class ServerPipeLineTask extends AbstractPipeLineTask {
      * @return
      */
     private boolean isGroupChat(Message message) {
-        TextMessage textMessage = (TextMessage) message;
-        return textMessage.getTextHeader().getToUserName().startsWith("#");
+        return message.getHeader().getParam2().startsWith("#");
     }
 }

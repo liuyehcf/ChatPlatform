@@ -1,11 +1,9 @@
 package org.liuyehcf.chat.writer;
 
 import org.liuyehcf.chat.interceptor.MessageInterceptor;
-import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.interceptor.ReflectionMethodInvocation;
 import org.liuyehcf.chat.protocol.Protocol;
-import org.liuyehcf.chat.protocol.TextProtocol;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -20,7 +18,7 @@ public class DefaultMessageWriterProxyFactory implements MessageWriterFactory {
     /**
      * 文本协议
      */
-    private static final Protocol DEFAULT_PROTOCOL = new TextProtocol();
+    private static final Protocol DEFAULT_PROTOCOL = new Protocol();
 
     /**
      * 拦截器链

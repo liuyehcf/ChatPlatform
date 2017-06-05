@@ -1,21 +1,76 @@
 package org.liuyehcf.chat.protocol;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by Liuye on 2017/5/29.
  */
-public interface Message {
-    /**
-     * 返回用于显示的String格式
-     *
-     * @return
-     */
-    String getDisplayMessageString();
+public class Message {
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
-     * 获取一份拷贝的Message
-     * 至于何种程度的拷贝由子类定义
-     *
-     * @return
+     * 控制信息
      */
-    Message getClonedMessage();
+    private Protocol.Control control;
+
+    /**
+     * 信息头
+     */
+    private Protocol.Header header;
+
+    /**
+     * 信息内容
+     */
+    private Protocol.Body body;
+
+
+    public Protocol.Control getControl() {
+        return control;
+    }
+
+    public void setControl(Protocol.Control control) {
+        this.control = control;
+    }
+
+    public Protocol.Header getHeader() {
+        return header;
+    }
+
+    public void setHeader(Protocol.Header header) {
+        this.header = header;
+    }
+
+    public Protocol.Body getBody() {
+        return body;
+    }
+
+    public void setBody(Protocol.Body body) {
+        this.body = body;
+    }
+
+    public Message() {
+    }
+
+    public String getDisplayMessageString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(SIMPLE_DATE_FORMAT.format(new Date()))
+                .append("   " + getHeader().getParam1())
+                .append("\n")
+                .append(getBody().getContent())
+                .append("\n");
+        return sb.toString();
+    }
+
+    public Message getClonedMessage() {
+        Message message = new Message();
+        message.setControl(this.getControl());
+        message.setHeader(new Protocol.Header());
+        message.setBody(this.getBody());
+
+        message.getHeader().setParam1(this.getHeader().getParam1());
+        message.getHeader().setParam2(this.getHeader().getParam2());
+        return message;
+    }
 }

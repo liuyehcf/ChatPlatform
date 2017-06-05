@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.service.*;
-import org.liuyehcf.chat.protocol.TextProtocol;
+import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 
@@ -18,7 +18,7 @@ public class ClientService extends Service {
     /**
      * 信息头
      */
-    private TextProtocol.TextHeader textHeader;
+    private Protocol.Header header;
 
     /**
      * 聊天界面
@@ -29,38 +29,38 @@ public class ClientService extends Service {
         return bindChatWindow;
     }
 
-    public TextProtocol.TextHeader getTextHeader() {
-        return textHeader;
+    public Protocol.Header getHeader() {
+        return header;
     }
 
     /**
      * 构造函数，允许抛出异常，交给ChatWindows处理
      *
-     * @param fromUserName
-     * @param toUserName
+     * @param source
+     * @param destination
      * @param messageReaderFactory
      * @param messageWriterFactory
      * @param inetSocketAddress
      * @throws IOException
      */
-    public ClientService(String fromUserName,
-                         String toUserName,
+    public ClientService(String source,
+                         String destination,
                          MessageReaderFactory messageReaderFactory,
                          MessageWriterFactory messageWriterFactory,
                          InetSocketAddress inetSocketAddress,
                          ChatWindow bindChatWindow) throws IOException {
 
-        super(fromUserName, toUserName, messageReaderFactory, messageWriterFactory);
+        super(source, destination, messageReaderFactory, messageWriterFactory);
 
         this.bindChatWindow = bindChatWindow;
 
         socketChannel = SocketChannel.open();
         socketChannel.connect(inetSocketAddress);
 
-        textHeader = new TextProtocol.TextHeader();
+        header = new Protocol.Header();
 
-        textHeader.setFromUserName(fromUserName);
-        textHeader.setToUserName(toUserName);
+        header.setParam1(source);
+        header.setParam2(destination);
 
         ChatClientDispatcher.getSingleton().getServiceMap().put(getServiceDescription(), this);
     }

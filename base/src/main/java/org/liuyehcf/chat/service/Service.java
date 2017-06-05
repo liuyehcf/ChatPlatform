@@ -128,11 +128,11 @@ public abstract class Service {
     }
 
     public Service(
-            String fromUserName,
-            String toUserName,
+            String source,
+            String destination,
             MessageReaderFactory messageReaderFactory,
             MessageWriterFactory messageWriterFactory) {
-        serviceDescription = new ServiceDescription(fromUserName, toUserName);
+        serviceDescription = new ServiceDescription(source, destination);
 
 
         messageReader = messageReaderFactory.build();

@@ -8,8 +8,6 @@ import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
-import org.liuyehcf.chat.protocol.TextMessage;
-import org.liuyehcf.chat.protocol.TextProtocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
@@ -285,7 +283,7 @@ public class ChatServerDispatcher {
                 service.offerMessage(
                         ServerUtils.createSystemMessage(
                                 true,
-                                service.getServiceDescription().getFromUserName(),
+                                service.getServiceDescription().getSource(),
                                 "[很抱歉通知您，服务器已关闭]"
                         ));
                 service.cancel();
@@ -337,7 +335,7 @@ public class ChatServerDispatcher {
         /**
          * 协议
          */
-        private Protocol protocol = new TextProtocol();
+        private Protocol protocol = new Protocol();
 
         @Override
         public Object intercept(MessageInvocation messageInvocation) throws IOException {
@@ -364,7 +362,7 @@ public class ChatServerDispatcher {
         /**
          * 协议
          */
-        private Protocol protocol = new TextProtocol();
+        private Protocol protocol = new Protocol();
 
         @Override
         public Object intercept(MessageInvocation messageInvocation) throws IOException {
@@ -379,9 +377,9 @@ public class ChatServerDispatcher {
                 throw e;
             }
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-            TextMessage message = (TextMessage) proxyMethodInvocation.getArguments()[0];
+            Message message = (Message) proxyMethodInvocation.getArguments()[0];
             LOGGER.debug("Send a message {}", protocol.wrap(message));
-            if (message.getTextControl().isOffLineMessage()) {
+            if (message.getControl().isOffLineMessage()) {
                 Service service = (Service) proxyMethodInvocation.getArguments()[1];
                 service.getBindPipeLineTask().offLine(service);
             }

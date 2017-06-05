@@ -2,8 +2,7 @@ package org.liuyehcf.chat.server;
 
 
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.TextMessage;
-import org.liuyehcf.chat.protocol.TextProtocol;
+import org.liuyehcf.chat.protocol.Protocol;
 
 
 /**
@@ -50,19 +49,19 @@ class ServerUtils {
      * @return
      */
     static Message createSystemMessage(boolean isOffLine, String notifyUserName, String systemContent) {
-        TextMessage message = new TextMessage();
+        Message message = new Message();
 
-        message.setTextControl(new TextProtocol.TextControl());
-        message.setTextHeader(new TextProtocol.TextHeader());
-        message.setTextBody(new TextProtocol.TextBody());
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
 
-        message.getTextControl().setOffLineMessage(isOffLine);
+        message.getControl().setOffLineMessage(isOffLine);
 
-        message.getTextControl().setSystemMessage(true);
-        message.getTextHeader().setFromUserName(TextProtocol.SERVER_USER_NAME);
-        message.getTextHeader().setToUserName(notifyUserName);
+        message.getControl().setSystemMessage(true);
+        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getHeader().setParam2(notifyUserName);
 
-        message.getTextBody().setContent(systemContent);
+        message.getBody().setContent(systemContent);
 
         return message;
     }

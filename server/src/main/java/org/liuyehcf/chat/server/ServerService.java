@@ -15,12 +15,12 @@ import java.nio.channels.SocketChannel;
  */
 public class ServerService extends Service {
 
-    public ServerService(String fromUserName,
-                         String toUserName,
+    public ServerService(String source,
+                         String destination,
                          MessageReaderFactory messageReaderFactory,
                          MessageWriterFactory messageWriterFactory,
                          SocketChannel socketChannel) {
-        super(fromUserName, toUserName, messageReaderFactory, messageWriterFactory);
+        super(source, destination, messageReaderFactory, messageWriterFactory);
 
         this.socketChannel = socketChannel;
     }

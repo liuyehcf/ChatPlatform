@@ -2,7 +2,6 @@ package org.liuyehcf.chat.server;
 
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.service.Service;
-import org.liuyehcf.chat.protocol.TextMessage;
 
 import java.util.*;
 
@@ -62,8 +61,8 @@ public class GroupService {
     }
 
     private Message getModifiedMessage(Service service, Message message) {
-        TextMessage textMessage = (TextMessage) message.getClonedMessage();
-        textMessage.getTextHeader().setToUserName(service.getServiceDescription().getFromUserName());
-        return textMessage;
+        Message modifiedMessage = message.getClonedMessage();
+        modifiedMessage.getHeader().setParam2(service.getServiceDescription().getSource());
+        return modifiedMessage;
     }
 }
