@@ -41,10 +41,35 @@ public class Protocol {
         private static final String CONTROL_REGEX = "<([01]+?)>";
         private static final Pattern CONTROL_PATTERN = Pattern.compile(CONTROL_REGEX);
 
+        /**
+         * 是否为系统消息，若是下面几个任何一个，则为系统消息
+         * 不是下面中的任何一个也可以是系统消息，代表系统发给用户的消息，需要用红色显示
+         */
         private boolean isSystemMessage;
 
+        /**
+         * 是否登录
+         */
+        private boolean isLoginInMessage;
+
+        /**
+         * 是否注销
+         */
+        private boolean isLoginOutMessage;
+
+        /**
+         * 是否注册
+         */
+        private boolean isRegisterMessage;
+
+        /**
+         * 是否为hello，会话连接时发送的消息
+         */
         private boolean isHelloMessage;
 
+        /**
+         * 是否为离线消息，当前对话关闭时发送的消息
+         */
         private boolean isOffLineMessage;
 
         public boolean isSystemMessage() {
@@ -53,6 +78,30 @@ public class Protocol {
 
         public void setSystemMessage(boolean systemMessage) {
             isSystemMessage = systemMessage;
+        }
+
+        public boolean isLoginInMessage() {
+            return isLoginInMessage;
+        }
+
+        public void setLoginInMessage(boolean loginInMessage) {
+            isLoginInMessage = loginInMessage;
+        }
+
+        public boolean isLoginOutMessage() {
+            return isLoginOutMessage;
+        }
+
+        public void setLoginOutMessage(boolean loginOutMessage) {
+            isLoginOutMessage = loginOutMessage;
+        }
+
+        public boolean isRegisterMessage() {
+            return isRegisterMessage;
+        }
+
+        public void setRegisterMessage(boolean registerMessage) {
+            isRegisterMessage = registerMessage;
         }
 
         public boolean isHelloMessage() {
@@ -74,6 +123,9 @@ public class Protocol {
         public String getControlString() {
             return CONTROL_PREFIX
                     + (isSystemMessage ? "1" : "0")
+                    + (isLoginInMessage ? "1" : "0")
+                    + (isLoginOutMessage ? "1" : "0")
+                    + (isRegisterMessage ? "1" : "0")
                     + (isHelloMessage ? "1" : "0")
                     + (isOffLineMessage ? "1" : "0")
                     + CONTROL_SUFFIX;
@@ -85,8 +137,13 @@ public class Protocol {
             if (m.find()) {
                 String controlString = m.group(1);
                 control.setSystemMessage(controlString.charAt(0) == '1');
-                control.setHelloMessage(controlString.charAt(1) == '1');
-                control.setOffLineMessage(controlString.charAt(2) == '1');
+                control.setLoginInMessage(controlString.charAt(1) == '1');
+                control.setLoginOutMessage(controlString.charAt(2) == '1');
+                control.setRegisterMessage(controlString.charAt(3) == '1');
+                control.setHelloMessage(controlString.charAt(4) == '1');
+                control.setOffLineMessage(controlString.charAt(5) == '1');
+            } else {
+                throw new RuntimeException("parse MessageControl failed!");
             }
             return control;
         }
@@ -162,6 +219,8 @@ public class Protocol {
             if (matcher.find()) {
                 header.setParam1(matcher.group(1));
                 header.setParam2(matcher.group(2));
+            } else {
+                throw new RuntimeException("parse MessageHeader failed!");
             }
             return header;
         }
@@ -221,6 +280,8 @@ public class Protocol {
             Body body = new Body();
             if (matcher.find()) {
                 body.setContent(matcher.group(1));
+            } else {
+                throw new RuntimeException("parse MessageBody failed!");
             }
             return body;
         }
