@@ -80,8 +80,10 @@ public class ClientMainTask extends AbstractPipeLineTask {
 
         for (Message message : messages) {
             if (message.getControl().isLoginInMessage()) {
-                if (message.getBody().getContent().equals("permit")) {
-                    ClientConnectionDispatcher.getSingleton().getBindMainWindow().setVisible(true);
+                if (message.getHeader().getParam3().equals("permit")) {
+                    String userName = message.getHeader().getParam2();
+                    MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
+                    mainWindow.setVisible(true);
                 }
             }
         }

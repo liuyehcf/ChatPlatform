@@ -1,6 +1,7 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.handler.WindowHandler;
+import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Protocol;
 
 import javax.swing.*;
@@ -40,6 +41,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     private ClientMainConnection mainConnection;
 
     /**
+     * 主界面所绑定的主界面线程，一个主界面线程可能管理多个主界面窗口
+     */
+    private PipeLineTask bindMainTask;
+
+    /**
      * 登录回调
      */
     private WindowHandler handler;
@@ -60,7 +66,10 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.password = password;
         this.handler = handler;
 
-        ClientConnectionDispatcher.getSingleton().setBindMainWindow(this);
+        if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
+            throw new RuntimeException();//todo
+        }
+        ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
 
         init();
         connect();
@@ -149,7 +158,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             return;
         }
 
-        ClientConnectionDispatcher.getSingleton().startListTask(mainConnection, account, password);
+        ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(mainConnection, account, password);
     }
 
 

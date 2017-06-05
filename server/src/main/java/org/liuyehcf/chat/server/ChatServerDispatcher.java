@@ -17,10 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -112,6 +109,12 @@ public class ChatServerDispatcher {
                 .addInterceptor(new ServerMessageWriteInterceptor());
 
         mainConnectionMap = new ConcurrentHashMap<String, Connection>();
+        //todo 测试数据
+        mainConnectionMap.put("测试用户1", new TestConnection());
+        mainConnectionMap.put("测试用户2", new TestConnection());
+        mainConnectionMap.put("测试用户3", new TestConnection());
+
+
         connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
         groupInfoMap = new ConcurrentHashMap<String, ServerGroupInfo>();
     }
@@ -394,4 +397,14 @@ public class ChatServerDispatcher {
     }
 
 
+    private static final class TestConnection extends Connection {
+        public TestConnection() {
+
+            super("?",
+                    "?",
+                    DefaultMessageReaderProxyFactory.Builder(),
+                    DefaultMessageWriterProxyFactory.Builder());
+
+        }
+    }
 }

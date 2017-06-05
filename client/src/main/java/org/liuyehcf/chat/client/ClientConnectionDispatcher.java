@@ -49,12 +49,12 @@ public class ClientConnectionDispatcher {
     /**
      * 列表界面
      */
-    private MainWindow bindMainWindow;
+    private Map<String, MainWindow> mainWindowMap;
 
     /**
-     * 界面线程
+     * 主界面线程列表，一个主界面线程可能管理多个主界面
      */
-    private ClientMainTask clientMainTask;
+    private List<PipeLineTask> mainTasks;
 
     /**
      * 保存着所有的ClientPipeLineTask，用于客户端负载均衡
@@ -91,12 +91,12 @@ public class ClientConnectionDispatcher {
      */
     private long nextLoadBalancingTimeStamp = 0;
 
-    public void setBindMainWindow(MainWindow bindMainWindow) {
-        this.bindMainWindow = bindMainWindow;
+    public Map<String, MainWindow> getMainWindowMap() {
+        return mainWindowMap;
     }
 
-    public MainWindow getBindMainWindow() {
-        return bindMainWindow;
+    public List<PipeLineTask> getMainTasks() {
+        return mainTasks;
     }
 
     public List<PipeLineTask> getPipeLineTasks() {
@@ -124,6 +124,8 @@ public class ClientConnectionDispatcher {
     }
 
     private ClientConnectionDispatcher() {
+        mainWindowMap = new ConcurrentHashMap<String, MainWindow>();
+        mainTasks = new LinkedList<PipeLineTask>();
         pipeLineTasks = new LinkedList<PipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
@@ -141,37 +143,38 @@ public class ClientConnectionDispatcher {
     }
 
 
-    public void startListTask(Connection connection, String account, String password) {
-        if (clientMainTask != null) {
+    //todo 如果一个线程管理多个主界面，那么也是需要加锁的哦
+    public void dispatcherMainConnection(Connection connection, String account, String password) {
+        if (!mainTasks.isEmpty()) {
             throw new RuntimeException();
         }
-        clientMainTask = new ClientMainTask();
-        LOGGER.info("Start the list Task {}", clientMainTask);
+        PipeLineTask mainTask = new ClientMainTask();
+        LOGGER.info("Start the list Task {}", mainTask);
 
-        clientMainTask.registerConnection(connection);
+        mainTask.registerConnection(connection);
 
-        executorService.execute(clientMainTask);
+        executorService.execute(mainTask);
 
         ClientUtils.sendLoginMessage(connection, account, password);
     }
 
 
-    public void dispatch(Connection connection) {
+    public void dispatchSessionConnection(Connection connection) {
         //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
         if (System.currentTimeMillis() < nextLoadBalancingTimeStamp) {
-            doDispatcher(connection);
+            doDispatchSessionConnection(connection);
         } else {
             //如果需要做负载均衡，则必须加锁，保证负载均衡时所有线程处于安全点
             try {
                 loadBalancingLock.lock();
-                doDispatcher(connection);
+                doDispatchSessionConnection(connection);
             } finally {
                 loadBalancingLock.unlock();
             }
         }
     }
 
-    private void doDispatcher(Connection connection) {
+    private void doDispatchSessionConnection(Connection connection) {
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
             if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {

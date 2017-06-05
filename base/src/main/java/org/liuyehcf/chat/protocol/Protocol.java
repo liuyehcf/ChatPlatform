@@ -166,18 +166,23 @@ public class Protocol {
         /**
          * 消息头匹配正则表达式
          */
-        private static final String HEADER_REGEX = "\\[param1:(.*?),param2:(.*?)\\]";
+        private static final String HEADER_REGEX = "\\[param1:(.*?),param2:(.*?),param3:(.*?)\\]";
         private static final Pattern HEADER_PATTERN = Pattern.compile(HEADER_REGEX);
 
         /**
-         * 消源用户
+         * 参数1
          */
-        private String param1;
+        private String param1 = "";
 
         /**
-         * 信宿用户
+         * 参数2
          */
-        private String param2;
+        private String param2 = "";
+
+        /**
+         * 参数3
+         */
+        private String param3 = "";
 
         public String getParam1() {
             return param1;
@@ -195,15 +200,24 @@ public class Protocol {
             this.param2 = param2;
         }
 
+        public String getParam3() {
+            return param3;
+        }
+
+        public void setParam3(String param3) {
+            this.param3 = param3;
+        }
+
         public Header() {
             param1 = "";
             param2 = "";
         }
 
         public String getHeaderString() {
-            return HEADER_PREFIX +
-                    "param1:" + param1 + "," +
-                    "param2:" + param2
+            return HEADER_PREFIX
+                    + "param1:" + param1 + ","
+                    + "param2:" + param2 + ","
+                    + "param3:" + param3
                     + HEADER_SUFFIX;
         }
 
@@ -219,6 +233,7 @@ public class Protocol {
             if (matcher.find()) {
                 header.setParam1(matcher.group(1));
                 header.setParam2(matcher.group(2));
+                header.setParam3(matcher.group(3));
             } else {
                 throw new RuntimeException("parse MessageHeader failed!");
             }
@@ -249,10 +264,9 @@ public class Protocol {
         /**
          * 内容
          */
-        private String content;
+        private String content = "";
 
         public Body() {
-            content = "";
         }
 
         public String getContent() {

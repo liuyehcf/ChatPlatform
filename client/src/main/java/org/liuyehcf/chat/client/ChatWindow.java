@@ -187,7 +187,7 @@ public class ChatWindow {
             return;
         }
 
-        ClientConnectionDispatcher.getSingleton().dispatch(connection);
+        ClientConnectionDispatcher.getSingleton().dispatchSessionConnection(connection);
     }
 
     public void flushOnWindow(boolean isSent, boolean isSystem, String content) {

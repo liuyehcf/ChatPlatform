@@ -78,10 +78,10 @@ class ServerUtils {
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(source);
+        message.getHeader().setParam3(isPermit ? "permit" : "deny");
 
-        message.getBody().setContent(isPermit ? "permit" : "deny");
         if (isPermit) {
-            message.getBody().setContent(content);
+            //message.getBody().setContent(content);
         }
 
         return message;
