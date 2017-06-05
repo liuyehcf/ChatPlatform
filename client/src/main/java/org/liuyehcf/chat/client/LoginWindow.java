@@ -66,12 +66,12 @@ public class LoginWindow {
         portLabel.setFont(GLOBAL_FONT);
         panel.add(portLabel);
 
-        JLabel localId = new JLabel("LocalId");
+        JLabel localId = new JLabel("Account");
         localId.setBounds(BLANK, BLANK * 3 + COMPONENT_HEIGHT * 2, LABEL_WIDTH, COMPONENT_HEIGHT);
         localId.setFont(GLOBAL_FONT);
         panel.add(localId);
 
-        JLabel remoteId = new JLabel("RemoteId");
+        JLabel remoteId = new JLabel("Password");
         remoteId.setBounds(BLANK, BLANK * 4 + COMPONENT_HEIGHT * 3, LABEL_WIDTH, COMPONENT_HEIGHT);
         remoteId.setFont(GLOBAL_FONT);
         panel.add(remoteId);
@@ -102,7 +102,7 @@ public class LoginWindow {
         systemLabel.setFont(GLOBAL_FONT);
         panel.add(systemLabel);
 
-        JButton connectButton = new JButton("Connect");
+        JButton connectButton = new JButton("Login in");
         connectButton.setBounds(BLANK, BLANK * 5 + COMPONENT_HEIGHT * 4, LABEL_WIDTH + FIELD_WIDTH, COMPONENT_HEIGHT);
         connectButton.setFont(GLOBAL_FONT);
         connectButton.addActionListener(new ActionListener() {
@@ -121,6 +121,9 @@ public class LoginWindow {
                     systemLabel.setText("SYSTEM: WRONG INPUT!");
                     return;
                 }
+
+//                new ListWindow();
+
                 new ChatWindow(
                         serverHost,
                         serverPort,

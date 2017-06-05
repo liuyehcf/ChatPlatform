@@ -46,6 +46,12 @@ public class ChatClientDispatcher {
         return LazyInitializeSingleton.chatClientDispatcher;
     }
 
+
+    /**
+     * 界面线程
+     */
+    private ListTask listTask;
+
     /**
      * 保存着所有的ClientPipeLineTask，用于客户端负载均衡
      */
@@ -121,6 +127,17 @@ public class ChatClientDispatcher {
         serviceMap = new ConcurrentHashMap<ServiceDescription, Service>();
 
     }
+
+
+    public void startListTask(Service service) {
+        if (listTask != null) {
+            throw new RuntimeException();
+        }
+        listTask = new ListTask();
+        LOGGER.info("Start the list Task {}", listTask);
+
+    }
+
 
     public void dispatch(Service service) {
         //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
