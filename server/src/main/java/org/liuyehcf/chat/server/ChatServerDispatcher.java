@@ -1,5 +1,6 @@
 package org.liuyehcf.chat.server;
 
+import org.liuyehcf.chat.pipe.MultiServicePipeLineTask;
 import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.service.ServiceDescription;
 import org.liuyehcf.chat.interceptor.MessageInterceptor;
@@ -52,7 +53,7 @@ public class ChatServerDispatcher {
     /**
      * 保存着所有的ServerPipeLineTask，用于服务端负载均衡
      */
-    private List<PipeLineTask> pipeLineTasks;
+    private List<MultiServicePipeLineTask> pipeLineTasks;
 
     /**
      * 做负载均衡时，仅用一个线程来做即可，即利用tryLock方法
@@ -89,12 +90,12 @@ public class ChatServerDispatcher {
      */
     private long nextLoadBalancingTimeStamp = 0;
 
-    public List<PipeLineTask> getPipeLineTasks() {
+    public List<MultiServicePipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
     }
 
     private ChatServerDispatcher() {
-        pipeLineTasks = new LinkedList<PipeLineTask>();
+        pipeLineTasks = new LinkedList<MultiServicePipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
 
@@ -186,10 +187,10 @@ public class ChatServerDispatcher {
      *
      * @return
      */
-    public PipeLineTask getIdlePipeLineTask() {
-        PipeLineTask idlePipeLineTask = null;
+    public MultiServicePipeLineTask getIdlePipeLineTask() {
+        MultiServicePipeLineTask idlePipeLineTask = null;
         int minSize = Integer.MAX_VALUE;
-        for (PipeLineTask pipeLineTask : pipeLineTasks) {
+        for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
             if (pipeLineTask.getServiceNum() < minSize) {
                 minSize = pipeLineTask.getServiceNum();
                 idlePipeLineTask = pipeLineTask;
@@ -219,7 +220,7 @@ public class ChatServerDispatcher {
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size() - 1) ;
 
                 int totalServiceNum = 0;
-                for (PipeLineTask pipeLineTask : pipeLineTasks) {
+                for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
                     totalServiceNum += pipeLineTask.getServiceNum();
                 }
 
@@ -248,16 +249,16 @@ public class ChatServerDispatcher {
         }
 
         LOGGER.info("start load balancing");
-        List<PipeLineTask> dropPipeLineTasks = new ArrayList<PipeLineTask>();
+        List<MultiServicePipeLineTask> dropPipeLineTasks = new ArrayList<MultiServicePipeLineTask>();
 
         //将连接数量最小的task取出，剩下的pipeLineTasks就是保留下来的
         while (pipeLineTasks.size() > remainTaskNum) {
-            PipeLineTask idlePipeLineTask = getIdlePipeLineTask();
+            MultiServicePipeLineTask idlePipeLineTask = getIdlePipeLineTask();
             pipeLineTasks.remove(idlePipeLineTask);
             dropPipeLineTasks.add(idlePipeLineTask);
         }
 
-        for (PipeLineTask pipeLineTask : dropPipeLineTasks) {
+        for (MultiServicePipeLineTask pipeLineTask : dropPipeLineTasks) {
             for (Service service : pipeLineTask.getServices()) {
                 //从原PipeLineTask中移除
                 pipeLineTask.removeService(service);
@@ -278,7 +279,7 @@ public class ChatServerDispatcher {
 
     public void stop() {
         //首先给所有活跃用户发送离线消息
-        for (PipeLineTask pipeLineTask : pipeLineTasks) {
+        for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
             for (Service service : pipeLineTask.getServices()) {
                 service.offerMessage(
                         ServerUtils.createSystemMessage(
@@ -301,7 +302,7 @@ public class ChatServerDispatcher {
                  */
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size()) ;
 
-                for (PipeLineTask pipeLineTask : pipeLineTasks) {
+                for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
                     for (Service service : pipeLineTask.getServices()) {
                         if (service.getWriteMessages().isEmpty()) {
                             pipeLineTask.offLine(service);

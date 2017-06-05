@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.service.*;
-import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
+import org.liuyehcf.chat.pipe.AbstractMultiServicePipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by HCF on 2017/5/30.
  */
-public class ClientPipeLineTask extends AbstractPipeLineTask {
+public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
 
     public ClientPipeLineTask() {
         ChatClientDispatcher.getSingleton().getPipeLineTasks().add(this);

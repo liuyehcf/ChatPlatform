@@ -38,25 +38,6 @@ public interface PipeLineTask extends Runnable {
     void registerService(Service service);
 
     /**
-     * 移除Service，用于服务端做负载均衡
-     */
-    void removeService(Service service);
-
-    /**
-     * 返回当前PipeLineTask管理的Service
-     *
-     * @return
-     */
-    Set<Service> getServices();
-
-    /**
-     * 返回当前PipeLine处理的Service数量
-     *
-     * @return
-     */
-    int getServiceNum();
-
-    /**
      * 让指定Service断开连接
      */
     void offLine(Service service);

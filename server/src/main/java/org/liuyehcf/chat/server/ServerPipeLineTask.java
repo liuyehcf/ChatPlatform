@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.server;
 
 import org.liuyehcf.chat.service.*;
-import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
+import org.liuyehcf.chat.pipe.AbstractMultiServicePipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * 服务端PipeLineTask实现类
  * Created by Liuye on 2017/5/29.
  */
-public class ServerPipeLineTask extends AbstractPipeLineTask {
+public class ServerPipeLineTask extends AbstractMultiServicePipeLineTask {
     /**
      * 用户名到Service的映射，多个PipeLineTask共享
      */

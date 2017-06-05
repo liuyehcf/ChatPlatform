@@ -5,13 +5,10 @@ import org.liuyehcf.chat.service.Service;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by Liuye on 2017/6/1.
+ * Created by Liuye on 2017/6/5.
  */
 public abstract class AbstractPipeLineTask implements PipeLineTask {
     /**
@@ -29,11 +26,6 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
      * 绑定的线程
      */
     private Thread bindThread;
-
-    /**
-     * 当前任务管理的所有Service
-     */
-    private Set<Service> localServices;
 
     /**
      * 读选择器
@@ -60,9 +52,23 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
         return writeSelector;
     }
 
+
+    @Override
+    public void registerService(Service service) {
+        service.getSelectors().clear();
+        service.bindPipeLineTask(this);
+
+        service.registerSelector(getReadSelector(), SelectionKey.OP_READ);
+        service.registerSelector(getWriteSelector(), SelectionKey.OP_WRITE);
+    }
+
+    @Override
+    public void offLine(Service service) {
+
+    }
+
     public AbstractPipeLineTask() {
         this.id = pipeLineTaskCnt.incrementAndGet();
-        this.localServices = new HashSet<Service>();
         try {
             readSelector = Selector.open();
             writeSelector = Selector.open();
@@ -70,48 +76,6 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
             throw new RuntimeException("read selector init failed!");
         }
     }
-
-    @Override
-    final public void registerService(Service service) {
-        service.getSelectors().clear();
-        service.bindPipeLineTask(this);
-
-        service.registerSelector(getReadSelector(), SelectionKey.OP_READ);
-        service.registerSelector(getWriteSelector(), SelectionKey.OP_WRITE);
-
-        getServices().add(service);
-    }
-
-    @Override
-    final public void removeService(Service service) {
-        List<Selector> selectors = service.getSelectors();
-        for (Selector selector : selectors) {
-            SelectionKey selectionKey = service.getSocketChannel().keyFor(selector);
-            if (selectionKey != null) {
-                selectionKey.cancel();
-            }
-        }
-        service.getSelectors().clear();
-
-        getServices().remove(service);
-
-        if (getServices().isEmpty()) {
-            getBindThread().interrupt();
-        }
-    }
-
-    @Override
-    final public Set<Service> getServices() {
-        return localServices;
-    }
-
-    @Override
-    final public int getServiceNum() {
-        return localServices.size();
-    }
-
-    @Override
-    public abstract void offLine(Service service);
 
     @Override
     final public void run() {
@@ -128,5 +92,4 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
     final public String toString() {
         return "PipeLineTask{" + this.id + "}";
     }
-
 }
