@@ -113,7 +113,7 @@ public class BootWindow {
                 listenThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        new ChatServerListener(
+                        new ServerConnectionListener(
                                 serverHost,
                                 serverPort,
                                 new WindowHandler() {

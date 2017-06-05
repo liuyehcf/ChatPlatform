@@ -8,13 +8,12 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.event.WindowListener;
 import java.net.InetSocketAddress;
 
 /**
  * Created by Liuye on 2017/6/5.
  */
-public class ListWindow extends JFrame implements TreeSelectionListener {
+public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 服务器主机名或IP
      */
@@ -38,7 +37,7 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
     /**
      * 关联的连接
      */
-    private ListService listService;
+    private ClientMainConnection listService;
 
     /**
      * 登录回调
@@ -50,7 +49,7 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
      */
     protected JTree jTree;
 
-    public ListWindow(String serverHost,
+    public MainWindow(String serverHost,
                       Integer serverPort,
                       String account,
                       String password,
@@ -61,7 +60,7 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
         this.password = password;
         this.handler = handler;
 
-        ChatClientDispatcher.getSingleton().setBindListWindow(this);
+        ClientConnectionDispatcher.getSingleton().setBindMainWindow(this);
 
         init();
         connect();
@@ -136,7 +135,7 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
 
     private void connect() {
         try {
-            listService = new ListService(
+            listService = new ClientMainConnection(
                     account,
                     Protocol.SERVER_USER_NAME,
                     new InetSocketAddress(serverHost, serverPort),
@@ -150,7 +149,7 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
             return;
         }
 
-        ChatClientDispatcher.getSingleton().startListTask(listService, account, password);
+        ClientConnectionDispatcher.getSingleton().startListTask(listService, account, password);
     }
 
 
@@ -227,7 +226,7 @@ public class ListWindow extends JFrame implements TreeSelectionListener {
 
         }
 
-        //ListWindow demo = new ListWindow();
+        //MainWindow demo = new MainWindow();
 
         //demo.setVisible(true);
 

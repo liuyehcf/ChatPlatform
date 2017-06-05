@@ -122,7 +122,7 @@ public class LoginWindow {
                     return;
                 }
 
-                new ListWindow(
+                new MainWindow(
                         serverHost,
                         serverPort,
                         account,

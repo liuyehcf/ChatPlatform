@@ -1,7 +1,7 @@
 package org.liuyehcf.chat.pipe;
 
 
-import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.connect.Connection;
 
 import java.nio.channels.Selector;
 import java.util.Set;
@@ -35,10 +35,29 @@ public interface PipeLineTask extends Runnable {
     /**
      * 将Service注册到当前PipeLineTask中
      */
-    void registerService(Service service);
+    void registerService(Connection connection);
 
     /**
      * 让指定Service断开连接
      */
-    void offLine(Service service);
+    void offLine(Connection connection);
+
+    /**
+     * 移除Service，用于服务端做负载均衡
+     */
+    void removeService(Connection connection);
+
+    /**
+     * 返回当前PipeLineTask管理的Service
+     *
+     * @return
+     */
+    Set<Connection> getServices();
+
+    /**
+     * 返回当前PipeLine处理的Service数量
+     *
+     * @return
+     */
+    int getServiceNum();
 }

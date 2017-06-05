@@ -1,14 +1,13 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.handler.WindowHandler;
-import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.connect.Connection;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 
 /**
@@ -48,7 +47,7 @@ public class ChatWindow {
     /**
      * 连接
      */
-    private Service service;
+    private Connection connection;
 
     /**
      * 滚动框区域
@@ -146,7 +145,7 @@ public class ChatWindow {
             public void actionPerformed(ActionEvent e) {
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
-                ClientUtils.sendNormalMessage(service, content);
+                ClientUtils.sendNormalMessage(connection, content);
                 textField.setText("");
             }
         });
@@ -172,11 +171,11 @@ public class ChatWindow {
 
     private void connect() {
         try {
-            service = new ClientService(
+            connection = new ClientConnection(
                     fromUserName,
                     toUserName,
-                    ChatClientDispatcher.getSingleton().getMessageReaderFactory(),
-                    ChatClientDispatcher.getSingleton().getMessageWriterFactory(),
+                    ClientConnectionDispatcher.getSingleton().getMessageReaderFactory(),
+                    ClientConnectionDispatcher.getSingleton().getMessageWriterFactory(),
                     new InetSocketAddress(serverHost, serverPort),
                     this
             );
@@ -188,7 +187,7 @@ public class ChatWindow {
             return;
         }
 
-        ChatClientDispatcher.getSingleton().dispatch(service);
+        ClientConnectionDispatcher.getSingleton().dispatch(connection);
     }
 
     public void flushOnWindow(boolean isSent, boolean isSystem, String content) {
@@ -244,7 +243,7 @@ public class ChatWindow {
         @Override
         public void windowClosed(WindowEvent e) {
             ClientUtils.sendSystemMessage(
-                    service,
+                    connection,
                     false,
                     true);
         }

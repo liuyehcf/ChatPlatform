@@ -1,8 +1,7 @@
 package org.liuyehcf.chat.server;
 
-import org.liuyehcf.chat.pipe.MultiServicePipeLineTask;
-import org.liuyehcf.chat.service.Service;
-import org.liuyehcf.chat.service.ServiceDescription;
+import org.liuyehcf.chat.connect.Connection;
+import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.interceptor.MessageInterceptor;
 import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
@@ -53,7 +52,7 @@ public class ChatServerDispatcher {
     /**
      * 保存着所有的ServerPipeLineTask，用于服务端负载均衡
      */
-    private List<MultiServicePipeLineTask> pipeLineTasks;
+    private List<PipeLineTask> pipeLineTasks;
 
     /**
      * 做负载均衡时，仅用一个线程来做即可，即利用tryLock方法
@@ -78,29 +77,29 @@ public class ChatServerDispatcher {
     /**
      * 主界面连接映射
      */
-    private Map<String, Service> listServiceMap;
+    private Map<String, Connection> listServiceMap;
 
     /**
      * Service描述符到Service的映射
      */
-    private Map<ServiceDescription, Service> serviceMap;
+    private Map<ConnectionDescription, Connection> serviceMap;
 
     /**
      * 用户组名到GroupService的映射
      */
-    private Map<String, GroupService> groupServiceMap;
+    private Map<String, ServerGroupInfo> groupServiceMap;
 
     /**
      * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
      */
     private long nextLoadBalancingTimeStamp = 0;
 
-    public List<MultiServicePipeLineTask> getPipeLineTasks() {
+    public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
     }
 
     private ChatServerDispatcher() {
-        pipeLineTasks = new LinkedList<MultiServicePipeLineTask>();
+        pipeLineTasks = new LinkedList<PipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
 
@@ -112,9 +111,9 @@ public class ChatServerDispatcher {
         messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
                 .addInterceptor(new ServerMessageWriteInterceptor());
 
-        listServiceMap = new ConcurrentHashMap<String, Service>();
-        serviceMap = new ConcurrentHashMap<ServiceDescription, Service>();
-        groupServiceMap = new ConcurrentHashMap<String, GroupService>();
+        listServiceMap = new ConcurrentHashMap<String, Connection>();
+        serviceMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
+        groupServiceMap = new ConcurrentHashMap<String, ServerGroupInfo>();
     }
 
     /**
@@ -145,30 +144,30 @@ public class ChatServerDispatcher {
 
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
                 //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
-                Service newService = new ServerService(
+                Connection newConnection = new ServerConnection(
                         "",
                         "",
                         messageReaderFactory,
                         messageWriterFactory,
                         socketChannel);
 
-                pipeLineTask.registerService(newService);
-                newService.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
+                pipeLineTask.registerService(newConnection);
+                newConnection.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
                 //该链接不再接受任何消息
-                newService.cancel();
+                newConnection.cancel();
             } else {
-                PipeLineTask newPipeLineTask = new ServerPipeLineTask(listServiceMap, serviceMap, groupServiceMap);
+                PipeLineTask newPipeLineTask = new ServerSessionTask(listServiceMap, serviceMap, groupServiceMap);
                 LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
 
                 //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
-                Service newService = new ServerService(
+                Connection newConnection = new ServerConnection(
                         "",
                         "",
                         messageReaderFactory,
                         messageWriterFactory,
                         socketChannel);
 
-                newPipeLineTask.registerService(newService);
+                newPipeLineTask.registerService(newConnection);
 
                 executorService.execute(newPipeLineTask);
             }
@@ -177,14 +176,14 @@ public class ChatServerDispatcher {
             LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
 
             //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
-            Service newService = new ServerService(
+            Connection newConnection = new ServerConnection(
                     "",
                     "",
                     messageReaderFactory,
                     messageWriterFactory,
                     socketChannel);
 
-            pipeLineTask.registerService(newService);
+            pipeLineTask.registerService(newConnection);
         }
     }
 
@@ -193,10 +192,10 @@ public class ChatServerDispatcher {
      *
      * @return
      */
-    public MultiServicePipeLineTask getIdlePipeLineTask() {
-        MultiServicePipeLineTask idlePipeLineTask = null;
+    public PipeLineTask getIdlePipeLineTask() {
+        PipeLineTask idlePipeLineTask = null;
         int minSize = Integer.MAX_VALUE;
-        for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
+        for (PipeLineTask pipeLineTask : pipeLineTasks) {
             if (pipeLineTask.getServiceNum() < minSize) {
                 minSize = pipeLineTask.getServiceNum();
                 idlePipeLineTask = pipeLineTask;
@@ -226,7 +225,7 @@ public class ChatServerDispatcher {
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size() - 1) ;
 
                 int totalServiceNum = 0;
-                for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
+                for (PipeLineTask pipeLineTask : pipeLineTasks) {
                     totalServiceNum += pipeLineTask.getServiceNum();
                 }
 
@@ -255,22 +254,22 @@ public class ChatServerDispatcher {
         }
 
         LOGGER.info("start load balancing");
-        List<MultiServicePipeLineTask> dropPipeLineTasks = new ArrayList<MultiServicePipeLineTask>();
+        List<PipeLineTask> dropPipeLineTasks = new ArrayList<PipeLineTask>();
 
         //将连接数量最小的task取出，剩下的pipeLineTasks就是保留下来的
         while (pipeLineTasks.size() > remainTaskNum) {
-            MultiServicePipeLineTask idlePipeLineTask = getIdlePipeLineTask();
+            PipeLineTask idlePipeLineTask = getIdlePipeLineTask();
             pipeLineTasks.remove(idlePipeLineTask);
             dropPipeLineTasks.add(idlePipeLineTask);
         }
 
-        for (MultiServicePipeLineTask pipeLineTask : dropPipeLineTasks) {
-            for (Service service : pipeLineTask.getServices()) {
+        for (PipeLineTask pipeLineTask : dropPipeLineTasks) {
+            for (Connection connection : pipeLineTask.getServices()) {
                 //从原PipeLineTask中移除
-                pipeLineTask.removeService(service);
+                pipeLineTask.removeService(connection);
 
                 //注册到新的PipeLineTask中
-                getIdlePipeLineTask().registerService(service);
+                getIdlePipeLineTask().registerService(connection);
             }
         }
     }
@@ -285,15 +284,15 @@ public class ChatServerDispatcher {
 
     public void stop() {
         //首先给所有活跃用户发送离线消息
-        for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
-            for (Service service : pipeLineTask.getServices()) {
-                service.offerMessage(
+        for (PipeLineTask pipeLineTask : pipeLineTasks) {
+            for (Connection connection : pipeLineTask.getServices()) {
+                connection.offerMessage(
                         ServerUtils.createSystemMessage(
                                 true,
-                                service.getServiceDescription().getSource(),
+                                connection.getConnectionDescription().getSource(),
                                 "[很抱歉通知您，服务器已关闭]"
                         ));
-                service.cancel();
+                connection.cancel();
             }
         }
 
@@ -308,10 +307,10 @@ public class ChatServerDispatcher {
                  */
                 while (loadBalancingLock.getQueueLength() < pipeLineTasks.size()) ;
 
-                for (MultiServicePipeLineTask pipeLineTask : pipeLineTasks) {
-                    for (Service service : pipeLineTask.getServices()) {
-                        if (service.getWriteMessages().isEmpty()) {
-                            pipeLineTask.offLine(service);
+                for (PipeLineTask pipeLineTask : pipeLineTasks) {
+                    for (Connection connection : pipeLineTask.getServices()) {
+                        if (connection.getWriteMessages().isEmpty()) {
+                            pipeLineTask.offLine(connection);
                         }
                         //否则等待剩余消息发送完毕
                     }
@@ -352,8 +351,8 @@ public class ChatServerDispatcher {
             } catch (IOException e) {
                 LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                Service service = (Service) proxyMethodInvocation.getArguments()[0];
-                service.getBindPipeLineTask().offLine(service);
+                Connection connection = (Connection) proxyMethodInvocation.getArguments()[0];
+                connection.getBindPipeLineTask().offLine(connection);
                 throw e;
             }
             for (Message message : messages)
@@ -379,16 +378,16 @@ public class ChatServerDispatcher {
             } catch (IOException e) {
                 LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                Service service = (Service) proxyMethodInvocation.getArguments()[1];
-                service.getBindPipeLineTask().offLine(service);
+                Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
+                connection.getBindPipeLineTask().offLine(connection);
                 throw e;
             }
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
             Message message = (Message) proxyMethodInvocation.getArguments()[0];
             LOGGER.debug("Send a message {}", protocol.wrap(message));
             if (message.getControl().isOffLineMessage()) {
-                Service service = (Service) proxyMethodInvocation.getArguments()[1];
-                service.getBindPipeLineTask().offLine(service);
+                Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
+                connection.getBindPipeLineTask().offLine(connection);
             }
             return result;
         }

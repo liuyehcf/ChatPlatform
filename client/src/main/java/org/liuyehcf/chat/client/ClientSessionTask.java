@@ -1,36 +1,39 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.pipe.AbstractSingleServicePipeLineTask;
+import org.liuyehcf.chat.connect.*;
+import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.reader.MessageReader;
-import org.liuyehcf.chat.service.Service;
 import org.liuyehcf.chat.writer.MessageWriter;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-
 /**
- * Created by Liuye on 2017/6/5.
+ * Created by HCF on 2017/5/30.
  */
-public class ListServicePipeLineTask extends AbstractSingleServicePipeLineTask {
+public class ClientSessionTask extends AbstractPipeLineTask {
 
-    public ListServicePipeLineTask() {
-
+    public ClientSessionTask() {
+        ClientConnectionDispatcher.getSingleton().getPipeLineTasks().add(this);
     }
 
-
     @Override
-    protected void start() {
+    public void start() {
         while (!Thread.currentThread().isInterrupted()) {
 
             readMessage();
 
             writeMessage();
+
+            /*
+             * 负载均衡
+             */
+            ClientConnectionDispatcher.getSingleton().checkLoadBalancing();
 
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -39,10 +42,9 @@ public class ListServicePipeLineTask extends AbstractSingleServicePipeLineTask {
                 getBindThread().interrupt();
             }
         }
-        ChatClientDispatcher.LOGGER.info("{} is finished", this);
-        ChatClientDispatcher.getSingleton().getPipeLineTasks().remove(this);
+        ClientConnectionDispatcher.LOGGER.info("{} is finished", this);
+        ClientConnectionDispatcher.getSingleton().getPipeLineTasks().remove(this);
     }
-
 
     private void readMessage() {
         int readyReadNum;
@@ -68,7 +70,7 @@ public class ListServicePipeLineTask extends AbstractSingleServicePipeLineTask {
     }
 
     private void readMessageFromService(SelectionKey selectionKey) {
-        ListService service = (ListService) selectionKey.attachment();
+        ClientConnection service = (ClientConnection) selectionKey.attachment();
 
         MessageReader messageReader = service.getMessageReader();
         List<Message> messages;
@@ -80,11 +82,13 @@ public class ListServicePipeLineTask extends AbstractSingleServicePipeLineTask {
         }
 
         for (Message message : messages) {
-            if (message.getControl().isLoginInMessage()) {
-                if (message.getBody().getContent().equals("permit")) {
-                    ChatClientDispatcher.getSingleton().getBindListWindow().setVisible(true);
-                }
+
+            //服务器告知下线
+            if (message.getControl().isOffLineMessage()) {
+                offLine(service);
             }
+
+            service.getBindChatWindow().flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 
@@ -111,7 +115,7 @@ public class ListServicePipeLineTask extends AbstractSingleServicePipeLineTask {
     }
 
     private void writeMessageToService(SelectionKey selectionKey) {
-        ListService service = (ListService) selectionKey.attachment();
+        ClientConnection service = (ClientConnection) selectionKey.attachment();
 
         Message message = service.pollMessage();
         if (message != null) {
@@ -126,9 +130,41 @@ public class ListServicePipeLineTask extends AbstractSingleServicePipeLineTask {
         }
     }
 
-
+    /**
+     * 离线的后续处理
+     *
+     * @param connection
+     */
     @Override
-    public void offLine(Service service) {
+    public void offLine(Connection connection) {
+        ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
 
+        SocketChannel socketChannel = connection.getSocketChannel();
+
+        for (Selector selector : connection.getSelectors()) {
+            SelectionKey selectionKey = socketChannel.keyFor(selector);
+            if (selectionKey != null) selectionKey.cancel();
+        }
+        connection.getSelectors().clear();
+
+        if (socketChannel.isConnected()) {
+            try {
+                socketChannel.finishConnect();
+            } catch (IOException e) {
+            }
+        }
+
+        if (socketChannel.isOpen()) {
+            try {
+                socketChannel.close();
+            } catch (IOException e) {
+            }
+        }
+
+        ClientConnectionDispatcher.getSingleton().getServiceMap().remove(connection.getConnectionDescription());
+
+        getServices().remove(connection);
+        if (getServiceNum() <= 0)
+            getBindThread().interrupt();
     }
 }

@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.writer;
 
-import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
@@ -34,8 +34,8 @@ public class MessageWriterImpl implements MessageWriter {
     }
 
     @Override
-    public void write(Message message, Service service) throws IOException {
-        SocketChannel socketChannel = service.getSocketChannel();
+    public void write(Message message, Connection connection) throws IOException {
+        SocketChannel socketChannel = connection.getSocketChannel();
         String messageString = protocol.wrap(message);
 
         byte[] messageBytes;

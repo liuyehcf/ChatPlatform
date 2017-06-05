@@ -1,10 +1,13 @@
 package org.liuyehcf.chat.pipe;
 
-import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.connect.Connection;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,6 +31,11 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
     private Thread bindThread;
 
     /**
+     * 当前任务管理的所有Connect
+     */
+    private Set<Connection> localConnections;
+
+    /**
      * 读选择器
      */
     private Selector readSelector;
@@ -36,6 +44,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
      * 写选择器
      */
     private Selector writeSelector;
+
 
     @Override
     final public Thread getBindThread() {
@@ -54,21 +63,52 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
 
     @Override
-    public void registerService(Service service) {
-        service.getSelectors().clear();
-        service.bindPipeLineTask(this);
+    public void registerService(Connection connection) {
+        connection.getSelectors().clear();
+        connection.bindPipeLineTask(this);
 
-        service.registerSelector(getReadSelector(), SelectionKey.OP_READ);
-        service.registerSelector(getWriteSelector(), SelectionKey.OP_WRITE);
+        connection.registerSelector(getReadSelector(), SelectionKey.OP_READ);
+        connection.registerSelector(getWriteSelector(), SelectionKey.OP_WRITE);
+        getServices().add(connection);
     }
 
     @Override
-    public void offLine(Service service) {
+    public void offLine(Connection connection) {
         throw new UnsupportedOperationException();
+    }
+
+
+    @Override
+    final public void removeService(Connection connection) {
+        List<Selector> selectors = connection.getSelectors();
+        for (Selector selector : selectors) {
+            SelectionKey selectionKey = connection.getSocketChannel().keyFor(selector);
+            if (selectionKey != null) {
+                selectionKey.cancel();
+            }
+        }
+        connection.getSelectors().clear();
+
+        getServices().remove(connection);
+
+        if (getServices().isEmpty()) {
+            getBindThread().interrupt();
+        }
+    }
+
+    @Override
+    final public Set<Connection> getServices() {
+        return localConnections;
+    }
+
+    @Override
+    final public int getServiceNum() {
+        return localConnections.size();
     }
 
     public AbstractPipeLineTask() {
         this.id = pipeLineTaskCnt.incrementAndGet();
+        this.localConnections = new HashSet<Connection>();
         try {
             readSelector = Selector.open();
             writeSelector = Selector.open();

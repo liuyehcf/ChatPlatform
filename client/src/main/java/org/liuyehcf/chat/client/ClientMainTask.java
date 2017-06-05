@@ -1,39 +1,35 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.service.*;
-import org.liuyehcf.chat.pipe.AbstractMultiServicePipeLineTask;
+import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.reader.MessageReader;
+import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.writer.MessageWriter;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by HCF on 2017/5/30.
- */
-public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
 
-    public ClientPipeLineTask() {
-        ChatClientDispatcher.getSingleton().getPipeLineTasks().add(this);
+/**
+ * Created by Liuye on 2017/6/5.
+ */
+public class ClientMainTask extends AbstractPipeLineTask {
+
+    public ClientMainTask() {
+
     }
 
     @Override
-    public void start() {
+    protected void start() {
         while (!Thread.currentThread().isInterrupted()) {
 
             readMessage();
 
             writeMessage();
-
-            /*
-             * 负载均衡
-             */
-            ChatClientDispatcher.getSingleton().checkLoadBalancing();
 
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -42,9 +38,10 @@ public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
                 getBindThread().interrupt();
             }
         }
-        ChatClientDispatcher.LOGGER.info("{} is finished", this);
-        ChatClientDispatcher.getSingleton().getPipeLineTasks().remove(this);
+        ClientConnectionDispatcher.LOGGER.info("{} is finished", this);
+        ClientConnectionDispatcher.getSingleton().getPipeLineTasks().remove(this);
     }
+
 
     private void readMessage() {
         int readyReadNum;
@@ -70,7 +67,7 @@ public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
     }
 
     private void readMessageFromService(SelectionKey selectionKey) {
-        ClientService service = (ClientService) selectionKey.attachment();
+        ClientMainConnection service = (ClientMainConnection) selectionKey.attachment();
 
         MessageReader messageReader = service.getMessageReader();
         List<Message> messages;
@@ -82,13 +79,11 @@ public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
         }
 
         for (Message message : messages) {
-
-            //服务器告知下线
-            if (message.getControl().isOffLineMessage()) {
-                offLine(service);
+            if (message.getControl().isLoginInMessage()) {
+                if (message.getBody().getContent().equals("permit")) {
+                    ClientConnectionDispatcher.getSingleton().getBindMainWindow().setVisible(true);
+                }
             }
-
-            service.getBindChatWindow().flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 
@@ -115,7 +110,7 @@ public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
     }
 
     private void writeMessageToService(SelectionKey selectionKey) {
-        ClientService service = (ClientService) selectionKey.attachment();
+        ClientMainConnection service = (ClientMainConnection) selectionKey.attachment();
 
         Message message = service.pollMessage();
         if (message != null) {
@@ -130,41 +125,9 @@ public class ClientPipeLineTask extends AbstractMultiServicePipeLineTask {
         }
     }
 
-    /**
-     * 离线的后续处理
-     *
-     * @param service
-     */
+
     @Override
-    public void offLine(Service service) {
-        ChatClientDispatcher.LOGGER.info("Service {} is getOff from {}", service, this);
+    public void offLine(Connection connection) {
 
-        SocketChannel socketChannel = service.getSocketChannel();
-
-        for (Selector selector : service.getSelectors()) {
-            SelectionKey selectionKey = socketChannel.keyFor(selector);
-            if (selectionKey != null) selectionKey.cancel();
-        }
-        service.getSelectors().clear();
-
-        if (socketChannel.isConnected()) {
-            try {
-                socketChannel.finishConnect();
-            } catch (IOException e) {
-            }
-        }
-
-        if (socketChannel.isOpen()) {
-            try {
-                socketChannel.close();
-            } catch (IOException e) {
-            }
-        }
-
-        ChatClientDispatcher.getSingleton().getServiceMap().remove(service.getServiceDescription());
-
-        getServices().remove(service);
-        if (getServiceNum() <= 0)
-            getBindThread().interrupt();
     }
 }

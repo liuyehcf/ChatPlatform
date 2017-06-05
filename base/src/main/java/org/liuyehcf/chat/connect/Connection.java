@@ -1,4 +1,4 @@
-package org.liuyehcf.chat.service;
+package org.liuyehcf.chat.connect;
 
 import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
@@ -18,11 +18,11 @@ import java.util.Queue;
 /**
  * Created by HCF on 2017/5/31.
  */
-public abstract class Service {
+public abstract class Connection {
     /**
      * 连接描述符
      */
-    private ServiceDescription serviceDescription;
+    private ConnectionDescription connectionDescription;
 
     /**
      * 是否为群聊
@@ -79,12 +79,12 @@ public abstract class Service {
      */
     private static final int CANCEL = -1;
 
-    public void setServiceDescription(ServiceDescription serviceDescription) {
-        this.serviceDescription = serviceDescription;
+    public void setConnectionDescription(ConnectionDescription connectionDescription) {
+        this.connectionDescription = connectionDescription;
     }
 
-    public ServiceDescription getServiceDescription() {
-        return serviceDescription;
+    public ConnectionDescription getConnectionDescription() {
+        return connectionDescription;
     }
 
     public boolean isGroupChat() {
@@ -127,12 +127,12 @@ public abstract class Service {
         return recentActiveTimeStamp;
     }
 
-    public Service(
+    public Connection(
             String source,
             String destination,
             MessageReaderFactory messageReaderFactory,
             MessageWriterFactory messageWriterFactory) {
-        serviceDescription = new ServiceDescription(source, destination);
+        connectionDescription = new ConnectionDescription(source, destination);
 
 
         messageReader = messageReaderFactory.build();
@@ -191,6 +191,6 @@ public abstract class Service {
 
     @Override
     public String toString() {
-        return getServiceDescription().toString();
+        return getConnectionDescription().toString();
     }
 }

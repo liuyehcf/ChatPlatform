@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.service.*;
+import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
@@ -13,7 +13,7 @@ import java.nio.channels.SocketChannel;
 /**
  * Created by HCF on 2017/5/30.
  */
-public class ClientService extends Service {
+public class ClientConnection extends Connection {
 
     /**
      * 信息头
@@ -43,12 +43,12 @@ public class ClientService extends Service {
      * @param inetSocketAddress
      * @throws IOException
      */
-    public ClientService(String source,
-                         String destination,
-                         MessageReaderFactory messageReaderFactory,
-                         MessageWriterFactory messageWriterFactory,
-                         InetSocketAddress inetSocketAddress,
-                         ChatWindow bindChatWindow) throws IOException {
+    public ClientConnection(String source,
+                            String destination,
+                            MessageReaderFactory messageReaderFactory,
+                            MessageWriterFactory messageWriterFactory,
+                            InetSocketAddress inetSocketAddress,
+                            ChatWindow bindChatWindow) throws IOException {
 
         super(source, destination, messageReaderFactory, messageWriterFactory);
 
@@ -62,7 +62,7 @@ public class ClientService extends Service {
         header.setParam1(source);
         header.setParam2(destination);
 
-        ChatClientDispatcher.getSingleton().getServiceMap().put(getServiceDescription(), this);
+        ClientConnectionDispatcher.getSingleton().getServiceMap().put(getConnectionDescription(), this);
     }
 
 }

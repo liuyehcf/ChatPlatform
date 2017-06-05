@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
@@ -35,33 +35,33 @@ class ClientUtils {
      */
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
-    static void sendSystemMessage(Service service, boolean isHelloMessage, boolean isOffLineMessage) {
+    static void sendSystemMessage(Connection connection, boolean isHelloMessage, boolean isOffLineMessage) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
-        message.setHeader(((ClientService) service).getHeader());
+        message.setHeader(((ClientConnection) connection).getHeader());
         message.setBody(new Protocol.Body());
 
         message.getControl().setSystemMessage(true);
         message.getControl().setHelloMessage(isHelloMessage);
         message.getControl().setOffLineMessage(isOffLineMessage);
 
-        service.offerMessage(message);
+        connection.offerMessage(message);
     }
 
-    static void sendNormalMessage(Service service, String content) {
+    static void sendNormalMessage(Connection connection, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
-        message.setHeader(((ClientService) service).getHeader());
+        message.setHeader(((ClientConnection) connection).getHeader());
         message.setBody(new Protocol.Body());
 
         message.getBody().setContent(content);
 
-        service.offerMessage(message);
+        connection.offerMessage(message);
     }
 
-    static void sendLoginMessage(Service service, String account, String password) {
+    static void sendLoginMessage(Connection connection, String account, String password) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -74,6 +74,6 @@ class ClientUtils {
         message.getHeader().setParam1(account);
         message.getHeader().setParam2(password);
 
-        service.offerMessage(message);
+        connection.offerMessage(message);
     }
 }

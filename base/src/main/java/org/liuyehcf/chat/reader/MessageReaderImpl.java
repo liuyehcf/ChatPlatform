@@ -1,6 +1,6 @@
 package org.liuyehcf.chat.reader;
 
-import org.liuyehcf.chat.service.Service;
+import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
@@ -51,8 +51,8 @@ public class MessageReaderImpl implements MessageReader {
     }
 
     @Override
-    public List<Message> read(Service service) throws IOException {
-        SocketChannel socketChannel = service.getSocketChannel();
+    public List<Message> read(Connection connection) throws IOException {
+        SocketChannel socketChannel = connection.getSocketChannel();
         byteBuffer.clear();
         while (socketChannel.read(byteBuffer) > 0) {
             //缓存到messageBuffer中
