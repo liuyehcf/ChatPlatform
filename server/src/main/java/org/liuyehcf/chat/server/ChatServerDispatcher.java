@@ -79,7 +79,7 @@ public class ChatServerDispatcher {
     /**
      * Connection描述符到Connection的映射
      */
-    private Map<ConnectionDescription, Connection> connectionMap;
+    private Map<ConnectionDescription, Connection> sessionConnectionMap;
 
     /**
      * 用户组名到ServerGroupInfo的映射
@@ -93,6 +93,18 @@ public class ChatServerDispatcher {
 
     public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
+    }
+
+    public Map<String, Connection> getMainConnectionMap() {
+        return mainConnectionMap;
+    }
+
+    public Map<ConnectionDescription, Connection> getSessionConnectionMap() {
+        return sessionConnectionMap;
+    }
+
+    public Map<String, ServerGroupInfo> getGroupInfoMap() {
+        return groupInfoMap;
     }
 
     private ChatServerDispatcher() {
@@ -111,7 +123,7 @@ public class ChatServerDispatcher {
         mainConnectionMap = new ConcurrentHashMap<String, Connection>();
 
 
-        connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
+        sessionConnectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
         groupInfoMap = new ConcurrentHashMap<String, ServerGroupInfo>();
     }
 
@@ -153,7 +165,7 @@ public class ChatServerDispatcher {
                 //该链接不再接受任何消息
                 newConnection.cancel();
             } else {
-                PipeLineTask newPipeLineTask = new ServerSessionTask(mainConnectionMap, connectionMap, groupInfoMap);
+                PipeLineTask newPipeLineTask = new ServerSessionTask();
                 LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
 
                 Connection newConnection = new ServerConnection(

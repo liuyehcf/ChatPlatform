@@ -18,30 +18,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ServerSessionTask extends AbstractPipeLineTask {
 
-    /**
-     * 客户端主界面连接的映射
-     * 每个用户只能对应一个Main Connection(主界面对应的Connection)
-     */
-    private Map<String, Connection> mainConnectionMap;
-
-    /**
-     * 用户名到Connection的映射，多个PipeLineTask共享
-     */
-    private Map<ConnectionDescription, Connection> sessionConnectionMap;
-
-    /**
-     * 用户组名到ServerGroupInfo的映射，多个PipeLineTask共享
-     */
-    private Map<String, ServerGroupInfo> groupInfoMap;
-
-    public ServerSessionTask(
-            Map<String, Connection> mainConnectionMap,
-            Map<ConnectionDescription, Connection> sessionConnectionMap,
-            Map<String, ServerGroupInfo> groupInfoMap) {
-        this.mainConnectionMap = mainConnectionMap;
-        this.sessionConnectionMap = sessionConnectionMap;
-        this.groupInfoMap = groupInfoMap;
-
+    public ServerSessionTask() {
         ChatServerDispatcher.getSingleton().getPipeLineTasks().add(this);
     }
 
@@ -114,17 +91,17 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 connection.setMainConnection(true);
 
                 String account = message.getHeader().getParam1();
-                if (!mainConnectionMap.containsKey(account)) {
-                    mainConnectionMap.put(account, connection);
+                if (!ChatServerDispatcher.getSingleton().getMainConnectionMap().containsKey(account)) {
+                    ChatServerDispatcher.getSingleton().getMainConnectionMap().put(account, connection);
                     //允许客户端登录
-                    connection.offerMessage(ServerUtils.createReplyLoginInMessage(true, account, mainConnectionMap.keySet().toString()));
+                    connection.offerMessage(ServerUtils.createReplyLoginInMessage(true, account, ChatServerDispatcher.getSingleton().getMainConnectionMap().keySet().toString()));
 
                     //刷新好友列表
-                    for (Connection otherConnection : mainConnectionMap.values()) {
+                    for (Connection otherConnection : ChatServerDispatcher.getSingleton().getMainConnectionMap().values()) {
                         otherConnection.offerMessage(
                                 ServerUtils.createLoginInFlushMessage(
                                         otherConnection.getConnectionDescription().getDestination(),
-                                        mainConnectionMap.keySet().toString()));
+                                        ChatServerDispatcher.getSingleton().getMainConnectionMap().keySet().toString()));
                     }
 
                     //todo 什么时候deny
@@ -133,7 +110,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 }
             } else if (message.getControl().isLoginOutMessage()) {
                 String user = message.getHeader().getParam1();
-                mainConnectionMap.remove(user);
+                ChatServerDispatcher.getSingleton().getMainConnectionMap().remove(user);
                 connection.getBindPipeLineTask().offLine(connection);
 
                 //找到该主界面对应的会话连接描述符
@@ -142,11 +119,11 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                         user);
                 //todo
                 //刷新好友列表
-                for (Connection otherConnection : mainConnectionMap.values()) {
+                for (Connection otherConnection : ChatServerDispatcher.getSingleton().getMainConnectionMap().values()) {
                     otherConnection.offerMessage(
                             ServerUtils.createLoginInFlushMessage(
                                     otherConnection.getConnectionDescription().getDestination(),
-                                    mainConnectionMap.keySet().toString()));
+                                    ChatServerDispatcher.getSingleton().getMainConnectionMap().keySet().toString()));
                 }
             }
             //是否是新建会话消息
@@ -167,8 +144,8 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                         newSessionDescription
                 );
 
-                if (!sessionConnectionMap.containsKey(connection.getConnectionDescription())) {
-                    sessionConnectionMap.put(connection.getConnectionDescription(), connection);
+                if (!ChatServerDispatcher.getSingleton().getSessionConnectionMap().containsKey(connection.getConnectionDescription())) {
+                    ChatServerDispatcher.getSingleton().getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
                     ChatServerDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUser, newSessionDescription);
 
                     String greetContent = fromUser +
@@ -203,8 +180,8 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String toUser = message.getHeader().getParam2();
 
                 ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUser);
-                if (sessionConnectionMap.containsKey(toConnectionDescription)) {
-                    Connection toConnection = sessionConnectionMap.get(toConnectionDescription);
+                if (ChatServerDispatcher.getSingleton().getSessionConnectionMap().containsKey(toConnectionDescription)) {
+                    Connection toConnection = ChatServerDispatcher.getSingleton().getSessionConnectionMap().get(toConnectionDescription);
                     toConnection.offerMessage(message);
                 } else {
                     //todo 激活对话窗口
@@ -284,16 +261,16 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
         ServerConnection serverConnection = (ServerConnection) connection;
         if (serverConnection.isMainConnection()) {
-            mainConnectionMap.remove(connection.getConnectionDescription().getDestination());
+            ChatServerDispatcher.getSingleton().getMainConnectionMap().remove(connection.getConnectionDescription().getDestination());
         } else {
-            sessionConnectionMap.remove(connection.getConnectionDescription());
+            ChatServerDispatcher.getSingleton().getSessionConnectionMap().remove(connection.getConnectionDescription());
         }
     }
 
 
     private void closeSession(String fromUser, String toUser) {
         ConnectionDescription connectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUser);
-        Connection connection = sessionConnectionMap.get(connectionDescription);
+        Connection connection = ChatServerDispatcher.getSingleton().getSessionConnectionMap().get(connectionDescription);
 
         String systemContent = "["
                 + fromUser
@@ -306,12 +283,12 @@ public class ServerSessionTask extends AbstractPipeLineTask {
     }
 
     private void closeGroupSession(Connection connection, String fromUser, String groupName) {
-        ServerGroupInfo serverGroupInfo = groupInfoMap.get(groupName);
+        ServerGroupInfo serverGroupInfo = ChatServerDispatcher.getSingleton().getGroupInfoMap().get(groupName);
 
         serverGroupInfo.removeConnection(connection);
 
         if (serverGroupInfo.isGroupEmpty()) {
-            groupInfoMap.remove(serverGroupInfo.getGroupName());
+            ChatServerDispatcher.getSingleton().getGroupInfoMap().remove(serverGroupInfo.getGroupName());
         } else {
             String systemContent = "["
                     + fromUser
