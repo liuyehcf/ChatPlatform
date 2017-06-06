@@ -23,6 +23,11 @@ import static org.liuyehcf.chat.protocol.Protocol.Header.PERMIT;
  */
 public class ClientMainTask extends AbstractPipeLineTask {
 
+    /**
+     * 单例对象
+     */
+    private ClientConnectionDispatcher clientConnectionDispatcher = ClientConnectionDispatcher.getSingleton();
+
     public ClientMainTask() {
 
     }
@@ -43,7 +48,7 @@ public class ClientMainTask extends AbstractPipeLineTask {
             }
         }
         ClientConnectionDispatcher.LOGGER.info("{} is finished", this);
-        ClientConnectionDispatcher.getSingleton().setMainTask(null);
+        clientConnectionDispatcher.setMainTask(null);
     }
 
 
@@ -90,7 +95,7 @@ public class ClientMainTask extends AbstractPipeLineTask {
                 //允许登录
                 if (message.getHeader().getParam3().equals(PERMIT)) {
 
-                    MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
+                    MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
 
                     //显示主界面
                     mainWindow.setVisible(true);
@@ -100,11 +105,17 @@ public class ClientMainTask extends AbstractPipeLineTask {
                 } else if (message.getHeader().getParam3().equals(DENY)) {
                     //拒绝登录
                 } else if (message.getHeader().getParam3().endsWith(FLUSH)) {
-                    MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
+                    MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
 
                     //刷新好友列表
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
+            } else if (message.getControl().isOpenSessionMessage()) {
+                String fromUser = message.getHeader().getParam1();
+                String toUser = message.getHeader().getParam2();
+                MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(fromUser);
+                SessionWindow sessionWindow = mainWindow.createSessionWindow(fromUser, toUser);
+                sessionWindow.flushOnWindow(false, false, message.getDisplayMessageString());
             }
         }
     }
@@ -143,9 +154,7 @@ public class ClientMainTask extends AbstractPipeLineTask {
                 //主动断开与服务器的连接，在发出消息之后，断开客户端连接
                 if (message.getControl().isLoginOutMessage()) {
                     offLine(connection);
-//                    ClientConnectionDispatcher.getSingleton()
-//                            .getMainWindowMap().get(message.getHeader().getParam1()).dispose();
-                    ClientConnectionDispatcher.getSingleton()
+                    clientConnectionDispatcher
                             .getMainWindowMap().remove(message.getHeader().getParam1());
                 }
 

@@ -1,7 +1,6 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.connect.*;
-import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 
@@ -19,7 +18,7 @@ public class ClientSessionConnection extends Connection {
     /**
      * 绑定在该连接上的SessionWindow
      */
-    private Map<String, ChatWindow> chatWindowMap;
+    private Map<String, SessionWindow> chatWindowMap;
 
     /**
      * 构造函数，允许抛出异常，交给ChatWindows处理
@@ -43,15 +42,15 @@ public class ClientSessionConnection extends Connection {
         socketChannel = SocketChannel.open();
         socketChannel.connect(inetSocketAddress);
 
-        chatWindowMap = new HashMap<String, ChatWindow>();
+        chatWindowMap = new HashMap<String, SessionWindow>();
 
         ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().put(getConnectionDescription(), this);
     }
 
-    public void addSessionWindow(String user, ChatWindow chatWindow) {
+    public void addSessionWindow(String user, SessionWindow sessionWindow) {
         if (chatWindowMap.containsKey(user))
             throw new RuntimeException();
-        chatWindowMap.put(user, chatWindow);
+        chatWindowMap.put(user, sessionWindow);
     }
 
     public void removeSessionWindow(String user) {
@@ -60,7 +59,7 @@ public class ClientSessionConnection extends Connection {
         chatWindowMap.remove(user);
     }
 
-    public ChatWindow getSessionWindow(String user) {
+    public SessionWindow getSessionWindow(String user) {
         return chatWindowMap.get(user);
     }
 }

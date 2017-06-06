@@ -56,7 +56,6 @@ public class ReflectionMethodInvocation implements ProxyMethodInvocation {
             try {
                 return getMethod().invoke(getTarget(), getArguments());
             } catch (InvocationTargetException e) {
-                e.printStackTrace(System.out);
                 throw (IOException) e.getTargetException();
             } catch (Exception e) {
                 return null;

@@ -1,6 +1,5 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.handler.WindowHandler;
 import org.liuyehcf.chat.protocol.Protocol;
 
@@ -14,7 +13,6 @@ import java.awt.event.WindowListener;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,7 +47,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 会话窗口界面
      */
-    private Set<ChatWindow> chatWindows;
+    private Set<SessionWindow> sessionWindows;
 
     /**
      * 登录回调
@@ -87,7 +85,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.password = password;
         this.handler = handler;
 
-        chatWindows = new HashSet<ChatWindow>();
+        sessionWindows = new HashSet<SessionWindow>();
 
         if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
             throw new RuntimeException();//todo
@@ -164,26 +162,38 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
 
+    public SessionWindow createSessionWindow(String fromUser, String toUser) {
+        if (!fromUser.equals(account)) throw new RuntimeException();
+        SessionWindow newSessionWindow = new SessionWindow(
+                this,
+                serverHost,
+                serverPort,
+                fromUser,
+                toUser,
+                new WindowHandler() {
+                    @Override
+                    public void onSuccessful() {
+                        //todo
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        //todo
+                    }
+                });
+        newSessionWindow.connect();
+        return newSessionWindow;
+    }
+
+
     @Override
     public void valueChanged(TreeSelectionEvent e) {
         //获取选择的节点
-
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) jTree
                 .getLastSelectedPathComponent();
 
         if (node.getLevel() == 2) {
-            ChatWindow newChatWindow = new ChatWindow(this, serverHost, serverPort, account, (String) node.getUserObject(), new WindowHandler() {
-                @Override
-                public void onSuccessful() {
-                    //todo
-                }
-
-                @Override
-                public void onFailure() {
-                    //todo
-                }
-            });
-            chatWindows.add(newChatWindow);
+            createSessionWindow(account, (String) node.getUserObject());
         }
     }
 
@@ -195,10 +205,18 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 onlineList.add(new DefaultMutableTreeNode(user));
             }
         }
+
+        //展开节点
+        for (int i = 0; i < jTree.getRowCount(); i++)
+            jTree.expandRow(i);
     }
 
-    public void removeChatWindow(ChatWindow chatWindow) {
-        chatWindows.remove(chatWindow);
+    public void addSessionWindow(SessionWindow sessionWindow) {
+        sessionWindows.add(sessionWindow);
+    }
+
+    public void removeSessionWindow(SessionWindow sessionWindow) {
+        sessionWindows.remove(sessionWindow);
     }
 
 
@@ -210,17 +228,16 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
         @Override
         public void windowClosing(WindowEvent e) {
-
+            //需要关闭当前主界面对应的所有会话连接
+            for (SessionWindow sessionWindow : sessionWindows) {
+                sessionWindow.dispose();
+            }
+            ClientUtils.sendLoginOutMessage(bindMainConnection, account);
         }
 
         @Override
         public void windowClosed(WindowEvent e) {
-            //需要关闭当前主界面对应的所有会话连接
-            for (ChatWindow chatWindow : chatWindows) {
-                ClientSessionConnection connection = chatWindow.getBindConnection();
-                ClientUtils.sendSessionOffLineMessage(connection, chatWindow.getHeader());
-            }
-            ClientUtils.sendLoginOutMessage(bindMainConnection, account);
+
         }
 
         @Override

@@ -124,6 +124,15 @@ public class ClientConnectionDispatcher {
         sessionConnectionMap = new ConcurrentHashMap<ConnectionDescription, ClientSessionConnection>();
     }
 
+    /**
+     * 目前，一个用户的所有会话都绑定到一个SessionConnection当中
+     * 如果已存在，则返回该会话，如果不存在，新建
+     *
+     * @param source
+     * @param serverHost
+     * @param serverPort
+     * @return
+     */
     public ClientSessionConnection getSessionConnection(String source, String serverHost, Integer serverPort) {
         ConnectionDescription connectionDescription = new ConnectionDescription(source, Protocol.SERVER_USER_NAME);
         if (sessionConnectionMap.containsKey(connectionDescription)) {
@@ -137,6 +146,8 @@ public class ClientConnectionDispatcher {
                         DefaultMessageWriterProxyFactory.Builder(),
                         new InetSocketAddress(serverHost, serverPort)
                 );
+                dispatchSessionConnection(newConnection);
+                sessionConnectionMap.put(connectionDescription, newConnection);
                 return newConnection;
             } catch (IOException e) {
                 return null;
@@ -154,7 +165,7 @@ public class ClientConnectionDispatcher {
 
         if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAINWINDOW_PER_MAIN_TASK) {
             mainTask.registerConnection(connection);
-            ClientUtils.sendLoginOutMessage(connection,account);
+            ClientUtils.sendLoginOutMessage(connection, account);
             connection.cancel();
             //注销操作等消息发送成功后再执行
         } else {
@@ -184,7 +195,7 @@ public class ClientConnectionDispatcher {
             if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
                 LOGGER.info("Client is overload");
                 //todo 客户端负载过高,直接拒绝新连接
-//                ChatWindow chatWindow = connection.getBindChatWindow();
+//                SessionWindow chatWindow = connection.getBindChatWindow();
 //                ((ClientSessionConnection) connection).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
 
             } else {

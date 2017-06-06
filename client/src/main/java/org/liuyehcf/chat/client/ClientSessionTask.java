@@ -18,8 +18,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClientSessionTask extends AbstractPipeLineTask {
 
+    /**
+     * 单例对象
+     */
+    private ClientConnectionDispatcher clientConnectionDispatcher = ClientConnectionDispatcher.getSingleton();
+
     public ClientSessionTask() {
-        ClientConnectionDispatcher.getSingleton().getPipeLineTasks().add(this);
+        clientConnectionDispatcher.getPipeLineTasks().add(this);
     }
 
     @Override
@@ -31,7 +36,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             writeMessage();
 
             //负载均衡
-            ClientConnectionDispatcher.getSingleton().checkLoadBalancing();
+            clientConnectionDispatcher.checkLoadBalancing();
 
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -41,7 +46,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             }
         }
         ClientConnectionDispatcher.LOGGER.info("{} is finished", this);
-        ClientConnectionDispatcher.getSingleton().getPipeLineTasks().remove(this);
+        clientConnectionDispatcher.getPipeLineTasks().remove(this);
     }
 
     private void readMessage() {
@@ -126,6 +131,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
                     connection.getSessionWindow(user).flushOnWindow(true, false, message.getDisplayMessageString());
                 if (message.getControl().isCloseSessionMessage()) {
                     connection.getBindPipeLineTask().offLine(connection);
+                    connection.removeSessionWindow(message.getHeader().getParam1());
                 }
             } catch (IOException e) {
                 connection.getSessionWindow(user).flushOnWindow(false, true, "[已失去与服务器的连接]");
@@ -143,7 +149,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
 
-        ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().remove(connection.getConnectionDescription());
+        clientConnectionDispatcher.getSessionConnectionMap().remove(connection.getConnectionDescription());
 
 
     }

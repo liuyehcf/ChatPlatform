@@ -117,4 +117,23 @@ class ServerUtils {
 
         return message;
     }
+
+
+    static Message createOpenSessionWindowMessage(String source, String destination, String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setOpenSessionMessage(true);
+
+        message.getHeader().setParam1(source);
+        message.getHeader().setParam2(destination);
+
+        message.getBody().setContent(content);
+
+        return message;
+    }
 }

@@ -50,13 +50,13 @@ public class ServerConnectionListener {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.bind(new InetSocketAddress(serverHost, serverPort));
         } catch (IOException e) {
-            ChatServerDispatcher.LOGGER.info("The server starts failed!");
+            ServerConnectionDispatcher.LOGGER.info("The server starts failed!");
             handler.onFailure();
             return;
         }
         handler.onSuccessful();
 
-        ChatServerDispatcher.LOGGER.info("The server starts successfully!");
+        ServerConnectionDispatcher.LOGGER.info("The server starts successfully!");
 
         while (!Thread.currentThread().isInterrupted()) {
 
@@ -66,10 +66,10 @@ public class ServerConnectionListener {
             //由于当前线程可能被中断，listen()方法会阻塞直到检测到新的连接或者被中断，被中断时返回null，并且此时中断标志位未被置位置
             if (socketChannel == null) continue;
 
-            ChatServerDispatcher.LOGGER.info("Listen to new connections");
+            ServerConnectionDispatcher.LOGGER.info("Listen to new connections");
 
             //分发新连接
-            ChatServerDispatcher.getSingleton().dispatch(socketChannel);
+            ServerConnectionDispatcher.getSingleton().dispatch(socketChannel);
 
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -80,7 +80,7 @@ public class ServerConnectionListener {
         }
 
         //终止服务器
-        ChatServerDispatcher.getSingleton().stop();
+        ServerConnectionDispatcher.getSingleton().stop();
     }
 
     private SocketChannel listen() {
@@ -88,7 +88,7 @@ public class ServerConnectionListener {
         try {
             socketChannel = serverSocketChannel.accept();
         } catch (IOException e) {
-            ChatServerDispatcher.LOGGER.info("The ServerConnectionListener thread is interrupted");
+            ServerConnectionDispatcher.LOGGER.info("The ServerConnectionListener thread is interrupted");
         }
         return socketChannel;
     }

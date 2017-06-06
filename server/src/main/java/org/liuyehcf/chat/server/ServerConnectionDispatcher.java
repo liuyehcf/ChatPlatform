@@ -27,22 +27,22 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by HCF on 2017/6/2.
  */
-public class ChatServerDispatcher {
+public class ServerConnectionDispatcher {
     /**
      * 日志
      */
-    static Logger LOGGER = LoggerFactory.getLogger(ChatServerDispatcher.class);
+    static Logger LOGGER = LoggerFactory.getLogger(ServerConnectionDispatcher.class);
 
     /**
      * 该类唯一作用是使得ChatServerDispatcher的单例延迟加载
      * 访问该类的其他静态变量，不会导致单例的初始化
      */
     private static class LazyInitializeSingleton {
-        private static ChatServerDispatcher chatServerDispatcher = new ChatServerDispatcher();
+        private static ServerConnectionDispatcher serverConnectionDispatcher = new ServerConnectionDispatcher();
     }
 
-    public static ChatServerDispatcher getSingleton() {
-        return LazyInitializeSingleton.chatServerDispatcher;
+    public static ServerConnectionDispatcher getSingleton() {
+        return LazyInitializeSingleton.serverConnectionDispatcher;
     }
 
 
@@ -107,7 +107,7 @@ public class ChatServerDispatcher {
         return groupInfoMap;
     }
 
-    private ChatServerDispatcher() {
+    private ServerConnectionDispatcher() {
         pipeLineTasks = new LinkedList<PipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
