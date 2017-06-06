@@ -10,12 +10,7 @@ import java.awt.event.ActionListener;
 /**
  * Created by Liuye on 2017/6/2.
  */
-public class LoginWindow {
-    /**
-     * 聊天界面
-     */
-    private JFrame frame;
-
+public class LoginWindow extends JFrame {
     private static final int LABEL_WIDTH = 150;
 
     private static final int COMPONENT_HEIGHT = 35;
@@ -33,9 +28,8 @@ public class LoginWindow {
 
     private void initWindow() {
 
-        frame = new JFrame();
-        frame.setSize(450, 350);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setSize(450, 350);
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         /* 创建面板，这个类似于 HTML 的 div 标签
          * 我们可以创建多个面板并在 JFrame 中指定位置
@@ -43,14 +37,14 @@ public class LoginWindow {
          */
         JPanel panel = new JPanel();
         // 添加面板
-        frame.add(panel);
+        this.add(panel);
         /*
          * 调用用户定义的方法并添加组件到面板
          */
         placeComponents(panel);
 
         // 设置界面可见
-        frame.setVisible(true);
+        this.setVisible(true);
     }
 
     private void placeComponents(JPanel panel) {
@@ -123,7 +117,7 @@ public class LoginWindow {
                 }
 
                 //重复登录校验
-                if(ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)){
+                if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
                     systemLabel.setText("SYSTEM: Please do not log in repeatedly!");
                     return;
                 }
