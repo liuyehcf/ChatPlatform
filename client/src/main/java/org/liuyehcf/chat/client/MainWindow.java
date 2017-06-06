@@ -74,6 +74,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
      */
     private DefaultMutableTreeNode offlineList;
 
+    private Set<String> onlineFriends;
+
     public MainWindow(String serverHost,
                       Integer serverPort,
                       String account,
@@ -156,7 +158,6 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             return;
         }
 
-        //需要发送一条Log消息后再断开
         ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(bindMainConnection, account, password);
         handler.onSuccessful();
     }
@@ -191,14 +192,13 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         //获取选择的节点
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) jTree
                 .getLastSelectedPathComponent();
-
-        if (node.getLevel() == 2) {
+        if (onlineFriends.contains(node.getUserObject()))
             createSessionWindow(account, (String) node.getUserObject());
-        }
     }
 
 
     public void flushUserList(List<String> s) {
+        onlineFriends = new HashSet<String>(s);
         onlineList.removeAllChildren();
         for (String user : s) {
             if (!user.equals(account)) {

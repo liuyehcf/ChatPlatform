@@ -142,9 +142,6 @@ public class LoginWindow {
 
                 //主界面连接到服务器
                 mainWindow.connect();
-
-                //将主界面放到映射map中
-                ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, mainWindow);
             }
         });
         panel.add(connectButton);
