@@ -68,7 +68,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     }
 
     private void readMessageFromConnection(SelectionKey selectionKey) {
-        ClientConnection connection = (ClientConnection) selectionKey.attachment();
+        ClientSessionConnection connection = (ClientSessionConnection) selectionKey.attachment();
 
         MessageReader messageReader = connection.getMessageReader();
         List<Message> messages;
@@ -82,11 +82,11 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         for (Message message : messages) {
 
             //服务器告知下线
-            if (message.getControl().isOffLineMessage()) {
+            if (message.getControl().isCloseSessionMessage()) {
                 offLine(connection);
             }
 
-            connection.getBindChatWindow().flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
+            connection.getSessionWindow(message.getHeader().getParam2()).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 
@@ -113,7 +113,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     }
 
     private void writeMessageToConnection(SelectionKey selectionKey) {
-        ClientConnection connection = (ClientConnection) selectionKey.attachment();
+        ClientSessionConnection connection = (ClientSessionConnection) selectionKey.attachment();
 
         Message message = connection.pollMessage();
         if (message != null) {
@@ -159,7 +159,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             }
         }
 
-        ClientConnectionDispatcher.getSingleton().getConnectionMap().remove(connection.getConnectionDescription());
+        ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().remove(connection.getConnectionDescription());
 
         getConnections().remove(connection);
         if (getConnectionNum() <= 0)

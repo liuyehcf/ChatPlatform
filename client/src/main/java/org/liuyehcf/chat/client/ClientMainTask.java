@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.liuyehcf.chat.protocol.Protocol.Header.DENY;
+import static org.liuyehcf.chat.protocol.Protocol.Header.FLUSH;
+import static org.liuyehcf.chat.protocol.Protocol.Header.PERMIT;
+
 
 /**
  * Created by Liuye on 2017/6/5.
@@ -39,7 +43,7 @@ public class ClientMainTask extends AbstractPipeLineTask {
             }
         }
         ClientConnectionDispatcher.LOGGER.info("{} is finished", this);
-        ClientConnectionDispatcher.getSingleton().getPipeLineTasks().remove(this);
+        ClientConnectionDispatcher.getSingleton().setMainTask(null);
     }
 
 
@@ -82,16 +86,23 @@ public class ClientMainTask extends AbstractPipeLineTask {
             //登录消息
             if (message.getControl().isLoginInMessage()) {
                 //允许登录
-                if (message.getHeader().getParam3().equals("permit")) {
+                if (message.getHeader().getParam3().equals(PERMIT)) {
                     String userName = message.getHeader().getParam2();
-                    //显示主界面
                     MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
+
+                    //显示主界面
                     mainWindow.setVisible(true);
 
                     //刷新好友列表
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
-                }else if(message.getHeader().getParam3().equals("deny")){
+                } else if (message.getHeader().getParam3().equals(DENY)) {
                     //拒绝登录
+                } else if (message.getHeader().getParam3().endsWith(FLUSH)) {
+                    String userName = message.getHeader().getParam2();
+                    MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
+
+                    //刷新好友列表
+                    mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
             }
         }

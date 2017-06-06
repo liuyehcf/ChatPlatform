@@ -3,6 +3,7 @@ package org.liuyehcf.chat.server;
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
+import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.writer.MessageWriter;
 
@@ -26,7 +27,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
     /**
      * 用户名到Connection的映射，多个PipeLineTask共享
      */
-    private Map<ConnectionDescription, Connection> connectionMap;
+    private Map<ConnectionDescription, Connection> sessionConnectionMap;
 
     /**
      * 用户组名到ServerGroupInfo的映射，多个PipeLineTask共享
@@ -35,10 +36,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
     public ServerSessionTask(
             Map<String, Connection> mainConnectionMap,
-            Map<ConnectionDescription, Connection> connectionMap,
+            Map<ConnectionDescription, Connection> sessionConnectionMap,
             Map<String, ServerGroupInfo> groupInfoMap) {
         this.mainConnectionMap = mainConnectionMap;
-        this.connectionMap = connectionMap;
+        this.sessionConnectionMap = sessionConnectionMap;
         this.groupInfoMap = groupInfoMap;
 
 
@@ -109,14 +110,21 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         for (Message message : messages) {
             connection.activeNow();
 
-            String source = message.getHeader().getParam1();
-            String destination = message.getHeader().getParam2();
-
             if (message.getControl().isLoginInMessage()) {
+                connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, message.getHeader().getParam1()));
+
                 String account = message.getHeader().getParam1();
                 if (!mainConnectionMap.containsKey(account)) {
                     mainConnectionMap.put(account, connection);
                     connection.offerMessage(ServerUtils.createReplyLoginInMessage(true, account, mainConnectionMap.keySet().toString()));
+
+
+                    for (Connection otherConnection : mainConnectionMap.values()) {
+                        otherConnection.offerMessage(
+                                ServerUtils.createLoginInFlushMessage(
+                                        otherConnection.getConnectionDescription().getDestination(),
+                                        mainConnectionMap.keySet().toString()));
+                    }
 
                     //todo 什么时候deny
                 } else {
@@ -125,93 +133,99 @@ public class ServerSessionTask extends AbstractPipeLineTask {
             } else if (message.getControl().isLoginOutMessage()) {
                 //todo
             }
-            //是否是Hello消息
-            else if (message.getControl().isHelloMessage()) {
-                ChatServerDispatcher.LOGGER.info("Client {} is accessing the server", source);
+            //是否是新建会话消息
+            else if (message.getControl().isOpenSessionMessage()) {
+                String fromUser = message.getHeader().getParam1();
+                String toUser = message.getHeader().getParam2();
+                ChatServerDispatcher.LOGGER.info("Client {} open a new Session", fromUser);
 
-                connection.setConnectionDescription(new ConnectionDescription(source, destination));
+                //该Connection第一次建立
+                if (connection.getConnectionDescription() == null) {
+                    connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUser));
+                }
 
-                if (!connectionMap.containsKey(connection.getConnectionDescription())) {
-                    connectionMap.put(connection.getConnectionDescription(), connection);
-                    ChatServerDispatcher.LOGGER.info("Client {} accesses the server successfully", source);
+                //增加一条会话描述符
+                SessionDescription newSessionDescription = new SessionDescription(fromUser, toUser);
+                connection.getConnectionDescription().addSessionDescription(
+                        newSessionDescription
+                );
 
-                    if (isGroupChat(message)) {
-                        ChatServerDispatcher.LOGGER.info("This connection is a group chat");
+                if (!sessionConnectionMap.containsKey(connection.getConnectionDescription())) {
+                    sessionConnectionMap.put(connection.getConnectionDescription(), connection);
+                    ChatServerDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUser, newSessionDescription);
 
-                        connection.setGroupChat(true);
-                        String groupName = connection.getConnectionDescription().getDestination();
-                        ServerGroupInfo groupConnect;
-                        if (groupInfoMap.containsKey(groupName)) {
-                            groupConnect = groupInfoMap.get(groupName);
-                        } else {
-                            groupConnect = new ServerGroupInfo();
-                            groupConnect.setGroupName(groupName);
-                            groupInfoMap.put(groupName, groupConnect);
-                        }
-                        groupConnect.addConnection(connection);
-                        String greetContent1 = "大家欢迎<"
-                                + source
-                                + ">进入群聊聊天室!!!";
-                        groupConnect.offerMessage(connection, ServerUtils.createSystemMessage(
-                                false,
-                                source,
-                                greetContent1));
+                    if (message.getControl().isGroupChat()) {
+                        ChatServerDispatcher.LOGGER.info("This Session is a group chat");
 
-                        String greetContent2 = source +
-                                "，欢迎进入群聊聊天室!!!";
-                        connection.offerMessage(ServerUtils.createSystemMessage(
-                                false,
-                                source,
-                                greetContent2));
+//                        connection.setGroupChat(true);
+//                        String groupName = connection.getConnectionDescription().getDestination();
+//                        ServerGroupInfo groupConnect;
+//                        if (groupInfoMap.containsKey(groupName)) {
+//                            groupConnect = groupInfoMap.get(groupName);
+//                        } else {
+//                            groupConnect = new ServerGroupInfo();
+//                            groupConnect.setGroupName(groupName);
+//                            groupInfoMap.put(groupName, groupConnect);
+//                        }
+//                        groupConnect.addConnection(connection);
+//                        String greetContent1 = "大家欢迎<"
+//                                + source
+//                                + ">进入群聊聊天室!!!";
+//                        groupConnect.offerMessage(connection, ServerUtils.createSystemMessage(
+//                                false,
+//                                source,
+//                                greetContent1));
+//
+//                        String greetContent2 = source +
+//                                "，欢迎进入群聊会话!!!";
+//                        connection.offerMessage(ServerUtils.createSystemMessage(
+//                                false,
+//                                source,
+//                                greetContent2));
                     } else {
-                        String greetContent = source +
-                                "，欢迎进入私人聊天室!!!";
+                        String greetContent = fromUser +
+                                "，欢迎进入私人会话!!!";
                         connection.offerMessage(ServerUtils.createSystemMessage(
                                 false,
-                                source,
+                                fromUser,
                                 greetContent));
-
                     }
                 } else {
-                    ChatServerDispatcher.LOGGER.info("The name of client {} is already exists", source);
-
-                    String greetContent = source +
-                            "名字重复，登录失败";
-                    connection.offerMessage(ServerUtils.createSystemMessage(
-                            true,
-                            source,
-                            greetContent));
+                    ChatServerDispatcher.LOGGER.error("The Session {} is already exists", connection.getConnectionDescription().getDestination());
                 }
             }
             //客户端要求断开连接
-            else if (message.getControl().isOffLineMessage()) {
-                ChatServerDispatcher.LOGGER.info("The client {} request goes offline", source);
+            else if (message.getControl().isCloseSessionMessage()) {
+                String fromUser = message.getHeader().getParam1();
+                String toUser = message.getHeader().getParam2();
 
-                offLine(connection);
+                SessionDescription sessionDescription = new SessionDescription(fromUser, toUser);
+                ChatServerDispatcher.LOGGER.info("The client {} close the session {}", fromUser, sessionDescription);
+                connection.getConnectionDescription().removeSessionDescription(sessionDescription);
+
+                if (message.getControl().isGroupChat()) {
+                    closeGroupSession(connection, fromUser, toUser);
+                } else {
+                    closeSession(fromUser, toUser);
+                }
             }
             //是否为群聊
-            else if (connection.isGroupChat()) {
-                String groupName = ((Message) message).getHeader().getParam2();
+            else if (message.getControl().isGroupChat()) {
+                String groupName = message.getHeader().getParam2();
                 ServerGroupInfo groupConnect = groupInfoMap.get(groupName);
                 groupConnect.offerMessage(connection, message);
             }
             //非群聊
             else {
-                //由于ConnectionDescription的hash与equals是带有方向的，因此必须获取与该用户连接的反向描述符
-                ConnectionDescription reverseConnectionDescription = connection.getConnectionDescription().getReverse();
-                if (connectionMap.containsKey(reverseConnectionDescription)) {
-                    Connection toConnection = connectionMap.get(reverseConnectionDescription);
-                    SocketChannel toSocketChannel = toConnection.getSocketChannel();
+                String fromUser = message.getHeader().getParam1();
+                String toUser = message.getHeader().getParam2();
+
+                ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUser);
+                if (sessionConnectionMap.containsKey(toConnectionDescription)) {
+                    Connection toConnection = sessionConnectionMap.get(toConnectionDescription);
                     toConnection.offerMessage(message);
                 } else {
-                    String systemContent = "["
-                            + connection.getConnectionDescription().getDestination()
-                            + "]未上线";
-                    connection.offerMessage(ServerUtils.createSystemMessage(
-                            false,
-                            source,
-                            systemContent
-                    ));
+                    //todo 激活对话窗口
                 }
             }
         }
@@ -309,51 +323,52 @@ public class ServerSessionTask extends AbstractPipeLineTask {
             }
         }
 
-        connectionMap.remove(connection.getConnectionDescription());
+        sessionConnectionMap.remove(connection.getConnectionDescription());
 
-        if (connection.isGroupChat()) {
-            ServerGroupInfo groupConnect = groupInfoMap.get(connection.getConnectionDescription().getDestination());
-            groupConnect.removeConnection(connection);
-            if (groupConnect.isGroupEmpty()) {
-                groupInfoMap.remove(groupConnect.getGroupName());
-            } else {
-                String systemContent = "["
-                        + connection.getConnectionDescription().getSource()
-                        + "]已断开连接";
-                groupConnect.offerMessage(connection, ServerUtils.createSystemMessage(
-                        false,
-                        connection.getConnectionDescription().getDestination(),
-                        systemContent
-                ));
-            }
-        } else {
-            //由于ConnectionDescription的hash与equals是带有方向的，因此必须获取与该用户连接的反向描述符
-            ConnectionDescription reverseConnectionDescription = connection.getConnectionDescription().getReverse();
-            if (connectionMap.containsKey(reverseConnectionDescription)) {
-                Connection toConnection = connectionMap.get(reverseConnectionDescription);
-                String systemContent = "["
-                        + connection.getConnectionDescription().getSource()
-                        + "]已断开连接";
-                toConnection.offerMessage(ServerUtils.createSystemMessage(
-                        false,
-                        connection.getConnectionDescription().getDestination(),
-                        systemContent
-                ));
-            }
-        }
+//        if (connection.isGroupChat()) {
+//            ServerGroupInfo groupConnect = groupInfoMap.get(connection.getConnectionDescription().getDestination());
+//            groupConnect.removeConnection(connection);
+//
+//        } else {
+//        }
 
         getConnections().remove(connection);
         if (getConnectionNum() <= 0)
             getBindThread().interrupt();
     }
 
-    /**
-     * 判断是否为群聊
-     *
-     * @param message
-     * @return
-     */
-    private boolean isGroupChat(Message message) {
-        return message.getHeader().getParam2().startsWith("#");
+
+    private void closeSession(String fromUser, String toUser) {
+        ConnectionDescription connectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUser);
+        Connection connection = sessionConnectionMap.get(connectionDescription);
+
+        String systemContent = "["
+                + fromUser
+                + "]已断开连接";
+        connection.offerMessage(ServerUtils.createSystemMessage(
+                false,
+                toUser,
+                systemContent
+        ));
+    }
+
+    private void closeGroupSession(Connection connection, String fromUser, String groupName) {
+        ServerGroupInfo serverGroupInfo = groupInfoMap.get(groupName);
+
+        serverGroupInfo.removeConnection(connection);
+
+        if (serverGroupInfo.isGroupEmpty()) {
+            groupInfoMap.remove(serverGroupInfo.getGroupName());
+        } else {
+            String systemContent = "["
+                    + fromUser
+                    + "]已断开连接";
+            serverGroupInfo.offerMessage(connection, ServerUtils.createSystemMessage(
+                    false,
+                    "",
+                    systemContent
+            ));
+        }
+
     }
 }

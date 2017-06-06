@@ -65,12 +65,18 @@ public class Protocol {
         /**
          * 是否为hello，会话连接时发送的消息
          */
-        private boolean isHelloMessage;
+        private boolean isOpenSessionMessage;
 
         /**
          * 是否为离线消息，当前对话关闭时发送的消息
          */
-        private boolean isOffLineMessage;
+        private boolean isCloseSessionMessage;
+
+        /**
+         * 是否为群聊
+         */
+        private boolean isGroupChat;
+
 
         public boolean isSystemMessage() {
             return isSystemMessage;
@@ -104,20 +110,28 @@ public class Protocol {
             isRegisterMessage = registerMessage;
         }
 
-        public boolean isHelloMessage() {
-            return isHelloMessage;
+        public boolean isOpenSessionMessage() {
+            return isOpenSessionMessage;
         }
 
-        public void setHelloMessage(boolean helloMessage) {
-            isHelloMessage = helloMessage;
+        public void setOpenSessionMessage(boolean openSessionMessage) {
+            isOpenSessionMessage = openSessionMessage;
         }
 
-        public boolean isOffLineMessage() {
-            return isOffLineMessage;
+        public boolean isCloseSessionMessage() {
+            return isCloseSessionMessage;
         }
 
-        public void setOffLineMessage(boolean offLineMessage) {
-            isOffLineMessage = offLineMessage;
+        public void setCloseSessionMessage(boolean closeSessionMessage) {
+            isCloseSessionMessage = closeSessionMessage;
+        }
+
+        public boolean isGroupChat() {
+            return isGroupChat;
+        }
+
+        public void setGroupChat(boolean groupChat) {
+            isGroupChat = groupChat;
         }
 
         public String getControlString() {
@@ -126,8 +140,9 @@ public class Protocol {
                     + (isLoginInMessage ? "1" : "0")
                     + (isLoginOutMessage ? "1" : "0")
                     + (isRegisterMessage ? "1" : "0")
-                    + (isHelloMessage ? "1" : "0")
-                    + (isOffLineMessage ? "1" : "0")
+                    + (isOpenSessionMessage ? "1" : "0")
+                    + (isCloseSessionMessage ? "1" : "0")
+                    + (isGroupChat ? "1" : "0")
                     + CONTROL_SUFFIX;
         }
 
@@ -140,8 +155,9 @@ public class Protocol {
                 control.setLoginInMessage(controlString.charAt(1) == '1');
                 control.setLoginOutMessage(controlString.charAt(2) == '1');
                 control.setRegisterMessage(controlString.charAt(3) == '1');
-                control.setHelloMessage(controlString.charAt(4) == '1');
-                control.setOffLineMessage(controlString.charAt(5) == '1');
+                control.setOpenSessionMessage(controlString.charAt(4) == '1');
+                control.setCloseSessionMessage(controlString.charAt(5) == '1');
+                control.setGroupChat(controlString.charAt(6) == '1');
             } else {
                 throw new RuntimeException("parse MessageControl failed!");
             }
@@ -162,6 +178,12 @@ public class Protocol {
          * 消息头后缀字符串
          */
         private static final char HEADER_SUFFIX = ']';
+
+        public static final String PERMIT = "PERMIT";
+
+        public static final String DENY = "DENY";
+
+        public static final String FLUSH = "FLUSH";
 
         /**
          * 消息头匹配正则表达式

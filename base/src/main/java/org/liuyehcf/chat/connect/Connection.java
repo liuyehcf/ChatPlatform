@@ -25,11 +25,6 @@ public abstract class Connection {
     private ConnectionDescription connectionDescription;
 
     /**
-     * 是否为群聊
-     */
-    private boolean isGroupChat;
-
-    /**
      * 套接字信道
      */
     protected SocketChannel socketChannel;
@@ -87,14 +82,6 @@ public abstract class Connection {
         return connectionDescription;
     }
 
-    public boolean isGroupChat() {
-        return isGroupChat;
-    }
-
-    public void setGroupChat(boolean groupChat) {
-        isGroupChat = groupChat;
-    }
-
     public SocketChannel getSocketChannel() {
         return socketChannel;
     }
@@ -128,12 +115,8 @@ public abstract class Connection {
     }
 
     public Connection(
-            String source,
-            String destination,
             MessageReaderFactory messageReaderFactory,
             MessageWriterFactory messageWriterFactory) {
-        connectionDescription = new ConnectionDescription(source, destination);
-
 
         messageReader = messageReaderFactory.build();
         messageWriter = messageWriterFactory.build();

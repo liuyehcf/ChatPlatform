@@ -1,14 +1,13 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.handler.WindowHandler;
-import org.liuyehcf.chat.connect.Connection;
+import org.liuyehcf.chat.protocol.Protocol;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.InetSocketAddress;
 
 /**
  * Created by Liuye on 2017/6/2.
@@ -32,12 +31,17 @@ public class ChatWindow {
     /**
      * 信源名字
      */
-    private String source;
+    private String fromUser;
 
     /**
      * 信宿名字
      */
-    private String destination;
+    private String toUser;
+
+    /**
+     * 此会话信息头
+     */
+    private Protocol.Header header;
 
     /**
      * 登录回调
@@ -45,9 +49,9 @@ public class ChatWindow {
     private WindowHandler handler;
 
     /**
-     * 连接
+     * 当前会话绑定的连接，该链接可能绑定了多个会话
      */
-    private Connection connection;
+    private ClientSessionConnection bindConnection;
 
     /**
      * 滚动框区域
@@ -75,12 +79,16 @@ public class ChatWindow {
         return textPane;
     }
 
-    public ChatWindow(String serverHost, Integer serverPort, String source, String destination, WindowHandler handler) {
+    public ChatWindow(String serverHost, Integer serverPort, String fromUser, String toUser, WindowHandler handler) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
-        this.source = source;
-        this.destination = destination;
+        this.fromUser = fromUser;
+        this.toUser = toUser;
         this.handler = handler;
+
+        this.header = new Protocol.Header();
+        this.header.setParam1(fromUser);
+        this.header.setParam2(toUser);
 
         initWindow();
 
@@ -141,7 +149,7 @@ public class ChatWindow {
             public void actionPerformed(ActionEvent e) {
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
-                ClientUtils.sendNormalMessage(connection, content);
+                ClientUtils.sendNormalMessage(bindConnection, header, content);
                 textField.setText("");
             }
         });
@@ -162,23 +170,18 @@ public class ChatWindow {
     }
 
     private void connect() {
-        try {
-            connection = new ClientConnection(
-                    source,
-                    destination,
-                    ClientConnectionDispatcher.getSingleton().getMessageReaderFactory(),
-                    ClientConnectionDispatcher.getSingleton().getMessageWriterFactory(),
-                    new InetSocketAddress(serverHost, serverPort),
-                    this
-            );
-            handler.onSucceed();
-        } catch (Exception e) {
+        //公用一条连接即可
+        bindConnection = (ClientSessionConnection) ClientConnectionDispatcher.getSingleton()
+                .getSessionConnection(fromUser, serverHost, serverPort);
+
+        if (bindConnection != null) {
+            ClientConnectionDispatcher.getSingleton().dispatchSessionConnection(bindConnection);
+            ClientUtils.sendSessionHelloMessage(bindConnection, header);
+            bindConnection.addSessionWindow(fromUser, this);
+        } else {
             handler.onFailure();
             frame.dispose();
-            return;
         }
-
-        ClientConnectionDispatcher.getSingleton().dispatchSessionConnection(connection);
     }
 
     public void flushOnWindow(boolean isSent, boolean isSystem, String content) {
@@ -233,7 +236,7 @@ public class ChatWindow {
 
         @Override
         public void windowClosed(WindowEvent e) {
-            ClientUtils.sendSessionOffLineMessage(connection);
+            ClientUtils.sendSessionOffLineMessage(bindConnection, header);
         }
 
         @Override

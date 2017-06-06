@@ -7,6 +7,7 @@ package org.liuyehcf.chat.server;
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
+
 import java.nio.channels.SocketChannel;
 
 
@@ -15,12 +16,10 @@ import java.nio.channels.SocketChannel;
  */
 public class ServerConnection extends Connection {
 
-    public ServerConnection(String source,
-                            String destination,
-                            MessageReaderFactory messageReaderFactory,
+    public ServerConnection(MessageReaderFactory messageReaderFactory,
                             MessageWriterFactory messageWriterFactory,
                             SocketChannel socketChannel) {
-        super(source, destination, messageReaderFactory, messageWriterFactory);
+        super(messageReaderFactory, messageWriterFactory);
 
         this.socketChannel = socketChannel;
     }

@@ -122,7 +122,7 @@ public class LoginWindow {
                     return;
                 }
 
-                new MainWindow(
+                MainWindow mainWindow = new MainWindow(
                         serverHost,
                         serverPort,
                         account,
@@ -139,6 +139,8 @@ public class LoginWindow {
                             }
                         }
                 );
+
+                ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, mainWindow);
             }
         });
         panel.add(connectButton);

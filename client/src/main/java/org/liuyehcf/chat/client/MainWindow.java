@@ -1,7 +1,8 @@
 package org.liuyehcf.chat.client;
 
+import org.liuyehcf.chat.connect.Connection;
+import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.handler.WindowHandler;
-import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Protocol;
 
 import javax.swing.*;
@@ -9,8 +10,11 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Liuye on 2017/6/5.
@@ -39,12 +43,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 关联的连接
      */
-    private ClientMainConnection mainConnection;
-
-    /**
-     * 主界面所绑定的主界面线程，一个主界面线程可能管理多个主界面窗口
-     */
-    private PipeLineTask bindMainTask;
+    private ClientMainConnection bindMainConnection;
 
     /**
      * 登录回调
@@ -126,27 +125,30 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         //自动调整大小
         this.pack();
 
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
 
     private void connect() {
         try {
-            mainConnection = new ClientMainConnection(
+            bindMainConnection = new ClientMainConnection(
                     account,
                     Protocol.SERVER_USER_NAME,
                     new InetSocketAddress(serverHost, serverPort),
                     this
             );
-            handler.onSucceed();
         } catch (Exception e) {
             handler.onFailure();
-            //todo 如何只关闭当前ChatWindow
             this.dispose();
             return;
         }
 
-        ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(mainConnection, account, password);
+        if (ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(bindMainConnection, account, password)) {
+            handler.onSucceed();
+        } else {
+            handler.onFailure();
+            this.dispose();
+        }
     }
 
 
@@ -182,32 +184,50 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         }
     }
 
+    private final class MyWindowListener implements WindowListener {
+        @Override
+        public void windowOpened(WindowEvent e) {
 
-    private MainWindow() {
-        init();
-        onlineList.add(new DefaultMutableTreeNode("hehe"));
-        onlineList.add(new DefaultMutableTreeNode("haha"));
-    }
-
-    public static void main(String[] args) {
-
-        //Windows风格
-        //String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
-
-        //Windows Classic风格
-        //String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel";
-
-        //系统当前风格
-        String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
-
-        try {
-            UIManager.setLookAndFeel(lookAndFeel);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
-        MainWindow demo = new MainWindow();
+        @Override
+        public void windowClosing(WindowEvent e) {
 
-        demo.setVisible(true);
+        }
+
+        @Override
+        public void windowClosed(WindowEvent e) {
+            //需要关闭当前主界面对应的所有会话连接
+            //todo
+//            for (Map.Entry<ConnectionDescription, ClientSessionConnection> entry : ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().entrySet()) {
+//                ConnectionDescription connectionDescription = entry.getKey();
+//                if (connectionDescription.getSource().equals(account)) {
+//                    ClientUtils.sendSessionOffLineMessage(entry.getValue());
+//                }
+//            }
+            ClientUtils.sendLoginOutMessage(bindMainConnection);
+
+            ClientConnectionDispatcher.getSingleton().getMainWindowMap().remove(account);
+        }
+
+        @Override
+        public void windowIconified(WindowEvent e) {
+
+        }
+
+        @Override
+        public void windowDeiconified(WindowEvent e) {
+
+        }
+
+        @Override
+        public void windowActivated(WindowEvent e) {
+
+        }
+
+        @Override
+        public void windowDeactivated(WindowEvent e) {
+
+        }
     }
 }

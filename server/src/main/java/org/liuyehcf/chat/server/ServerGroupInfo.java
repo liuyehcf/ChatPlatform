@@ -13,7 +13,7 @@ public class ServerGroupInfo {
     /**
      * 群聊名
      */
-    private String groupName;
+    private final String groupName;
 
     /**
      * 当前群聊的Connection集合
@@ -24,11 +24,8 @@ public class ServerGroupInfo {
         return groupName;
     }
 
-    public void setGroupName(String groupName) {
+    public ServerGroupInfo(String groupName) {
         this.groupName = groupName;
-    }
-
-    public ServerGroupInfo() {
         connections = new HashSet<Connection>();
     }
 

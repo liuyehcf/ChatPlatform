@@ -4,6 +4,10 @@ package org.liuyehcf.chat.server;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
+import static org.liuyehcf.chat.protocol.Protocol.Header.DENY;
+import static org.liuyehcf.chat.protocol.Protocol.Header.FLUSH;
+import static org.liuyehcf.chat.protocol.Protocol.Header.PERMIT;
+
 
 /**
  * Created by Liuye on 2017/6/1.
@@ -55,7 +59,7 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setOffLineMessage(isOffLine);
+        message.getControl().setCloseSessionMessage(isOffLine);
 
         message.getControl().setSystemMessage(true);
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
@@ -78,7 +82,7 @@ class ServerUtils {
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(source);
-        message.getHeader().setParam3(isPermit ? "permit" : "deny");
+        message.getHeader().setParam3(isPermit ? PERMIT : DENY);
 
         if (isPermit) {
             message.getBody().setContent(content);
@@ -87,4 +91,30 @@ class ServerUtils {
         return message;
     }
 
+
+    /**
+     * 上线刷新列表消息
+     *
+     * @param source
+     * @param content
+     * @return
+     */
+    static Message createLoginInFlushMessage(String source, String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setLoginInMessage(true);
+
+        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getHeader().setParam2(source);
+        message.getHeader().setParam3(FLUSH);
+
+        message.getBody().setContent(content);
+
+        return message;
+    }
 }

@@ -12,6 +12,10 @@ import java.util.List;
  * Created by Liuye on 2017/6/2.
  */
 class ClientUtils {
+    /**
+     * 主界面线程管理的主界面最大数量
+     */
+    static final int MAX_MAINWINDOW_PER_MAIN_TASK = 4;
 
     /**
      * 每个线程管理的channel数量的最大值
@@ -39,37 +43,37 @@ class ClientUtils {
      */
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
-    static void sendSessionHelloMessage(Connection connection) {
+    static void sendSessionHelloMessage(Connection connection, Protocol.Header header) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
-        message.setHeader(((ClientConnection) connection).getHeader());
+        message.setHeader(header);
         message.setBody(new Protocol.Body());
 
         message.getControl().setSystemMessage(true);
-        message.getControl().setHelloMessage(true);
+        message.getControl().setOpenSessionMessage(true);
 
         connection.offerMessage(message);
     }
 
-    static void sendSessionOffLineMessage(Connection connection) {
+    static void sendSessionOffLineMessage(Connection connection, Protocol.Header header) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
-        message.setHeader(((ClientConnection) connection).getHeader());
+        message.setHeader(header);
         message.setBody(new Protocol.Body());
 
         message.getControl().setSystemMessage(true);
-        message.getControl().setOffLineMessage(true);
+        message.getControl().setCloseSessionMessage(true);
 
         connection.offerMessage(message);
     }
 
-    static void sendNormalMessage(Connection connection, String content) {
+    static void sendNormalMessage(Connection connection, Protocol.Header header, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
-        message.setHeader(((ClientConnection) connection).getHeader());
+        message.setHeader(header);
         message.setBody(new Protocol.Body());
 
         message.getBody().setContent(content);
@@ -77,7 +81,7 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
-    static void sendLoginMessage(Connection connection, String account, String password) {
+    static void sendLoginInMessage(Connection connection, String account, String password) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -93,8 +97,21 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
+    static void sendLoginOutMessage(Connection connection) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setLoginOutMessage(true);
+
+        connection.offerMessage(message);
+    }
+
     static List<String> retrieveNames(String s) {
-        s = s.replaceAll("[\\[\\]]", "");
+        s = s.replaceAll("[\\[\\] ]", "");
         String[] names = s.split(",");
         return new ArrayList<String>(Arrays.asList(names));
     }

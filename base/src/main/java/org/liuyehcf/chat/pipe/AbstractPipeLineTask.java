@@ -63,7 +63,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
 
     @Override
-    public void registerConnection(Connection connection) {
+    final public void registerConnection(Connection connection) {
         connection.getSelectors().clear();
         connection.bindPipeLineTask(this);
 

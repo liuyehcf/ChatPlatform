@@ -109,10 +109,10 @@ public class ChatServerDispatcher {
                 .addInterceptor(new ServerMessageWriteInterceptor());
 
         mainConnectionMap = new ConcurrentHashMap<String, Connection>();
-        //todo 测试数据
-        mainConnectionMap.put("测试用户1", new TestConnection());
-        mainConnectionMap.put("测试用户2", new TestConnection());
-        mainConnectionMap.put("测试用户3", new TestConnection());
+//        //todo 测试数据
+//        mainConnectionMap.put("测试用户1", new TestConnection());
+//        mainConnectionMap.put("测试用户2", new TestConnection());
+//        mainConnectionMap.put("测试用户3", new TestConnection());
 
 
         connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
@@ -146,10 +146,8 @@ public class ChatServerDispatcher {
                 LOGGER.info("Server is overload");
 
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
-                //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
+
                 Connection newConnection = new ServerConnection(
-                        "",
-                        "",
                         messageReaderFactory,
                         messageWriterFactory,
                         socketChannel);
@@ -162,10 +160,7 @@ public class ChatServerDispatcher {
                 PipeLineTask newPipeLineTask = new ServerSessionTask(mainConnectionMap, connectionMap, groupInfoMap);
                 LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
 
-                //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
                 Connection newConnection = new ServerConnection(
-                        "",
-                        "",
                         messageReaderFactory,
                         messageWriterFactory,
                         socketChannel);
@@ -178,10 +173,7 @@ public class ChatServerDispatcher {
             PipeLineTask pipeLineTask = getIdlePipeLineTask();
             LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
 
-            //该链接描述符的建立是在第一次接受消息时，此时只是截获SocketChannel，无法得知发送发的具体信息
             Connection newConnection = new ServerConnection(
-                    "",
-                    "",
                     messageReaderFactory,
                     messageWriterFactory,
                     socketChannel);
@@ -388,23 +380,11 @@ public class ChatServerDispatcher {
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
             Message message = (Message) proxyMethodInvocation.getArguments()[0];
             LOGGER.debug("Send a message {}", protocol.wrap(message));
-            if (message.getControl().isOffLineMessage()) {
+            if (message.getControl().isCloseSessionMessage()) {
                 Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
                 connection.getBindPipeLineTask().offLine(connection);
             }
             return result;
-        }
-    }
-
-
-    private static final class TestConnection extends Connection {
-        public TestConnection() {
-
-            super("?",
-                    "?",
-                    DefaultMessageReaderProxyFactory.Builder(),
-                    DefaultMessageWriterProxyFactory.Builder());
-
         }
     }
 }

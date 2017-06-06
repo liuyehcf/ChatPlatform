@@ -1,6 +1,7 @@
 package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.connect.Connection;
+import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
@@ -33,11 +34,10 @@ public class ClientMainConnection extends Connection {
                                 InetSocketAddress inetSocketAddress,
                                 MainWindow bindMainWindow) throws IOException {
         //todo 为ListService配置工厂
-
-        super(source,
-                destination,
-                DefaultMessageReaderProxyFactory.Builder(),
+        //让MainConnection和SessionConnection在Server端加以区别
+        super(DefaultMessageReaderProxyFactory.Builder(),
                 DefaultMessageWriterProxyFactory.Builder());
+        setConnectionDescription(new ConnectionDescription(source + "<MAIN>", destination));
 
         this.bindMainWindow = bindMainWindow;
 

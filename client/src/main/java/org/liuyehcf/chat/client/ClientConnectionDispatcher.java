@@ -8,6 +8,7 @@ import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.pipe.PipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
+import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,9 +54,9 @@ public class ClientConnectionDispatcher {
     private Map<String, MainWindow> mainWindowMap;
 
     /**
-     * 主界面线程列表，一个主界面线程可能管理多个主界面
+     * 主界面线程，一个主界面线程可能管理多个主界面
      */
-    private List<PipeLineTask> mainTasks;
+    private PipeLineTask mainTask;
 
     /**
      * 保存着所有的ClientPipeLineTask，用于客户端负载均衡
@@ -84,7 +86,7 @@ public class ClientConnectionDispatcher {
     /**
      * Connection描述符到Connection的映射，多个PipeLineTask共享
      */
-    private Map<ConnectionDescription, Connection> connectionMap;
+    private Map<ConnectionDescription, ClientSessionConnection> sessionConnectionMap;
 
     /**
      * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
@@ -95,37 +97,20 @@ public class ClientConnectionDispatcher {
         return mainWindowMap;
     }
 
-    public List<PipeLineTask> getMainTasks() {
-        return mainTasks;
+    public void setMainTask(PipeLineTask mainTask) {
+        this.mainTask = mainTask;
     }
 
     public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
     }
 
-    public ReentrantLock getLoadBalancingLock() {
-        return loadBalancingLock;
-    }
-
-    public MessageReaderFactory getMessageReaderFactory() {
-        return messageReaderFactory;
-    }
-
-    public MessageWriterFactory getMessageWriterFactory() {
-        return messageWriterFactory;
-    }
-
-    public ExecutorService getExecutorService() {
-        return executorService;
-    }
-
-    public Map<ConnectionDescription, Connection> getConnectionMap() {
-        return connectionMap;
+    public Map<ConnectionDescription, ClientSessionConnection> getSessionConnectionMap() {
+        return sessionConnectionMap;
     }
 
     private ClientConnectionDispatcher() {
         mainWindowMap = new ConcurrentHashMap<String, MainWindow>();
-        mainTasks = new LinkedList<PipeLineTask>();
         pipeLineTasks = new LinkedList<PipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
@@ -138,28 +123,47 @@ public class ClientConnectionDispatcher {
 
         executorService = Executors.newCachedThreadPool();
 
-        connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
-
+        sessionConnectionMap = new ConcurrentHashMap<ConnectionDescription, ClientSessionConnection>();
     }
 
+    public ClientSessionConnection getSessionConnection(String source, String serverHost, Integer serverPort) {
+        ConnectionDescription connectionDescription = new ConnectionDescription(source, Protocol.SERVER_USER_NAME);
+        if (sessionConnectionMap.containsKey(connectionDescription)) {
+            return sessionConnectionMap.get(connectionDescription);
+        } else {
+            try {
+                ClientSessionConnection newConnection = new ClientSessionConnection(
+                        source,
+                        Protocol.SERVER_USER_NAME,
+                        DefaultMessageReaderProxyFactory.Builder(),
+                        DefaultMessageWriterProxyFactory.Builder(),
+                        new InetSocketAddress(serverHost, serverPort)
+                );
+                return newConnection;
+            } catch (IOException e) {
+                return null;
+            }
+        }
+    }
 
     //todo 如果一个线程管理多个主界面，那么也是需要加锁的哦
-    public void dispatcherMainConnection(Connection connection, String account, String password) {
-        if (!mainTasks.isEmpty()) {
-            throw new RuntimeException();
+    public boolean dispatcherMainConnection(ClientMainConnection connection, String account, String password) {
+        if (mainTask == null) {
+            mainTask = new ClientMainTask();
+            executorService.execute(mainTask);
+            LOGGER.info("Start the Main Task {}", mainTask);
         }
-        PipeLineTask mainTask = new ClientMainTask();
-        LOGGER.info("Start the list Task {}", mainTask);
+
+        if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAINWINDOW_PER_MAIN_TASK)
+            return false;
 
         mainTask.registerConnection(connection);
-
-        executorService.execute(mainTask);
-
-        ClientUtils.sendLoginMessage(connection, account, password);
+        ClientUtils.sendLoginInMessage(connection, account, password);
+        return true;
     }
 
 
-    public void dispatchSessionConnection(Connection connection) {
+    public void dispatchSessionConnection(ClientSessionConnection connection) {
         //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
         if (System.currentTimeMillis() < nextLoadBalancingTimeStamp) {
             doDispatchSessionConnection(connection);
@@ -174,14 +178,14 @@ public class ClientConnectionDispatcher {
         }
     }
 
-    private void doDispatchSessionConnection(Connection connection) {
+    private void doDispatchSessionConnection(ClientSessionConnection connection) {
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
             if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
                 LOGGER.info("Client is overload");
                 //todo 客户端负载过高,直接拒绝新连接
-                ChatWindow chatWindow = ((ClientConnection) connection).getBindChatWindow();
-                ((ClientConnection) connection).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
+//                ChatWindow chatWindow = connection.getBindChatWindow();
+//                ((ClientSessionConnection) connection).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
 
             } else {
                 PipeLineTask newPipeLineTask = new ClientSessionTask();
@@ -197,7 +201,6 @@ public class ClientConnectionDispatcher {
 
             pipeLineTask.registerConnection(connection);
         }
-        ClientUtils.sendSessionHelloMessage(connection);
     }
 
     /**
@@ -308,8 +311,8 @@ public class ClientConnectionDispatcher {
                 messages = (List<Message>) messageInvocation.process();
             } catch (IOException e) {
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                ClientConnection connection = (ClientConnection) proxyMethodInvocation.getArguments()[0];
-                connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
+                ClientSessionConnection connection = (ClientSessionConnection) proxyMethodInvocation.getArguments()[0];
+                //todo connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
                 connection.getBindPipeLineTask().offLine(connection);
                 throw e;
             }
@@ -329,17 +332,17 @@ public class ClientConnectionDispatcher {
                 result = messageInvocation.process();
             } catch (IOException e) {
                 ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                ClientConnection connection = (ClientConnection) proxyMethodInvocation.getArguments()[1];
-                connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
+                ClientSessionConnection connection = (ClientSessionConnection) proxyMethodInvocation.getArguments()[1];
+                //todo connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
                 connection.getBindPipeLineTask().offLine(connection);
                 throw e;
             }
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-            ClientConnection connection = (ClientConnection) proxyMethodInvocation.getArguments()[1];
+            ClientSessionConnection connection = (ClientSessionConnection) proxyMethodInvocation.getArguments()[1];
             Message message = (Message) proxyMethodInvocation.getArguments()[0];
-            if (!message.getControl().isHelloMessage() && !message.getControl().isOffLineMessage())
-                connection.getBindChatWindow().flushOnWindow(true, false, message.getDisplayMessageString());
-            if (message.getControl().isOffLineMessage()) {
+            if (!message.getControl().isOpenSessionMessage() && !message.getControl().isCloseSessionMessage())
+                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(true, false, message.getDisplayMessageString());
+            if (message.getControl().isCloseSessionMessage()) {
                 connection.getBindPipeLineTask().offLine(connection);
             }
             return result;
