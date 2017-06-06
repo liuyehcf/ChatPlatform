@@ -113,6 +113,20 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
+    static Message createOpenSessionWindowMessage(String fromUser, String toUser, String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getHeader().setParam1(fromUser);
+        message.getHeader().setParam2(toUser);
+
+        message.getBody().setContent(content);
+        return message;
+    }
+
     static List<String> retrieveNames(String s) {
         s = s.replaceAll("[\\[\\] ]", "");
         String[] names = s.split(",");

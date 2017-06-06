@@ -122,6 +122,15 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 ConnectionDescription connectionDescription = new ConnectionDescription(
                         Protocol.SERVER_USER_NAME,
                         user);
+                Connection sessionConnection = serverConnectionDispatcher.getSessionConnectionMap().get(connectionDescription);
+
+                if (sessionConnection != null) {
+                    for (SessionDescription sessionDescription : sessionConnection.getConnectionDescription().getSessionDescriptions()) {
+                        closeSession(sessionDescription.getFromUser(), sessionDescription.getToUser());
+                    }
+                    serverConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
+                    sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
+                }
                 //todo
                 //刷新好友列表
                 for (Connection otherConnection : serverConnectionDispatcher.getMainConnectionMap().values()) {
@@ -171,7 +180,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 SessionDescription sessionDescription = new SessionDescription(fromUser, toUser);
                 ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUser, sessionDescription);
                 connection.getConnectionDescription().removeSessionDescription(sessionDescription);
-
 
                 closeSession(fromUser, toUser);
 

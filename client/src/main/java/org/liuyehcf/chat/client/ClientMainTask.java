@@ -115,7 +115,13 @@ public class ClientMainTask extends AbstractPipeLineTask {
                 String toUser = message.getHeader().getParam2();
                 MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(fromUser);
                 SessionWindow sessionWindow = mainWindow.createSessionWindow(fromUser, toUser);
-                sessionWindow.flushOnWindow(false, false, message.getDisplayMessageString());
+
+                Message notSendMessage = ClientUtils.createOpenSessionWindowMessage(
+                        toUser,
+                        fromUser,
+                        message.getBody().getContent()
+                );
+                sessionWindow.flushOnWindow(false, false, notSendMessage.getDisplayMessageString());
             }
         }
     }
