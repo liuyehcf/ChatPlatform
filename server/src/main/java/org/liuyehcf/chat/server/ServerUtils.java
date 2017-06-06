@@ -1,6 +1,7 @@
 package org.liuyehcf.chat.server;
 
 
+import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
@@ -45,32 +46,59 @@ class ServerUtils {
      */
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
-    /**
-     * 创建一条系统消息
-     *
-     * @param notifyUserName
-     * @param systemContent
-     * @return
-     */
-    static Message createSystemMessage(boolean isOffLine, String notifyUserName, String systemContent) {
+
+    static void sendSystemMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setCloseSessionMessage(isOffLine);
-
         message.getControl().setSystemMessage(true);
+
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
-        message.getHeader().setParam2(notifyUserName);
+        message.getHeader().setParam2(toUserName);
 
-        message.getBody().setContent(systemContent);
+        message.getBody().setContent(content);
 
-        return message;
+        connection.offerMessage(message);
     }
 
-    static Message createReplyLoginInMessage(boolean isPermit, String source, String content) {
+
+    /**
+     * 创建一条系统消息
+     *
+     * @param toUserName
+     * @param content
+     * @return
+     */
+    static void sendCloseSessionMessage(Connection connection, String toUserName, String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setCloseSessionMessage(true);
+
+        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getHeader().setParam2(toUserName);
+
+        message.getBody().setContent(content);
+
+        connection.offerMessage(message);
+    }
+
+    /**
+     * 登录回复消息
+     *
+     * @param isPermit
+     * @param toUserName
+     * @param content
+     * @return
+     */
+    static void sendReplyLoginInMessage(Connection connection, boolean isPermit, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -81,25 +109,25 @@ class ServerUtils {
         message.getControl().setLoginInMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
-        message.getHeader().setParam2(source);
+        message.getHeader().setParam2(toUserName);
         message.getHeader().setParam3(isPermit ? PERMIT : DENY);
 
         if (isPermit) {
             message.getBody().setContent(content);
         }
 
-        return message;
+        connection.offerMessage(message);
     }
 
 
     /**
      * 上线刷新列表消息
      *
-     * @param source
+     * @param toUserName
      * @param content
      * @return
      */
-    static Message createLoginInFlushMessage(String source, String content) {
+    static void sendLoginInFlushMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -110,16 +138,24 @@ class ServerUtils {
         message.getControl().setLoginInMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
-        message.getHeader().setParam2(source);
+        message.getHeader().setParam2(toUserName);
         message.getHeader().setParam3(FLUSH);
 
         message.getBody().setContent(content);
 
-        return message;
+        connection.offerMessage(message);
     }
 
 
-    static Message createOpenSessionWindowMessage(String source, String destination, String content) {
+    /**
+     * 该条信息的含义为：希望fromUserName用户，开启一个fromUserName到toUserName的会话
+     *
+     * @param fromUserName
+     * @param toUserName
+     * @param content
+     * @return
+     */
+    static void sendOpenSessionWindowMessage(Connection connection, String fromUserName, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -129,11 +165,16 @@ class ServerUtils {
         message.getControl().setSystemMessage(true);
         message.getControl().setOpenSessionMessage(true);
 
-        message.getHeader().setParam1(source);
-        message.getHeader().setParam2(destination);
+        message.getHeader().setParam1(fromUserName);
+        message.getHeader().setParam2(toUserName);
 
         message.getBody().setContent(content);
 
-        return message;
+        connection.offerMessage(message);
+    }
+
+
+    static void ASSERT(boolean flag) {
+        if (!flag) throw new RuntimeException();
     }
 }

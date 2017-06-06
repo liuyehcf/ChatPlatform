@@ -85,12 +85,6 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         }
 
         for (Message message : messages) {
-
-            //服务器告知下线
-            if (message.getControl().isCloseSessionMessage()) {
-                offLine(connection);
-            }
-
             connection.getSessionWindow(message.getHeader().getParam2()).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }

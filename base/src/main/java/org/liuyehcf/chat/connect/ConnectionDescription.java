@@ -1,7 +1,8 @@
 package org.liuyehcf.chat.connect;
 
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Liuye on 2017/6/2.
@@ -25,7 +26,7 @@ public class ConnectionDescription {
     /**
      * Session描述符列表
      */
-    private List<SessionDescription> sessionDescriptions;
+    private Set<SessionDescription> sessionDescriptions;
 
     /**
      * 文本类型
@@ -42,7 +43,7 @@ public class ConnectionDescription {
         this.source = source;
         this.destination = destination;
         this.type = TEXT;
-        sessionDescriptions = new LinkedList<SessionDescription>();
+        sessionDescriptions = new HashSet<SessionDescription>();
     }
 
     /**
@@ -56,7 +57,7 @@ public class ConnectionDescription {
         this.source = source;
         this.destination = destination;
         this.type = type;
-        sessionDescriptions = new LinkedList<SessionDescription>();
+        sessionDescriptions = new HashSet<SessionDescription>();
     }
 
     public String getSource() {
@@ -71,17 +72,16 @@ public class ConnectionDescription {
         return type;
     }
 
-    public void addSessionDescription(SessionDescription sessionDescription) {
-        sessionDescriptions.add(sessionDescription);
+    public boolean addSessionDescription(SessionDescription sessionDescription) {
+        return sessionDescriptions.add(sessionDescription);
     }
 
-    public void removeSessionDescription(SessionDescription sessionDescription) {
-        if (!sessionDescriptions.remove(sessionDescription))
-            throw new RuntimeException();
+    public boolean removeSessionDescription(SessionDescription sessionDescription) {
+        return sessionDescriptions.remove(sessionDescription);
     }
 
 
-    public List<SessionDescription> getSessionDescriptions() {
+    public Set<SessionDescription> getSessionDescriptions() {
         return sessionDescriptions;
     }
 

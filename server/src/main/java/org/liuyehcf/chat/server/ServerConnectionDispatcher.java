@@ -147,6 +147,7 @@ public class ServerConnectionDispatcher {
         }
     }
 
+    //todo 如果是主链接，不拒绝，会话连接，则拒绝
     private void doDispatcher(SocketChannel socketChannel) {
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
@@ -161,7 +162,8 @@ public class ServerConnectionDispatcher {
                         socketChannel);
 
                 pipeLineTask.registerConnection(newConnection);
-                newConnection.offerMessage(ServerUtils.createSystemMessage(true, "", "服务器负载过高，请稍后尝试登陆"));
+                //发送系统消息关闭会话
+                ServerUtils.sendCloseSessionMessage(newConnection, "", "服务器负载过高，请稍后尝试登陆");
                 //该链接不再接受任何消息
                 newConnection.cancel();
             } else {
@@ -285,16 +287,16 @@ public class ServerConnectionDispatcher {
         }
     }
 
+    //todo 这个方法有问题
     public void stop() {
         //首先给所有活跃用户发送离线消息
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
             for (Connection connection : pipeLineTask.getConnections()) {
-                connection.offerMessage(
-                        ServerUtils.createSystemMessage(
-                                true,
-                                connection.getConnectionDescription().getSource(),
-                                "[很抱歉通知您，服务器已关闭]"
-                        ));
+
+                ServerUtils.sendCloseSessionMessage(
+                        connection,
+                        connection.getConnectionDescription().getSource(),
+                        "[很抱歉通知您，服务器已关闭]");
                 connection.cancel();
             }
         }
@@ -388,10 +390,11 @@ public class ServerConnectionDispatcher {
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
             Message message = (Message) proxyMethodInvocation.getArguments()[0];
             LOGGER.debug("Send a message {}", protocol.wrap(message));
-            if (message.getControl().isCloseSessionMessage()) {
-                Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
-                connection.getBindPipeLineTask().offLine(connection);
-            }
+            //todo
+//            if (message.getControl().isCloseSessionMessage()) {
+//                Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
+//                connection.getBindPipeLineTask().offLine(connection);
+//            }
             return result;
         }
     }

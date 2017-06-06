@@ -97,24 +97,27 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 connection.setMainConnection(true);
 
                 String account = message.getHeader().getParam1();
-                if (serverConnectionDispatcher.getMainConnectionMap().containsKey(account))
-                    throw new RuntimeException();
+                ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
+
                 serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
-                //允许客户端登录
-                connection.offerMessage(ServerUtils.createReplyLoginInMessage(true, account, serverConnectionDispatcher.getMainConnectionMap().keySet().toString()));
+
+                //发送消息，允许客户端登录
+                ServerUtils.sendReplyLoginInMessage(
+                        connection,
+                        true,
+                        account,
+                        serverConnectionDispatcher.getMainConnectionMap().keySet().toString());
 
                 //刷新好友列表
-                for (Connection otherConnection : serverConnectionDispatcher.getMainConnectionMap().values()) {
-                    otherConnection.offerMessage(
-                            ServerUtils.createLoginInFlushMessage(
-                                    otherConnection.getConnectionDescription().getDestination(),
-                                    serverConnectionDispatcher.getMainConnectionMap().keySet().toString()));
-                }
+                refreshFriendList();
                 //todo 何时deny
             }
             //注销信息
             else if (message.getControl().isLoginOutMessage()) {
                 String userName = message.getHeader().getParam1();
+                ServerUtils.ASSERT(serverConnectionDispatcher.getMainConnectionMap().containsKey(userName));
+
+                //关闭主界面连接
                 serverConnectionDispatcher.getMainConnectionMap().remove(userName);
                 connection.getBindPipeLineTask().offLine(connection);
 
@@ -122,23 +125,21 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 ConnectionDescription connectionDescription = new ConnectionDescription(
                         Protocol.SERVER_USER_NAME,
                         userName);
+
+                //获取会话连接
                 Connection sessionConnection = serverConnectionDispatcher.getSessionConnectionMap().get(connectionDescription);
 
-                if (sessionConnection != null) {
-                    for (SessionDescription sessionDescription : sessionConnection.getConnectionDescription().getSessionDescriptions()) {
-                        closeSession(sessionDescription.getFromUserName(), sessionDescription.getToUserName());
-                    }
-                    serverConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
-                    sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
-                }
-                //todo
+                ServerUtils.ASSERT(sessionConnection != null);
+
+                //注销通知
+                loginOutNotify(sessionConnection);
+
+                //关闭会话连接
+                serverConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
+                sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
+
                 //刷新好友列表
-                for (Connection otherConnection : serverConnectionDispatcher.getMainConnectionMap().values()) {
-                    otherConnection.offerMessage(
-                            ServerUtils.createLoginInFlushMessage(
-                                    otherConnection.getConnectionDescription().getDestination(),
-                                    serverConnectionDispatcher.getMainConnectionMap().keySet().toString()));
-                }
+                refreshFriendList();
             }
             //是否是新建会话消息
             else if (message.getControl().isOpenSessionMessage()) {
@@ -146,7 +147,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String toUserName = message.getHeader().getParam2();
                 ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session", fromUserName);
 
-                //该Connection第一次建立
+                //该Connection第一次建立，服务端Connection建立时是没有描述符的，因为没有接到任何消息
                 if (connection.getConnectionDescription() == null) {
                     connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
                     connection.setMainConnection(false);
@@ -154,23 +155,14 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
                 //增加一条会话描述符
                 SessionDescription newSessionDescription = new SessionDescription(fromUserName, toUserName);
-                connection.getConnectionDescription().addSessionDescription(
-                        newSessionDescription
-                );
+                ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
+                        newSessionDescription));
 
-                if (!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription())) {
-                    serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
-                    ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
+                ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
 
-                    String greetContent = fromUserName +
-                            "，欢迎进入六爷聊天室!!!";
-                    connection.offerMessage(ServerUtils.createSystemMessage(
-                            false,
-                            fromUserName,
-                            greetContent));
-                } else {
-                    throw new RuntimeException();
-                }
+                serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
+                ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
+
             }
             //客户端要求断开连接
             else if (message.getControl().isCloseSessionMessage()) {
@@ -179,9 +171,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
                 SessionDescription sessionDescription = new SessionDescription(fromUserName, toUserName);
                 ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
-                connection.getConnectionDescription().removeSessionDescription(sessionDescription);
-
-                closeSession(fromUserName, toUserName);
+                ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
 
                 //该连接没有会话了
                 if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
@@ -198,14 +188,21 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
                     toConnection.offerMessage(message);
                 } else {
-                    //todo 激活对话窗口
                     Connection mainConnection;
-
                     if ((mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(toUserName)) != null) {
-                        mainConnection.offerMessage(
-                                ServerUtils.createOpenSessionWindowMessage(
-                                        toUserName, fromUserName, message.getBody().getContent()
-                                ));
+
+                        //发送一条消息要求客户端代开会话窗口
+                        ServerUtils.sendOpenSessionWindowMessage(
+                                mainConnection,
+                                toUserName,
+                                fromUserName,
+                                message.getBody().getContent());
+                    } else {
+                        //todo 此时对方已下线
+                        ServerUtils.sendSystemMessage(
+                                connection,
+                                fromUserName,
+                                "<" + toUserName + ">已经离线");
                     }
                 }
             }
@@ -258,15 +255,16 @@ public class ServerSessionTask extends AbstractPipeLineTask {
      * 检查处于Connection是否处于活跃状态
      * 超过一定时间就强制下线
      */
+    //todo 这个方法有问题
     private void checkActive() {
         long currentStamp = System.currentTimeMillis();
         for (Connection connection : getConnections()) {
             if (currentStamp - connection.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
-                connection.offerMessage(ServerUtils.createSystemMessage(
-                        true,
+                //发送消息关闭会话
+                ServerUtils.sendCloseSessionMessage(
+                        connection,
                         connection.getConnectionDescription().getSource(),
                         "占着茅坑不拉屎，你可以滚了!!!"
-                        )
                 );
             }
         }
@@ -289,41 +287,59 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         }
     }
 
-
-    private void closeSession(String fromUserName, String toUserName) {
-        ConnectionDescription connectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
-        Connection connection = serverConnectionDispatcher.getSessionConnectionMap().get(connectionDescription);
-
-        //connection为null代表已经关闭了
-        if (connection != null) {
-            String systemContent = "["
-                    + fromUserName
-                    + "]已断开连接";
-            connection.offerMessage(ServerUtils.createSystemMessage(
-                    false,
-                    toUserName,
-                    systemContent
-            ));
+    private void refreshFriendList() {
+        String listString = serverConnectionDispatcher.getMainConnectionMap().keySet().toString();
+        for (Connection connection : serverConnectionDispatcher.getMainConnectionMap().values()) {
+            //发送系统消息，要求客户端刷新主界面好友列表
+            ServerUtils.sendLoginInFlushMessage(
+                    connection,
+                    connection.getConnectionDescription().getDestination(),
+                    listString);
         }
     }
 
-    private void closeGroupSession(Connection connection, String fromUserName, String groupName) {
-        ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
+    private void loginOutNotify(Connection connection) {
+        //遍历会话连接的所有会话描述符
+        for (SessionDescription sessionDescription : connection.getConnectionDescription().getSessionDescriptions()) {
+            String fromUserName = sessionDescription.getFromUserName();
+            String toUserName = sessionDescription.getToUserName();
 
-        serverGroupInfo.removeConnection(connection);
+            ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
+            Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
 
-        if (serverGroupInfo.isGroupEmpty()) {
-            serverConnectionDispatcher.getGroupInfoMap().remove(serverGroupInfo.getGroupName());
-        } else {
-            String systemContent = "["
-                    + fromUserName
-                    + "]已断开连接";
-            serverGroupInfo.offerMessage(connection, ServerUtils.createSystemMessage(
-                    false,
-                    "",
-                    systemContent
-            ));
+            //connection为null代表已经关闭了
+            if (toConnection != null) {
+                String systemContent = "["
+                        + fromUserName
+                        + "]已断开连接";
+                ServerUtils.sendCloseSessionMessage(
+                        toConnection,
+                        toUserName,
+                        systemContent);
+            }
         }
 
+
     }
+
+    //todo
+//    private void closeGroupSession(Connection connection, String fromUserName, String groupName) {
+//        ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
+//
+//        serverGroupInfo.removeConnection(connection);
+//
+//        if (serverGroupInfo.isGroupEmpty()) {
+//            serverConnectionDispatcher.getGroupInfoMap().remove(serverGroupInfo.getGroupName());
+//        } else {
+//            String systemContent = "["
+//                    + fromUserName
+//                    + "]已断开连接";
+//            serverGroupInfo.offerMessage(connection, ServerUtils.sendCloseSessionMessage(
+//                    false,
+//                    "",
+//                    systemContent
+//            ));
+//        }
+//
+//    }
 }
