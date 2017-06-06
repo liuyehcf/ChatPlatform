@@ -129,15 +129,15 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 //获取会话连接
                 Connection sessionConnection = serverConnectionDispatcher.getSessionConnectionMap().get(connectionDescription);
 
-                ServerUtils.ASSERT(sessionConnection != null);
+                //若为空，则代表该用户没有开启任何会话
+                if (sessionConnection != null) {
+                    //注销通知
+                    loginOutNotify(sessionConnection);
 
-                //注销通知
-                loginOutNotify(sessionConnection);
-
-                //关闭会话连接
-                serverConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
-                sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
-
+                    //关闭会话连接
+                    serverConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
+                    sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
+                }
                 //刷新好友列表
                 refreshFriendList();
             }
