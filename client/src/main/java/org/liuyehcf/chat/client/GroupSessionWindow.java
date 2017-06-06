@@ -144,7 +144,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
 
         scrollPane = new JScrollPane(textPane);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setBounds(125, 25, 800, 600);
+        scrollPane.setBounds(125, 25, 700, 600);
 
 
         //设置一个输入文本框以及一个按钮
