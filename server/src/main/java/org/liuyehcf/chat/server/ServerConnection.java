@@ -16,6 +16,19 @@ import java.nio.channels.SocketChannel;
  */
 public class ServerConnection extends Connection {
 
+    /**
+     * 是否是主界面的连接
+     */
+    private boolean isMainConnection;
+
+    public boolean isMainConnection() {
+        return isMainConnection;
+    }
+
+    public void setMainConnection(boolean mainConnection) {
+        isMainConnection = mainConnection;
+    }
+
     public ServerConnection(MessageReaderFactory messageReaderFactory,
                             MessageWriterFactory messageWriterFactory,
                             SocketChannel socketChannel) {

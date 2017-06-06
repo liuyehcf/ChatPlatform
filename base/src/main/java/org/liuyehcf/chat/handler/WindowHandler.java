@@ -7,7 +7,7 @@ public interface WindowHandler {
     /**
      * 登录成功时的回调函数
      */
-    void onSucceed();
+    void onSuccessful();
 
     /**
      * 登录失败时的回调函数

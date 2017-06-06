@@ -14,16 +14,10 @@ import java.nio.channels.SocketChannel;
  * Created by Liuye on 2017/6/5.
  */
 public class ClientMainConnection extends Connection {
-
-    /**
-     * 信息头
-     */
-    private Protocol.Header header;
-
     /**
      * 绑定的列表窗口
      */
-    private MainWindow bindMainWindow;
+    private final MainWindow bindMainWindow;
 
     public MainWindow getBindMainWindow() {
         return bindMainWindow;
@@ -37,16 +31,11 @@ public class ClientMainConnection extends Connection {
         //让MainConnection和SessionConnection在Server端加以区别
         super(DefaultMessageReaderProxyFactory.Builder(),
                 DefaultMessageWriterProxyFactory.Builder());
-        setConnectionDescription(new ConnectionDescription(source + "<MAIN>", destination));
+        setConnectionDescription(new ConnectionDescription(source, destination));
 
         this.bindMainWindow = bindMainWindow;
 
         socketChannel = SocketChannel.open();
         socketChannel.connect(inetSocketAddress);
-
-        header = new Protocol.Header();
-
-        header.setParam1(source);
-        header.setParam2(destination);
     }
 }

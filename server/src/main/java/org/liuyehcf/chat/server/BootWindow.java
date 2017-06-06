@@ -119,7 +119,7 @@ public class BootWindow {
                                 new WindowHandler() {
                                     //注意，以下两个回调是由listenThread这个线程来做的
                                     @Override
-                                    public void onSucceed() {
+                                    public void onSuccessful() {
                                         systemLabel.setText("Boot succeed!");
                                     }
 

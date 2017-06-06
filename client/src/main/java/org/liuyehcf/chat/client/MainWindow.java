@@ -1,6 +1,5 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.handler.WindowHandler;
 import org.liuyehcf.chat.protocol.Protocol;
@@ -13,8 +12,10 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Liuye on 2017/6/5.
@@ -44,6 +45,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
      * 关联的连接
      */
     private ClientMainConnection bindMainConnection;
+
+    /**
+     * 会话窗口界面
+     */
+    private Set<ChatWindow> chatWindows;
 
     /**
      * 登录回调
@@ -81,13 +87,14 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.password = password;
         this.handler = handler;
 
+        chatWindows = new HashSet<ChatWindow>();
+
         if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
             throw new RuntimeException();//todo
         }
         ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
 
         init();
-        connect();
     }
 
     private void init() {
@@ -125,11 +132,17 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         //自动调整大小
         this.pack();
 
+        //增加窗口监听器
+        this.addWindowListener(new MyWindowListener());
+
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
 
-    private void connect() {
+    /**
+     * 每一个MainWindow对应一个ClientMainConnection
+     */
+    public void connect() {
         try {
             bindMainConnection = new ClientMainConnection(
                     account,
@@ -138,17 +151,16 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                     this
             );
         } catch (Exception e) {
+            //如果抛出异常，那么MainWindow启动失败，执行失败回调
             handler.onFailure();
+            //关闭主界面
             this.dispose();
             return;
         }
 
-        if (ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(bindMainConnection, account, password)) {
-            handler.onSucceed();
-        } else {
-            handler.onFailure();
-            this.dispose();
-        }
+        //需要发送一条Log消息后再断开
+        ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(bindMainConnection, account, password);
+        handler.onSuccessful();
     }
 
 
@@ -160,9 +172,9 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 .getLastSelectedPathComponent();
 
         if (node.getLevel() == 2) {
-            new ChatWindow(serverHost, serverPort, account, (String) node.getUserObject(), new WindowHandler() {
+            ChatWindow newChatWindow = new ChatWindow(this, serverHost, serverPort, account, (String) node.getUserObject(), new WindowHandler() {
                 @Override
-                public void onSucceed() {
+                public void onSuccessful() {
                     //todo
                 }
 
@@ -171,6 +183,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                     //todo
                 }
             });
+            chatWindows.add(newChatWindow);
         }
     }
 
@@ -183,6 +196,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             }
         }
     }
+
+    public void removeChatWindow(ChatWindow chatWindow) {
+        chatWindows.remove(chatWindow);
+    }
+
 
     private final class MyWindowListener implements WindowListener {
         @Override
@@ -198,16 +216,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         @Override
         public void windowClosed(WindowEvent e) {
             //需要关闭当前主界面对应的所有会话连接
-            //todo
-//            for (Map.Entry<ConnectionDescription, ClientSessionConnection> entry : ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().entrySet()) {
-//                ConnectionDescription connectionDescription = entry.getKey();
-//                if (connectionDescription.getSource().equals(account)) {
-//                    ClientUtils.sendSessionOffLineMessage(entry.getValue());
-//                }
-//            }
-            ClientUtils.sendLoginOutMessage(bindMainConnection);
-
-            ClientConnectionDispatcher.getSingleton().getMainWindowMap().remove(account);
+            for (ChatWindow chatWindow : chatWindows) {
+                ClientSessionConnection connection = chatWindow.getBindConnection();
+                ClientUtils.sendSessionOffLineMessage(connection, chatWindow.getHeader());
+            }
+            ClientUtils.sendLoginOutMessage(bindMainConnection, account);
         }
 
         @Override

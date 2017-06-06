@@ -115,11 +115,9 @@ public class ClientConnectionDispatcher {
 
         loadBalancingLock = new ReentrantLock(true);
 
-        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder()
-                .addInterceptor(new ClientMessageReadeInterceptor());
+        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder();
 
-        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
-                .addInterceptor(new ClientMessageWriteInterceptor());
+        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder();
 
         executorService = Executors.newCachedThreadPool();
 
@@ -147,21 +145,23 @@ public class ClientConnectionDispatcher {
     }
 
     //todo 如果一个线程管理多个主界面，那么也是需要加锁的哦
-    public boolean dispatcherMainConnection(ClientMainConnection connection, String account, String password) {
+    public void dispatcherMainConnection(ClientMainConnection connection, String account, String password) {
         if (mainTask == null) {
             mainTask = new ClientMainTask();
             executorService.execute(mainTask);
             LOGGER.info("Start the Main Task {}", mainTask);
         }
 
-        if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAINWINDOW_PER_MAIN_TASK)
-            return false;
-
-        mainTask.registerConnection(connection);
-        ClientUtils.sendLoginInMessage(connection, account, password);
-        return true;
+        if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAINWINDOW_PER_MAIN_TASK) {
+            mainTask.registerConnection(connection);
+            ClientUtils.sendLoginOutMessage(connection,account);
+            connection.cancel();
+            //注销操作等消息发送成功后再执行
+        } else {
+            mainTask.registerConnection(connection);
+            ClientUtils.sendLoginInMessage(connection, account, password);
+        }
     }
-
 
     public void dispatchSessionConnection(ClientSessionConnection connection) {
         //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
@@ -295,57 +295,6 @@ public class ClientConnectionDispatcher {
             loadBalancingLock.lock();
         } finally {
             loadBalancingLock.unlock();
-        }
-    }
-
-
-    /**
-     * 消息读取后处理器，仅处理异常
-     */
-    private static class ClientMessageReadeInterceptor implements MessageInterceptor {
-
-        @Override
-        public Object intercept(MessageInvocation messageInvocation) throws IOException {
-            List<Message> messages;
-            try {
-                messages = (List<Message>) messageInvocation.process();
-            } catch (IOException e) {
-                ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                ClientSessionConnection connection = (ClientSessionConnection) proxyMethodInvocation.getArguments()[0];
-                //todo connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
-                connection.getBindPipeLineTask().offLine(connection);
-                throw e;
-            }
-            return messages;
-        }
-    }
-
-    /**
-     * 消息写入后处理器
-     */
-    private static class ClientMessageWriteInterceptor implements MessageInterceptor {
-
-        @Override
-        public Object intercept(MessageInvocation messageInvocation) throws IOException {
-            Object result;
-            try {
-                result = messageInvocation.process();
-            } catch (IOException e) {
-                ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                ClientSessionConnection connection = (ClientSessionConnection) proxyMethodInvocation.getArguments()[1];
-                //todo connection.getBindChatWindow().flushOnWindow(false, true, "[已失去与服务器的连接]");
-                connection.getBindPipeLineTask().offLine(connection);
-                throw e;
-            }
-            ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-            ClientSessionConnection connection = (ClientSessionConnection) proxyMethodInvocation.getArguments()[1];
-            Message message = (Message) proxyMethodInvocation.getArguments()[0];
-            if (!message.getControl().isOpenSessionMessage() && !message.getControl().isCloseSessionMessage())
-                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(true, false, message.getDisplayMessageString());
-            if (message.getControl().isCloseSessionMessage()) {
-                connection.getBindPipeLineTask().offLine(connection);
-            }
-            return result;
         }
     }
 }

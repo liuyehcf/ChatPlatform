@@ -97,7 +97,7 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
-    static void sendLoginOutMessage(Connection connection) {
+    static void sendLoginOutMessage(Connection connection, String account) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -106,6 +106,9 @@ class ClientUtils {
 
         message.getControl().setSystemMessage(true);
         message.getControl().setLoginOutMessage(true);
+
+        message.getHeader().setParam1(account);
+        message.getHeader().setParam2(Protocol.SERVER_USER_NAME);
 
         connection.offerMessage(message);
     }

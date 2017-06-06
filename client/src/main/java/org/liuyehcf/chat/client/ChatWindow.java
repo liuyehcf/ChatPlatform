@@ -2,6 +2,7 @@ package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.handler.WindowHandler;
 import org.liuyehcf.chat.protocol.Protocol;
+import sun.applet.Main;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -49,6 +50,11 @@ public class ChatWindow {
     private WindowHandler handler;
 
     /**
+     * 该会话关联的主界面
+     */
+    private final MainWindow mainWindow;
+
+    /**
      * 当前会话绑定的连接，该链接可能绑定了多个会话
      */
     private ClientSessionConnection bindConnection;
@@ -75,11 +81,16 @@ public class ChatWindow {
 
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
-    public JTextPane getTextPane() {
-        return textPane;
+    public Protocol.Header getHeader() {
+        return header;
     }
 
-    public ChatWindow(String serverHost, Integer serverPort, String fromUser, String toUser, WindowHandler handler) {
+    public ClientSessionConnection getBindConnection() {
+        return bindConnection;
+    }
+
+    public ChatWindow(MainWindow mainWindow, String serverHost, Integer serverPort, String fromUser, String toUser, WindowHandler handler) {
+        this.mainWindow = mainWindow;
         this.serverHost = serverHost;
         this.serverPort = serverPort;
         this.fromUser = fromUser;
@@ -237,6 +248,7 @@ public class ChatWindow {
         @Override
         public void windowClosed(WindowEvent e) {
             ClientUtils.sendSessionOffLineMessage(bindConnection, header);
+            mainWindow.removeChatWindow(ChatWindow.this);
         }
 
         @Override
@@ -258,9 +270,5 @@ public class ChatWindow {
         public void windowDeactivated(WindowEvent e) {
 
         }
-    }
-
-    public static void main(String[] args) {
-        new ChatWindow("1", 1, "1", "1", null);
     }
 }

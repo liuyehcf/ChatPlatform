@@ -5,6 +5,7 @@ import org.liuyehcf.chat.connect.Connection;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,9 +74,42 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
     }
 
     @Override
-    public void offLine(Connection connection) {
-        throw new UnsupportedOperationException();
+    final public void offLine(Connection connection) {
+        SocketChannel socketChannel = connection.getSocketChannel();
+
+        for (Selector selector : connection.getSelectors()) {
+            SelectionKey selectionKey = socketChannel.keyFor(selector);
+            if (selectionKey != null) selectionKey.cancel();
+        }
+        connection.getSelectors().clear();
+
+        if (socketChannel.isConnected()) {
+            try {
+                socketChannel.finishConnect();
+            } catch (IOException e) {
+            }
+        }
+
+        if (socketChannel.isOpen()) {
+            try {
+                socketChannel.close();
+            } catch (IOException e) {
+            }
+        }
+
+        getConnections().remove(connection);
+
+        if (getConnections().isEmpty()) {
+            getBindThread().interrupt();
+        }
+
+        offLinePostProcess(connection);
     }
+
+    /**
+     * 下线的后续处理，交给子类实现
+     */
+    protected abstract void offLinePostProcess(Connection connection);
 
 
     @Override

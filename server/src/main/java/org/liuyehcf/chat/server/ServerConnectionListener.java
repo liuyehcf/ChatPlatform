@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,7 +54,7 @@ public class ServerConnectionListener {
             handler.onFailure();
             return;
         }
-        handler.onSucceed();
+        handler.onSuccessful();
 
         ChatServerDispatcher.LOGGER.info("The server starts successfully!");
 

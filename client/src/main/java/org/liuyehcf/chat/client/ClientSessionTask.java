@@ -75,7 +75,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         try {
             messages = messageReader.read(connection);
         } catch (IOException e) {
-            //由于已经添加了拦截器，这里不做处理
+            ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
             return;
         }
 
@@ -118,12 +118,18 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         Message message = connection.pollMessage();
         if (message != null) {
             MessageWriter messageWriter = connection.getMessageWriter();
-
+            String user = message.getHeader().getParam1();
             try {
                 messageWriter.write(message, connection);
+
+                if (!message.getControl().isOpenSessionMessage() && !message.getControl().isCloseSessionMessage())
+                    connection.getSessionWindow(user).flushOnWindow(true, false, message.getDisplayMessageString());
+                if (message.getControl().isCloseSessionMessage()) {
+                    connection.getBindPipeLineTask().offLine(connection);
+                }
             } catch (IOException e) {
-                //由于已经添加了拦截器，这里不做处理
-                return;
+                connection.getSessionWindow(user).flushOnWindow(false, true, "[已失去与服务器的连接]");
+                connection.getBindPipeLineTask().offLine(connection);
             }
         }
     }
@@ -134,35 +140,11 @@ public class ClientSessionTask extends AbstractPipeLineTask {
      * @param connection
      */
     @Override
-    public void offLine(Connection connection) {
+    protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
-
-        SocketChannel socketChannel = connection.getSocketChannel();
-
-        for (Selector selector : connection.getSelectors()) {
-            SelectionKey selectionKey = socketChannel.keyFor(selector);
-            if (selectionKey != null) selectionKey.cancel();
-        }
-        connection.getSelectors().clear();
-
-        if (socketChannel.isConnected()) {
-            try {
-                socketChannel.finishConnect();
-            } catch (IOException e) {
-            }
-        }
-
-        if (socketChannel.isOpen()) {
-            try {
-                socketChannel.close();
-            } catch (IOException e) {
-            }
-        }
 
         ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().remove(connection.getConnectionDescription());
 
-        getConnections().remove(connection);
-        if (getConnectionNum() <= 0)
-            getBindThread().interrupt();
+
     }
 }

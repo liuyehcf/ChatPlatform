@@ -78,16 +78,18 @@ public class ClientMainTask extends AbstractPipeLineTask {
         try {
             messages = messageReader.read(connection);
         } catch (IOException e) {
-            //由于已经添加了拦截器，这里不做处理
+            ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
+            connection.getBindPipeLineTask().offLine(connection);
             return;
         }
 
         for (Message message : messages) {
             //登录消息
+            String userName = message.getHeader().getParam2();
             if (message.getControl().isLoginInMessage()) {
                 //允许登录
                 if (message.getHeader().getParam3().equals(PERMIT)) {
-                    String userName = message.getHeader().getParam2();
+
                     MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
 
                     //显示主界面
@@ -98,7 +100,6 @@ public class ClientMainTask extends AbstractPipeLineTask {
                 } else if (message.getHeader().getParam3().equals(DENY)) {
                     //拒绝登录
                 } else if (message.getHeader().getParam3().endsWith(FLUSH)) {
-                    String userName = message.getHeader().getParam2();
                     MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
 
                     //刷新好友列表
@@ -136,19 +137,27 @@ public class ClientMainTask extends AbstractPipeLineTask {
         Message message = connection.pollMessage();
         if (message != null) {
             MessageWriter messageWriter = connection.getMessageWriter();
-
             try {
                 messageWriter.write(message, connection);
+
+                //主动断开与服务器的连接，在发出消息之后，断开客户端连接
+                if (message.getControl().isLoginOutMessage()) {
+                    offLine(connection);
+//                    ClientConnectionDispatcher.getSingleton()
+//                            .getMainWindowMap().get(message.getHeader().getParam1()).dispose();
+                    ClientConnectionDispatcher.getSingleton()
+                            .getMainWindowMap().remove(message.getHeader().getParam1());
+                }
+
             } catch (IOException e) {
-                //由于已经添加了拦截器，这里不做处理
-                return;
+                ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
+                connection.getBindPipeLineTask().offLine(connection);
             }
         }
     }
 
-
     @Override
-    public void offLine(Connection connection) {
-
+    protected void offLinePostProcess(Connection connection) {
+        ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
     }
 }

@@ -109,10 +109,6 @@ public class ChatServerDispatcher {
                 .addInterceptor(new ServerMessageWriteInterceptor());
 
         mainConnectionMap = new ConcurrentHashMap<String, Connection>();
-//        //todo 测试数据
-//        mainConnectionMap.put("测试用户1", new TestConnection());
-//        mainConnectionMap.put("测试用户2", new TestConnection());
-//        mainConnectionMap.put("测试用户3", new TestConnection());
 
 
         connectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();

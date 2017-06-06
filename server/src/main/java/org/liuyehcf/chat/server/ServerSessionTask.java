@@ -42,7 +42,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         this.sessionConnectionMap = sessionConnectionMap;
         this.groupInfoMap = groupInfoMap;
 
-
         ChatServerDispatcher.getSingleton().getPipeLineTasks().add(this);
     }
 
@@ -96,7 +95,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
     }
 
     private void readMessageFromConnection(SelectionKey selectionKey) {
-        Connection connection = (Connection) selectionKey.attachment();
+        ServerConnection connection = (ServerConnection) selectionKey.attachment();
 
         MessageReader messageReader = connection.getMessageReader();
         List<Message> messages;
@@ -112,13 +111,15 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
             if (message.getControl().isLoginInMessage()) {
                 connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, message.getHeader().getParam1()));
+                connection.setMainConnection(true);
 
                 String account = message.getHeader().getParam1();
                 if (!mainConnectionMap.containsKey(account)) {
                     mainConnectionMap.put(account, connection);
+                    //允许客户端登录
                     connection.offerMessage(ServerUtils.createReplyLoginInMessage(true, account, mainConnectionMap.keySet().toString()));
 
-
+                    //刷新好友列表
                     for (Connection otherConnection : mainConnectionMap.values()) {
                         otherConnection.offerMessage(
                                 ServerUtils.createLoginInFlushMessage(
@@ -131,7 +132,22 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     //todo
                 }
             } else if (message.getControl().isLoginOutMessage()) {
+                String user = message.getHeader().getParam1();
+                mainConnectionMap.remove(user);
+                connection.getBindPipeLineTask().offLine(connection);
+
+                //找到该主界面对应的会话连接描述符
+                ConnectionDescription connectionDescription = new ConnectionDescription(
+                        Protocol.SERVER_USER_NAME,
+                        user);
                 //todo
+                //刷新好友列表
+                for (Connection otherConnection : mainConnectionMap.values()) {
+                    otherConnection.offerMessage(
+                            ServerUtils.createLoginInFlushMessage(
+                                    otherConnection.getConnectionDescription().getDestination(),
+                                    mainConnectionMap.keySet().toString()));
+                }
             }
             //是否是新建会话消息
             else if (message.getControl().isOpenSessionMessage()) {
@@ -142,6 +158,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 //该Connection第一次建立
                 if (connection.getConnectionDescription() == null) {
                     connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUser));
+                    connection.setMainConnection(false);
                 }
 
                 //增加一条会话描述符
@@ -154,44 +171,14 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     sessionConnectionMap.put(connection.getConnectionDescription(), connection);
                     ChatServerDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUser, newSessionDescription);
 
-                    if (message.getControl().isGroupChat()) {
-                        ChatServerDispatcher.LOGGER.info("This Session is a group chat");
-
-//                        connection.setGroupChat(true);
-//                        String groupName = connection.getConnectionDescription().getDestination();
-//                        ServerGroupInfo groupConnect;
-//                        if (groupInfoMap.containsKey(groupName)) {
-//                            groupConnect = groupInfoMap.get(groupName);
-//                        } else {
-//                            groupConnect = new ServerGroupInfo();
-//                            groupConnect.setGroupName(groupName);
-//                            groupInfoMap.put(groupName, groupConnect);
-//                        }
-//                        groupConnect.addConnection(connection);
-//                        String greetContent1 = "大家欢迎<"
-//                                + source
-//                                + ">进入群聊聊天室!!!";
-//                        groupConnect.offerMessage(connection, ServerUtils.createSystemMessage(
-//                                false,
-//                                source,
-//                                greetContent1));
-//
-//                        String greetContent2 = source +
-//                                "，欢迎进入群聊会话!!!";
-//                        connection.offerMessage(ServerUtils.createSystemMessage(
-//                                false,
-//                                source,
-//                                greetContent2));
-                    } else {
-                        String greetContent = fromUser +
-                                "，欢迎进入私人会话!!!";
-                        connection.offerMessage(ServerUtils.createSystemMessage(
-                                false,
-                                fromUser,
-                                greetContent));
-                    }
+                    String greetContent = fromUser +
+                            "，欢迎进入六爷聊天室!!!";
+                    connection.offerMessage(ServerUtils.createSystemMessage(
+                            false,
+                            fromUser,
+                            greetContent));
                 } else {
-                    ChatServerDispatcher.LOGGER.error("The Session {} is already exists", connection.getConnectionDescription().getDestination());
+                    throw new RuntimeException();
                 }
             }
             //客户端要求断开连接
@@ -203,17 +190,12 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 ChatServerDispatcher.LOGGER.info("The client {} close the session {}", fromUser, sessionDescription);
                 connection.getConnectionDescription().removeSessionDescription(sessionDescription);
 
-                if (message.getControl().isGroupChat()) {
-                    closeGroupSession(connection, fromUser, toUser);
-                } else {
-                    closeSession(fromUser, toUser);
+                closeSession(fromUser, toUser);
+
+                //该连接没有会话了
+                if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
+                    connection.getBindPipeLineTask().offLine(connection);
                 }
-            }
-            //是否为群聊
-            else if (message.getControl().isGroupChat()) {
-                String groupName = message.getHeader().getParam2();
-                ServerGroupInfo groupConnect = groupInfoMap.get(groupName);
-                groupConnect.offerMessage(connection, message);
             }
             //非群聊
             else {
@@ -291,50 +273,21 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         }
     }
 
-
     /**
      * 离线的后续处理
      *
      * @param connection
      */
     @Override
-    public void offLine(Connection connection) {
+    protected void offLinePostProcess(Connection connection) {
         ChatServerDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
 
-        SocketChannel socketChannel = connection.getSocketChannel();
-
-        for (Selector selector : connection.getSelectors()) {
-            SelectionKey selectionKey = socketChannel.keyFor(selector);
-            if (selectionKey != null) selectionKey.cancel();
+        ServerConnection serverConnection = (ServerConnection) connection;
+        if (serverConnection.isMainConnection()) {
+            mainConnectionMap.remove(connection.getConnectionDescription().getDestination());
+        } else {
+            sessionConnectionMap.remove(connection.getConnectionDescription());
         }
-        connection.getSelectors().clear();
-
-        if (socketChannel.isConnected()) {
-            try {
-                socketChannel.finishConnect();
-            } catch (IOException e) {
-            }
-        }
-
-        if (socketChannel.isOpen()) {
-            try {
-                socketChannel.close();
-            } catch (IOException e) {
-            }
-        }
-
-        sessionConnectionMap.remove(connection.getConnectionDescription());
-
-//        if (connection.isGroupChat()) {
-//            ServerGroupInfo groupConnect = groupInfoMap.get(connection.getConnectionDescription().getDestination());
-//            groupConnect.removeConnection(connection);
-//
-//        } else {
-//        }
-
-        getConnections().remove(connection);
-        if (getConnectionNum() <= 0)
-            getBindThread().interrupt();
     }
 
 

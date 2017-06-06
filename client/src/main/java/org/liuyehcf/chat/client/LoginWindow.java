@@ -129,7 +129,7 @@ public class LoginWindow {
                         password,
                         new WindowHandler() {
                             @Override
-                            public void onSucceed() {
+                            public void onSuccessful() {
                                 systemLabel.setText("Login succeed!");
                             }
 
@@ -140,6 +140,10 @@ public class LoginWindow {
                         }
                 );
 
+                //主界面连接到服务器
+                mainWindow.connect();
+
+                //将主界面放到映射map中
                 ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, mainWindow);
             }
         });
