@@ -10,6 +10,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * Created by Liuye on 2017/6/5.
@@ -53,7 +54,22 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 树组件
      */
-    protected JTree jTree;
+    private JTree jTree;
+
+    /**
+     * 树根节点
+     */
+    private DefaultMutableTreeNode rootList;
+
+    /**
+     * 一级节点，在线好友
+     */
+    private DefaultMutableTreeNode onlineList;
+
+    /**
+     * 一级节点，离线好友
+     */
+    private DefaultMutableTreeNode offlineList;
 
     public MainWindow(String serverHost,
                       Integer serverPort,
@@ -79,63 +95,35 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         jTree = new JTree();
 
         //树节点的相关数据
+        rootList = new DefaultMutableTreeNode("好友");
 
-        DefaultMutableTreeNode rootList = new DefaultMutableTreeNode("好友");
+        onlineList = new DefaultMutableTreeNode("在线好友");
+        offlineList = new DefaultMutableTreeNode("离线好友");
 
-        DefaultMutableTreeNode onlineList = new DefaultMutableTreeNode("在线好友");
-
-        DefaultMutableTreeNode offlineList = new DefaultMutableTreeNode("离线好友");
-
-
-        onlineList.add(new DefaultMutableTreeNode("好友1"));
-
-        onlineList.add(new DefaultMutableTreeNode("好友2"));
-
-        offlineList.add(new DefaultMutableTreeNode("好友3"));
-
-        offlineList.add(new DefaultMutableTreeNode("好友4"));
 
         rootList.add(onlineList);
-
         rootList.add(offlineList);
 
-
-        //树的数据模型
-
-        DefaultTreeModel model = new DefaultTreeModel(rootList);
-
         //设置数据模型
-
-        jTree.setModel(model);
-
-        // 展开所有树
-
-//        for (int i = 0; i < jTree.getRowCount(); i++)
-//
-//            jTree.expandRow(i);
+        jTree.setModel(new DefaultTreeModel(rootList));
 
         //添加事件
-
         jTree.addTreeSelectionListener(this);
 
         //滚动面板
-
         JScrollPane jScrollPane = new JScrollPane(jTree,
-
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         //添加树到滚动面板
-
         jScrollPane.getViewport().add(jTree);
 
         //添加滚动面板到窗口中
-
         this.getContentPane().add(jScrollPane);
 
-        this.setTitle("JTree的事件例子");
+        this.setTitle("六爷聊天系统");
 
+        //自动调整大小
         this.pack();
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -167,77 +155,59 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         //获取选择的节点
 
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) jTree
-
                 .getLastSelectedPathComponent();
 
-        if (node.getLevel() == 0) {
+        if (node.getLevel() == 2) {
+            new ChatWindow(serverHost, serverPort, account, (String) node.getUserObject(), new WindowHandler() {
+                @Override
+                public void onSucceed() {
+                    //todo
+                }
 
-            //显示提示信息
-
-//            JOptionPane.showMessageDialog(null,
-//
-//                    node.getUserObject() + ": 共" + node.getChildCount() + "个国家");
-
-        } else if (node.getLevel() == 1) {
-
-//            //显示提示信息
-//
-//            JOptionPane.showMessageDialog(null,
-//
-//                    node.getUserObject() + ": 共" + node.getChildCount() + "名名将");
-
-        } else if (node.getLevel() == 2) {
-
-            //显示提示信息
-
-            JOptionPane.showMessageDialog(null, node.getParent() + "名将: " +
-
-                    node.getUserObject());
-
+                @Override
+                public void onFailure() {
+                    //todo
+                }
+            });
         }
-
     }
 
+
+    public void flushUserList(List<String> s) {
+        onlineList.removeAllChildren();
+        for (String user : s) {
+            if (!user.equals(account)) {
+                onlineList.add(new DefaultMutableTreeNode(user));
+            }
+        }
+    }
+
+
+    private MainWindow() {
+        init();
+        onlineList.add(new DefaultMutableTreeNode("hehe"));
+        onlineList.add(new DefaultMutableTreeNode("haha"));
+    }
 
     public static void main(String[] args) {
 
         //Windows风格
-
         //String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
 
         //Windows Classic风格
-
         //String lookAndFeel = "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel";
 
         //系统当前风格
-
         String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
 
         try {
-
             UIManager.setLookAndFeel(lookAndFeel);
-
-        } catch (ClassNotFoundException e) {
-
+        } catch (Exception e) {
             e.printStackTrace();
-
-        } catch (InstantiationException e) {
-
-            e.printStackTrace();
-
-        } catch (IllegalAccessException e) {
-
-            e.printStackTrace();
-
-        } catch (UnsupportedLookAndFeelException e) {
-
-            e.printStackTrace();
-
         }
 
-        //MainWindow demo = new MainWindow();
+        MainWindow demo = new MainWindow();
 
-        //demo.setVisible(true);
-
+        demo.setVisible(true);
     }
 }

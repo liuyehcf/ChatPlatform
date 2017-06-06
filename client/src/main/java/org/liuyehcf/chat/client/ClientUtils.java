@@ -4,6 +4,10 @@ import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Liuye on 2017/6/2.
  */
@@ -35,7 +39,7 @@ class ClientUtils {
      */
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
-    static void sendSystemMessage(Connection connection, boolean isHelloMessage, boolean isOffLineMessage) {
+    static void sendSessionHelloMessage(Connection connection) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -43,8 +47,20 @@ class ClientUtils {
         message.setBody(new Protocol.Body());
 
         message.getControl().setSystemMessage(true);
-        message.getControl().setHelloMessage(isHelloMessage);
-        message.getControl().setOffLineMessage(isOffLineMessage);
+        message.getControl().setHelloMessage(true);
+
+        connection.offerMessage(message);
+    }
+
+    static void sendSessionOffLineMessage(Connection connection) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(((ClientConnection) connection).getHeader());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+        message.getControl().setOffLineMessage(true);
 
         connection.offerMessage(message);
     }
@@ -75,5 +91,11 @@ class ClientUtils {
         message.getHeader().setParam2(password);
 
         connection.offerMessage(message);
+    }
+
+    static List<String> retrieveNames(String s) {
+        s = s.replaceAll("[\\[\\]]", "");
+        String[] names = s.split(",");
+        return new ArrayList<String>(Arrays.asList(names));
     }
 }

@@ -79,11 +79,19 @@ public class ClientMainTask extends AbstractPipeLineTask {
         }
 
         for (Message message : messages) {
+            //登录消息
             if (message.getControl().isLoginInMessage()) {
+                //允许登录
                 if (message.getHeader().getParam3().equals("permit")) {
                     String userName = message.getHeader().getParam2();
+                    //显示主界面
                     MainWindow mainWindow = ClientConnectionDispatcher.getSingleton().getMainWindowMap().get(userName);
                     mainWindow.setVisible(true);
+
+                    //刷新好友列表
+                    mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
+                }else if(message.getHeader().getParam3().equals("deny")){
+                    //拒绝登录
                 }
             }
         }

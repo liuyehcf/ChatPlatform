@@ -32,12 +32,12 @@ public class ChatWindow {
     /**
      * 信源名字
      */
-    private String fromUserName;
+    private String source;
 
     /**
      * 信宿名字
      */
-    private String toUserName;
+    private String destination;
 
     /**
      * 登录回调
@@ -75,11 +75,11 @@ public class ChatWindow {
         return textPane;
     }
 
-    public ChatWindow(String serverHost, Integer serverPort, String fromUserName, String toUserName, WindowHandler handler) {
+    public ChatWindow(String serverHost, Integer serverPort, String source, String destination, WindowHandler handler) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
-        this.fromUserName = fromUserName;
-        this.toUserName = toUserName;
+        this.source = source;
+        this.destination = destination;
         this.handler = handler;
 
         initWindow();
@@ -91,9 +91,7 @@ public class ChatWindow {
     private void initWindow() {
         frame = new JFrame();
 
-        /*
-         * 滚动条显示文本框
-         */
+        //滚动条显示文本框
         textPane = new JTextPane();
         textPane.setFont(GLOBAL_FONT);
         textPane.setBackground(Color.WHITE);
@@ -103,9 +101,7 @@ public class ChatWindow {
         scrollPane.setBounds(25, 25, 800, 600);
 
 
-        /*
-         * 设置一个输入文本框以及一个按钮
-         */
+        //设置一个输入文本框以及一个按钮
         JPanel panel = new JPanel();
         panel.setLayout(null);//这行必须，否则会很诡异
 
@@ -157,14 +153,10 @@ public class ChatWindow {
         frame.setSize(875, 825);
         frame.setLocation(300, 100);
 
-        /*
-         * 设置窗口监听器
-         */
+        //设置窗口监听器
         frame.addWindowListener(new MyWindowListener());
 
-        /*
-         * 这里的关闭策略选择DISPOSE_ON_CLOSE，这样子窗口关了，父窗口不会关
-         */
+        //这里的关闭策略选择DISPOSE_ON_CLOSE，这样子窗口关了，父窗口不会关
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -172,8 +164,8 @@ public class ChatWindow {
     private void connect() {
         try {
             connection = new ClientConnection(
-                    fromUserName,
-                    toUserName,
+                    source,
+                    destination,
                     ClientConnectionDispatcher.getSingleton().getMessageReaderFactory(),
                     ClientConnectionDispatcher.getSingleton().getMessageWriterFactory(),
                     new InetSocketAddress(serverHost, serverPort),
@@ -182,7 +174,6 @@ public class ChatWindow {
             handler.onSucceed();
         } catch (Exception e) {
             handler.onFailure();
-            //todo 如何只关闭当前ChatWindow
             frame.dispose();
             return;
         }
@@ -242,10 +233,7 @@ public class ChatWindow {
 
         @Override
         public void windowClosed(WindowEvent e) {
-            ClientUtils.sendSystemMessage(
-                    connection,
-                    false,
-                    true);
+            ClientUtils.sendSessionOffLineMessage(connection);
         }
 
         @Override

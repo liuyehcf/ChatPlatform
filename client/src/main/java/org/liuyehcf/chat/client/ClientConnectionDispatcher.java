@@ -197,7 +197,7 @@ public class ClientConnectionDispatcher {
 
             pipeLineTask.registerConnection(connection);
         }
-        ClientUtils.sendSystemMessage(connection, true, false);
+        ClientUtils.sendSessionHelloMessage(connection);
     }
 
     /**

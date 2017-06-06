@@ -81,7 +81,7 @@ class ServerUtils {
         message.getHeader().setParam3(isPermit ? "permit" : "deny");
 
         if (isPermit) {
-            //message.getBody().setContent(content);
+            message.getBody().setContent(content);
         }
 
         return message;
