@@ -194,8 +194,9 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         //获取选择的节点
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) jTree
                 .getLastSelectedPathComponent();
-        if (onlineFriends.contains(node.getUserObject()))
-            createSessionWindow(account, (String) node.getUserObject());
+        if (node != null && node.getUserObject() != null)
+            if (onlineFriends.contains(node.getUserObject()))
+                createSessionWindow(account, (String) node.getUserObject());
     }
 
 
@@ -207,6 +208,9 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 onlineList.add(new DefaultMutableTreeNode(user));
             }
         }
+
+        //刷新
+        ((DefaultTreeModel) jTree.getModel()).reload();
 
         //展开节点
         for (int i = 0; i < jTree.getRowCount(); i++)
