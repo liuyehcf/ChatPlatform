@@ -15,17 +15,17 @@ class ClientUtils {
     /**
      * 主界面线程管理的主界面最大数量
      */
-    static final int MAX_MAINWINDOW_PER_MAIN_TASK = 4;
+    static final int MAX_MAIN_WINDOW_PER_MAIN_TASK = 6;
 
     /**
      * 每个线程管理的channel数量的最大值
      */
-    static final int MAX_CONNECTION_PER_TASK = 3;
+    static final int MAX_CONNECTION_PER_TASK = 2;
 
     /**
      * 最大线程数量
      */
-    static final int MAX_THREAD_NUM = 4;
+    static final int MAX_THREAD_NUM = 3;
 
     /**
      * 当每个任务管理的连接数量与每个任务可管理最大连接数量之比

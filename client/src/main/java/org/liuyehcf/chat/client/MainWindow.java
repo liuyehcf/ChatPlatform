@@ -136,6 +136,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.addWindowListener(new MyWindowListener());
 
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+
     }
 
 

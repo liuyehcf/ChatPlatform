@@ -3,11 +3,7 @@ package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
-import org.liuyehcf.chat.interceptor.MessageInterceptor;
-import org.liuyehcf.chat.interceptor.MessageInvocation;
-import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.pipe.PipeLineTask;
-import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
@@ -163,7 +159,7 @@ public class ClientConnectionDispatcher {
             LOGGER.info("Start the Main Task {}", mainTask);
         }
 
-        if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAINWINDOW_PER_MAIN_TASK) {
+        if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAIN_WINDOW_PER_MAIN_TASK) {
             mainTask.registerConnection(connection);
             ClientUtils.sendLoginOutMessage(connection, account);
             connection.cancel();
