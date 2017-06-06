@@ -113,15 +113,15 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
-    static Message createOpenSessionWindowMessage(String fromUser, String toUser, String content) {
+    static Message createOpenSessionWindowMessage(String fromUserName, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getHeader().setParam1(fromUser);
-        message.getHeader().setParam2(toUser);
+        message.getHeader().setParam1(fromUserName);
+        message.getHeader().setParam2(toUserName);
 
         message.getBody().setContent(content);
         return message;

@@ -123,18 +123,18 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         Message message = connection.pollMessage();
         if (message != null) {
             MessageWriter messageWriter = connection.getMessageWriter();
-            String user = message.getHeader().getParam1();
+            String userName = message.getHeader().getParam1();
             try {
                 messageWriter.write(message, connection);
 
                 if (!message.getControl().isOpenSessionMessage() && !message.getControl().isCloseSessionMessage())
-                    connection.getSessionWindow(user).flushOnWindow(true, false, message.getDisplayMessageString());
+                    connection.getSessionWindow(userName).flushOnWindow(true, false, message.getDisplayMessageString());
                 if (message.getControl().isCloseSessionMessage()) {
                     connection.getBindPipeLineTask().offLine(connection);
                     connection.removeSessionWindow(message.getHeader().getParam1());
                 }
             } catch (IOException e) {
-                connection.getSessionWindow(user).flushOnWindow(false, true, "[已失去与服务器的连接]");
+                connection.getSessionWindow(userName).flushOnWindow(false, true, "[已失去与服务器的连接]");
                 connection.getBindPipeLineTask().offLine(connection);
             }
         }

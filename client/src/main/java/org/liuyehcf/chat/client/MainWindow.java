@@ -166,14 +166,14 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
 
-    public SessionWindow createSessionWindow(String fromUser, String toUser) {
-        if (!fromUser.equals(account)) throw new RuntimeException();
+    public SessionWindow createSessionWindow(String fromUserName, String toUserName) {
+        if (!fromUserName.equals(account)) throw new RuntimeException();
         SessionWindow newSessionWindow = new SessionWindow(
                 this,
                 serverHost,
                 serverPort,
-                fromUser,
-                toUser,
+                fromUserName,
+                toUserName,
                 new WindowHandler() {
                     @Override
                     public void onSuccessful() {
@@ -201,12 +201,12 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
 
-    public void flushUserList(List<String> s) {
-        onlineFriends = new HashSet<String>(s);
+    public void flushUserList(List<String> userNames) {
+        onlineFriends = new HashSet<String>(userNames);
         onlineList.removeAllChildren();
-        for (String user : s) {
-            if (!user.equals(account)) {
-                onlineList.add(new DefaultMutableTreeNode(user));
+        for (String userName : userNames) {
+            if (!userName.equals(account)) {
+                onlineList.add(new DefaultMutableTreeNode(userName));
             }
         }
 

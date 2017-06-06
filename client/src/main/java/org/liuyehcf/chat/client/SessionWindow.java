@@ -26,12 +26,12 @@ public class SessionWindow extends JFrame {
     /**
      * 信源名字
      */
-    private String fromUser;
+    private String fromUserName;
 
     /**
      * 信宿名字
      */
-    private String toUser;
+    private String toUserName;
 
     /**
      * 此会话信息头
@@ -83,17 +83,17 @@ public class SessionWindow extends JFrame {
         return bindConnection;
     }
 
-    public SessionWindow(MainWindow bindMainWindow, String serverHost, Integer serverPort, String fromUser, String toUser, WindowHandler handler) {
+    public SessionWindow(MainWindow bindMainWindow, String serverHost, Integer serverPort, String fromUserName, String toUserName, WindowHandler handler) {
         this.bindMainWindow = bindMainWindow;
         this.serverHost = serverHost;
         this.serverPort = serverPort;
-        this.fromUser = fromUser;
-        this.toUser = toUser;
+        this.fromUserName = fromUserName;
+        this.toUserName = toUserName;
         this.handler = handler;
 
         this.header = new Protocol.Header();
-        this.header.setParam1(fromUser);
-        this.header.setParam2(toUser);
+        this.header.setParam1(this.fromUserName);
+        this.header.setParam2(this.toUserName);
 
         initWindow();
 
@@ -175,11 +175,11 @@ public class SessionWindow extends JFrame {
     public void connect() {
         //公用一条连接即可
         bindConnection = ClientConnectionDispatcher.getSingleton()
-                .getSessionConnection(fromUser, serverHost, serverPort);
+                .getSessionConnection(fromUserName, serverHost, serverPort);
 
         if (bindConnection != null) {
             ClientUtils.sendSessionHelloMessage(bindConnection, header);
-            bindConnection.addSessionWindow(fromUser, this);
+            bindConnection.addSessionWindow(fromUserName, this);
         } else {
             handler.onFailure();
             this.dispose();

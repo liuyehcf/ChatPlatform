@@ -47,19 +47,19 @@ public class ClientSessionConnection extends Connection {
         ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().put(getConnectionDescription(), this);
     }
 
-    public void addSessionWindow(String user, SessionWindow sessionWindow) {
-        if (chatWindowMap.containsKey(user))
+    public void addSessionWindow(String userName, SessionWindow sessionWindow) {
+        if (chatWindowMap.containsKey(userName))
             throw new RuntimeException();
-        chatWindowMap.put(user, sessionWindow);
+        chatWindowMap.put(userName, sessionWindow);
     }
 
-    public void removeSessionWindow(String user) {
-        if (!chatWindowMap.containsKey(user))
+    public void removeSessionWindow(String userName) {
+        if (!chatWindowMap.containsKey(userName))
             throw new RuntimeException();
-        chatWindowMap.remove(user);
+        chatWindowMap.remove(userName);
     }
 
-    public SessionWindow getSessionWindow(String user) {
-        return chatWindowMap.get(user);
+    public SessionWindow getSessionWindow(String userName) {
+        return chatWindowMap.get(userName);
     }
 }

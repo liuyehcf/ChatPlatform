@@ -4,21 +4,21 @@ package org.liuyehcf.chat.connect;
  * Created by Liuye on 2017/6/6.
  */
 public class SessionDescription {
-    private final String fromUser;
+    private final String fromUserName;
 
-    private final String toUser;
+    private final String toUserName;
 
-    public String getFromUser() {
-        return fromUser;
+    public String getFromUserName() {
+        return fromUserName;
     }
 
-    public String getToUser() {
-        return toUser;
+    public String getToUserName() {
+        return toUserName;
     }
 
-    public SessionDescription(String fromUser, String toUser) {
-        this.fromUser = fromUser;
-        this.toUser = toUser;
+    public SessionDescription(String fromUserName, String toUserName) {
+        this.fromUserName = fromUserName;
+        this.toUserName = toUserName;
     }
 
     @Override
@@ -36,6 +36,6 @@ public class SessionDescription {
 
     @Override
     public String toString() {
-        return fromUser + ":" + toUser;
+        return fromUserName + ":" + toUserName;
     }
 }

@@ -118,7 +118,13 @@ public class LoginWindow {
                     account = localIdField.getText();
                     password = remoteIdField.getText();
                 } catch (Throwable e) {
-                    systemLabel.setText("SYSTEM: WRONG INPUT!");
+                    systemLabel.setText("SYSTEM: wring input!");
+                    return;
+                }
+
+                //重复登录校验
+                if(ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)){
+                    systemLabel.setText("SYSTEM: Please do not log in repeatedly!");
                     return;
                 }
 
