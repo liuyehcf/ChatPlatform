@@ -106,7 +106,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         onlineList = new DefaultMutableTreeNode("在线好友");
         offlineList = new DefaultMutableTreeNode("离线好友");
 
-
+        rootList.add(new DefaultMutableTreeNode("<" + account + ">"));
         rootList.add(onlineList);
         rootList.add(offlineList);
 
@@ -130,7 +130,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.setTitle("六爷聊天系统");
 
         //自动调整大小
-        this.pack();
+        //this.pack();
+        this.setSize(400, 600);
 
         //增加窗口监听器
         this.addWindowListener(new MyWindowListener());
