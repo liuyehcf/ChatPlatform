@@ -167,6 +167,23 @@ public class Protocol {
      * 信息头
      */
     public static final class Header {
+
+        public static final String PERMIT = "PERMIT";
+
+        public static final String DENY = "DENY";
+
+        public static final String LOGIN_REPLY = "LOGIN_REPLY";
+
+        public static final String APPLY_GROUP_NAME = "APPLY_GROUP_NAME";
+
+        public static final String FLUSH_FRIEND_LIST = "FLUSH_FRIEND_LIST";
+
+        public static final String FLUSH_GROUP_LIST = "FLUSH_GROUP_LIST";
+
+        public static final String NOT_ONLINE = "NOT_ONLINE";
+
+        public static final String LOGIN_OUT_NOTIFY = "LOGIN_OUT_NOTIFY";
+
         /**
          * 消息头前缀字符串
          */
@@ -176,12 +193,6 @@ public class Protocol {
          * 消息头后缀字符串
          */
         private static final char HEADER_SUFFIX = ']';
-
-        public static final String PERMIT = "PERMIT";
-
-        public static final String DENY = "DENY";
-
-        public static final String FLUSH = "FLUSH";
 
         /**
          * 消息头匹配正则表达式

@@ -189,7 +189,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         return newSessionWindow;
     }
 
-    public void createGroupSessionWindow(String groupName) {
+    public GroupSessionWindow createGroupSessionWindow(String groupName) {
         GroupSessionWindow newGroupSessionWindow = new GroupSessionWindow(
                 this,
                 serverHost,
@@ -206,6 +206,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                     }
                 });
         newGroupSessionWindow.connect();
+        return newGroupSessionWindow;
     }
 
 
@@ -217,19 +218,27 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         if (node != null && node.getParent() != null
                 && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("在线好友")
                 && node.getUserObject() != null) {
+
             if (sessionWindowMap.containsKey(node.getUserObject())) {
                 sessionWindowMap.get(node.getUserObject()).toFront();
-            } else if (onlineFriends.contains(node.getUserObject()))
+            } else {
                 createSessionWindow((String) node.getUserObject());
+            }
+
         } else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
+
             String groupName = JOptionPane.showInputDialog("请输入群聊名");
-            while (groupName == null || groupName.equals("") || groupSessionWindowMap.containsKey(groupName)) {
+
+            while (groupName == null || groupName.equals("")
+                    || groupSessionWindowMap.containsKey(groupName)) {
+
                 if (groupName == null || groupName.equals(""))
                     groupName = JOptionPane.showInputDialog("群聊名不能为空，请重新输入");
                 else
                     groupName = JOptionPane.showInputDialog("该名称已被占用，请重新输入");
+
             }
-            createGroupSessionWindow(groupName);
+            ClientUtils.sendApplyGroupNameMessage(bindMainConnection, account, groupName);
         }
     }
 

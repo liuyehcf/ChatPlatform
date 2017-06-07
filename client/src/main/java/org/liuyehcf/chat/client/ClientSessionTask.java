@@ -13,6 +13,9 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static org.liuyehcf.chat.protocol.Protocol.Header.LOGIN_OUT_NOTIFY;
+import static org.liuyehcf.chat.protocol.Protocol.Header.NOT_ONLINE;
+
 /**
  * Created by HCF on 2017/5/30.
  */
@@ -87,10 +90,10 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         for (Message message : messages) {
 
             if (message.getControl().isSystemMessage()) {
-                if (message.getHeader().getParam1().equals("LOGIN_OUT_NOTIFY")) {
+                if (message.getHeader().getParam1().equals(LOGIN_OUT_NOTIFY)) {
                     //参见ServerUtils.sendLoginOutNotifyMessage方法
                     connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
-                } else if (message.getHeader().getParam1().equals("NOT_ONLINE")) {
+                } else if (message.getHeader().getParam1().equals(NOT_ONLINE)) {
                     //参见ServerUtils.sendNotOnLineMessage方法
                     connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
                 }

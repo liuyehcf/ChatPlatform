@@ -12,6 +12,8 @@ import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static org.liuyehcf.chat.protocol.Protocol.Header.APPLY_GROUP_NAME;
+
 /**
  * 服务端PipeLineTask实现类
  * Created by Liuye on 2017/5/29.
@@ -96,8 +98,21 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
             ServerConnectionDispatcher.LOGGER.debug("Receive a message {}", protocol.wrap(message));
 
+            if (message.getControl().isSystemMessage()) {
+                if (message.getHeader().getParam1().equals(APPLY_GROUP_NAME)) {
+                    String groupName = message.getHeader().getParam3();
+                    if (!serverConnectionDispatcher.getGroupInfoMap().containsKey(groupName)) {
+                        serverConnectionDispatcher.getGroupInfoMap().put(groupName, new ServerGroupInfo(groupName));
+
+                        //刷新群聊列表
+                        refreshGroupList();
+                    } else {
+                        //失败说明冲突，同样会刷新，这里什么都不用做
+                    }
+                }
+            }
             //登录信息
-            if (message.getControl().isLoginInMessage()) {
+            else if (message.getControl().isLoginInMessage()) {
                 connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, message.getHeader().getParam1()));
                 connection.setMainConnection(true);
 
@@ -110,8 +125,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 ServerUtils.sendReplyLoginInMessage(
                         connection,
                         true,
-                        account,
-                        serverConnectionDispatcher.getMainConnectionMap().keySet().toString());
+                        account);
 
                 //刷新好友列表
                 refreshFriendList();
@@ -320,7 +334,18 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         String listString = serverConnectionDispatcher.getMainConnectionMap().keySet().toString();
         for (Connection connection : serverConnectionDispatcher.getMainConnectionMap().values()) {
             //发送系统消息，要求客户端刷新主界面好友列表
-            ServerUtils.sendLoginInFlushMessage(
+            ServerUtils.sendFlushFriendListMessage(
+                    connection,
+                    connection.getConnectionDescription().getDestination(),
+                    listString);
+        }
+    }
+
+    private void refreshGroupList() {
+        String listString = serverConnectionDispatcher.getGroupInfoMap().keySet().toString();
+        for (Connection connection : serverConnectionDispatcher.getMainConnectionMap().values()) {
+            //发送系统消息，要求客户端刷新群聊列表
+            ServerUtils.sendFlushGroupListMessage(
                     connection,
                     connection.getConnectionDescription().getDestination(),
                     listString);

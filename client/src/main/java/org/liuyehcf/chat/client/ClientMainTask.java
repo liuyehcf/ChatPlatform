@@ -1,9 +1,7 @@
 package org.liuyehcf.chat.client;
 
-import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.writer.MessageWriter;
@@ -15,9 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.liuyehcf.chat.protocol.Protocol.Header.DENY;
-import static org.liuyehcf.chat.protocol.Protocol.Header.FLUSH;
-import static org.liuyehcf.chat.protocol.Protocol.Header.PERMIT;
+import static org.liuyehcf.chat.protocol.Protocol.Header.*;
 
 
 /**
@@ -91,30 +87,33 @@ public class ClientMainTask extends AbstractPipeLineTask {
         }
 
         for (Message message : messages) {
-            //登录消息
-            String userName = message.getHeader().getParam2();
-
             if (message.getControl().isSystemMessage()) {
+                if (message.getHeader().getParam1().equals(LOGIN_REPLY)) {
+                    //允许登录
+                    if (message.getHeader().getParam3().equals(PERMIT)) {
+                        String userName = message.getHeader().getParam2();
 
-            } else if (message.getControl().isLoginInMessage()) {
-                //允许登录
-                if (message.getHeader().getParam3().equals(PERMIT)) {
+                        //获取主界面
+                        MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
 
+                        //显示主界面
+                        mainWindow.setVisible(true);
+                    } else if (message.getHeader().getParam3().equals(DENY)) {
+                        //拒绝登录
+                    }
+                } else if (message.getHeader().getParam1().equals(FLUSH_FRIEND_LIST)) {
+                    String userName = message.getHeader().getParam2();
+
+                    //获取主界面
                     MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
-
-                    //显示主界面
-                    mainWindow.setVisible(true);
 
                     //刷新好友列表
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
-                } else if (message.getHeader().getParam3().equals(DENY)) {
-                    //拒绝登录
-                } else if (message.getHeader().getParam3().endsWith(FLUSH)) {
-                    MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
+                } else if (message.getHeader().getParam1().equals(FLUSH_GROUP_LIST)) {
 
-                    //刷新好友列表
-                    mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
+            } else if (message.getControl().isLoginInMessage()) {
+
             } else if (message.getControl().isLoginOutMessage()) {
 
             } else if (message.getControl().isRegisterMessage()) {

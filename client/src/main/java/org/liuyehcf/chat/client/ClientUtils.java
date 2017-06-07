@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.liuyehcf.chat.protocol.Protocol.Header.*;
+
+
 /**
  * Created by Liuye on 2017/6/2.
  */
@@ -43,43 +46,13 @@ class ClientUtils {
      */
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
-    static void sendOpenSessionMessage(Connection connection, Protocol.Header header) {
-        Message message = new Message();
-
-        message.setControl(new Protocol.Control());
-        message.setHeader(header);
-        message.setBody(new Protocol.Body());
-
-        message.getControl().setOpenSessionMessage(true);
-
-        connection.offerMessage(message);
-    }
-
-    static void sendCloseSessionMessage(Connection connection, boolean isGroupSession, Protocol.Header header) {
-        Message message = new Message();
-
-        message.setControl(new Protocol.Control());
-        message.setHeader(header);
-        message.setBody(new Protocol.Body());
-
-        message.getControl().setGroupChat(isGroupSession);
-        message.getControl().setCloseSessionMessage(true);
-
-        connection.offerMessage(message);
-    }
-
-    static void sendNormalMessage(Connection connection, Protocol.Header header, String content) {
-        Message message = new Message();
-
-        message.setControl(new Protocol.Control());
-        message.setHeader(header);
-        message.setBody(new Protocol.Body());
-
-        message.getBody().setContent(content);
-
-        connection.offerMessage(message);
-    }
-
+    /**
+     * 登录
+     *
+     * @param connection
+     * @param account
+     * @param password
+     */
     static void sendLoginInMessage(Connection connection, String account, String password) {
         Message message = new Message();
 
@@ -95,6 +68,12 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
+    /**
+     * 注销
+     *
+     * @param connection
+     * @param account
+     */
     static void sendLoginOutMessage(Connection connection, String account) {
         Message message = new Message();
 
@@ -110,6 +89,71 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
+    /**
+     * 打开会话
+     *
+     * @param connection
+     * @param header
+     */
+    static void sendOpenSessionMessage(Connection connection, Protocol.Header header) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(header);
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setOpenSessionMessage(true);
+
+        connection.offerMessage(message);
+    }
+
+    /**
+     * 关闭会话
+     *
+     * @param connection
+     * @param isGroupSession
+     * @param header
+     */
+    static void sendCloseSessionMessage(Connection connection, boolean isGroupSession, Protocol.Header header) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(header);
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setGroupChat(isGroupSession);
+        message.getControl().setCloseSessionMessage(true);
+
+        connection.offerMessage(message);
+    }
+
+    /**
+     * 正常消息
+     *
+     * @param connection
+     * @param header
+     * @param content
+     */
+    static void sendNormalMessage(Connection connection, Protocol.Header header, String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(header);
+        message.setBody(new Protocol.Body());
+
+        message.getBody().setContent(content);
+
+        connection.offerMessage(message);
+    }
+
+    /**
+     * 创建一条用于显示的Message，当Session被动打开时，需要显示这个方法创建的Message
+     *
+     * @param fromUserName
+     * @param toUserName
+     * @param content
+     * @return
+     */
     static Message createOpenSessionWindowMessage(String fromUserName, String toUserName, String content) {
         Message message = new Message();
 
@@ -124,6 +168,29 @@ class ClientUtils {
         return message;
     }
 
+    static void sendApplyGroupNameMessage(Connection connection, String fromUserName, String groupName) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+
+        message.getHeader().setParam1(APPLY_GROUP_NAME);
+        message.getHeader().setParam2(fromUserName);
+        message.getHeader().setParam3(groupName);
+
+        connection.offerMessage(message);
+    }
+
+
+    /**
+     * 从服务器返回的在线人员信息数据中解析成在线人员列表
+     *
+     * @param s
+     * @return
+     */
     static List<String> retrieveNames(String s) {
         s = s.replaceAll("[\\[\\] ]", "");
         String[] names = s.split(",");
