@@ -10,6 +10,7 @@ import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
+import org.liuyehcf.chat.server.interceptor.ServerMessageReaderInterceptor;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public class ServerConnectionDispatcher {
     /**
      * 日志
      */
-    static Logger LOGGER = LoggerFactory.getLogger(ServerConnectionDispatcher.class);
+    public static Logger LOGGER = LoggerFactory.getLogger(ServerConnectionDispatcher.class);
 
     /**
      * 该类唯一作用是使得ChatServerDispatcher的单例延迟加载
@@ -114,7 +115,8 @@ public class ServerConnectionDispatcher {
 
         executorService = Executors.newCachedThreadPool();
 
-        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder();
+        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder()
+                .addInterceptor(new ServerMessageReaderInterceptor(this));
 
         messageWriterFactory = DefaultMessageWriterProxyFactory.Builder();
 

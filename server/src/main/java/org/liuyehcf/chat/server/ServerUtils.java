@@ -10,38 +10,38 @@ import static org.liuyehcf.chat.protocol.Protocol.Header.*;
 /**
  * Created by Liuye on 2017/6/1.
  */
-class ServerUtils {
+public class ServerUtils {
 
     /**
      * 每个线程管理的channel数量的最大值
      */
-    static final int MAX_CONNECTION_PER_TASK = 3;
+    public static final int MAX_CONNECTION_PER_TASK = 3;
 
     /**
      * 允许最长不活跃时间，单位分钟
      */
-    static final int MAX_INACTIVE_TIME = 100;
+    public static final int MAX_INACTIVE_TIME = 100;
 
     /**
      * 最大线程数量
      */
-    static final int MAX_THREAD_NUM = 4;
+    public static final int MAX_THREAD_NUM = 4;
 
     /**
      * 当每个任务管理的连接数量与每个任务可管理最大连接数量之比
      * 若小于该值，可以减少线程数量，将连接进行重新分配
      */
-    static final double LOAD_FACTORY_THRESHOLD = 0.5;
+    public static final double LOAD_FACTORY_THRESHOLD = 0.5;
 
     /**
      * 负载均衡需要达到的平均现有连接数与最大连接数之比
      */
-    static final double LOAD_FACTORY_BALANCED = 0.8;
+    public static final double LOAD_FACTORY_BALANCED = 0.8;
 
     /**
      * 做负载均衡的频率，1分钟一次
      */
-    static final int LOAD_BALANCE_FREQUENCY = 1;
+    public static final int LOAD_BALANCE_FREQUENCY = 1;
 
 
     /**
@@ -50,7 +50,7 @@ class ServerUtils {
      * @param toUserName
      * @return
      */
-    static void sendReplyLoginInMessage(Connection connection, boolean isPermit, String toUserName) {
+    public static void sendReplyLoginInMessage(Connection connection, boolean isPermit, String toUserName) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -74,7 +74,7 @@ class ServerUtils {
      * @param content
      * @return
      */
-    static void sendFlushFriendListMessage(Connection connection, String toUserName, String content) {
+    public static void sendFlushFriendListMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -91,7 +91,7 @@ class ServerUtils {
         connection.offerMessage(message);
     }
 
-    static void sendFlushGroupListMessage(Connection connection, String toUserName, String content) {
+    public static void sendFlushGroupListMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -117,7 +117,7 @@ class ServerUtils {
      * @param content
      * @return
      */
-    static void sendOpenSessionWindowMessage(Connection connection, String fromUserName, String toUserName, String content) {
+    public static void sendOpenSessionWindowMessage(Connection connection, String fromUserName, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -142,7 +142,7 @@ class ServerUtils {
      * @param toUserName
      * @param content
      */
-    static void sendNotOnLineMessage(Connection connection, String toUserName, String notOnLineUserName, String content) {
+    public static void sendNotOnLineMessage(Connection connection, String toUserName, String notOnLineUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -168,7 +168,7 @@ class ServerUtils {
      * @param content
      * @return
      */
-    static void sendLoginOutNotifyMessage(Connection connection, String toUserName, String closingUserName, String content) {
+    public static void sendLoginOutNotifyMessage(Connection connection, String toUserName, String closingUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -186,7 +186,7 @@ class ServerUtils {
         connection.offerMessage(message);
     }
 
-    static Message createFlushGroupSessionUserListMessage(String content) {
+    public static Message createFlushGroupSessionUserListMessage(String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -203,7 +203,7 @@ class ServerUtils {
     }
 
 
-    static void ASSERT(boolean flag) {
+    public static void ASSERT(boolean flag) {
         if (!flag) throw new RuntimeException();
     }
 }
