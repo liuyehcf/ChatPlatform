@@ -85,23 +85,30 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         }
 
         for (Message message : messages) {
-            if (message.getControl().isLoginOutMessage()) {
-                String userName = message.getHeader().getParam2();
+
+            if (message.getControl().isLoginInMessage()) {
+
+            }
+            //这里的LoginOutMessage用于通知某用户已经下线
+            else if (message.getControl().isLoginOutMessage()) {
                 String loginOutUserName = message.getHeader().getParam3();
 
-                SessionDescription sessionDescription = new SessionDescription(
-                        userName,
-                        loginOutUserName);
-
-                connection.getConnectionDescription().removeSessionDescription(sessionDescription);
-                ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", userName, sessionDescription);
-
                 //参见ServerUtils.sendLogOutMessage方法
-                connection.getSessionWindow(loginOutUserName).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
-            } else if (message.getControl().isSystemMessage()) {
-                connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+                connection.getSessionWindow(loginOutUserName).flushOnWindow(false, true, message.getDisplayMessageString());
+
+            } else if (message.getControl().isRegisterMessage()) {
+
+            } else if (message.getControl().isOpenSessionMessage()) {
+
+            } else if (message.getControl().isCloseSessionMessage()) {
+
             } else {
-                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, false, message.getDisplayMessageString());
+                //参见ServerUtils.sendNotOnLineMessage
+                boolean isSystem = !message.getHeader().getParam3().isEmpty();
+                if (!isSystem)
+                    connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, false, message.getDisplayMessageString());
+                else
+                    connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
             }
         }
     }
@@ -138,20 +145,20 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             try {
                 messageWriter.write(message, connection);
 
-                //如果不是系统消息就打印到会话窗口
-                if (!message.getControl().isSystemMessage()) {
-                    connection.getSessionWindow(toUserName).flushOnWindow(true, false, message.getDisplayMessageString());
-                }
-                //如果是会话打开消息
-                else if (message.getControl().isOpenSessionMessage()) {
+                if (message.getControl().isLoginInMessage()) {
+
+                } else if (message.getControl().isLoginOutMessage()) {
+
+                } else if (message.getControl().isRegisterMessage()) {
+
+                } else if (message.getControl().isOpenSessionMessage()) {
                     SessionDescription newSessionDescription = new SessionDescription(
                             message.getHeader().getParam1(),
                             message.getHeader().getParam2());
                     ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
                     ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
-                }
-                //如果是会话关闭消息
-                else if (message.getControl().isCloseSessionMessage()) {
+
+                } else if (message.getControl().isCloseSessionMessage()) {
                     SessionDescription sessionDescription = new SessionDescription(
                             message.getHeader().getParam1(),
                             message.getHeader().getParam2());
@@ -163,7 +170,10 @@ public class ClientSessionTask extends AbstractPipeLineTask {
                     if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
                         connection.getBindPipeLineTask().offLine(connection);
                     }
+                } else {
+                    connection.getSessionWindow(toUserName).flushOnWindow(true, false, message.getDisplayMessageString());
                 }
+
             } catch (IOException e) {
                 ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
                 connection.getSessionWindow(toUserName).flushOnWindow(false, true, "[已失去与服务器的连接]");

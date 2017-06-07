@@ -61,8 +61,6 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
-
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(toUserName);
         message.getHeader().setParam3(notOnLineUserName);
@@ -87,7 +85,6 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setLoginOutMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
@@ -114,7 +111,6 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setLoginInMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
@@ -143,7 +139,6 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setLoginInMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
@@ -171,7 +166,6 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setOpenSessionMessage(true);
 
         message.getHeader().setParam1(fromUserName);

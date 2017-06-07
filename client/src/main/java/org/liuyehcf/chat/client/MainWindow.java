@@ -222,7 +222,9 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         if (node != null && node.getParent() != null
                 && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("在线好友")
                 && node.getUserObject() != null) {
-            if (onlineFriends.contains(node.getUserObject()))
+            if (sessionWindowMap.containsKey(node.getUserObject())) {
+                sessionWindowMap.get(node.getUserObject()).toFront();
+            } else if (onlineFriends.contains(node.getUserObject()))
                 createSessionWindow((String) node.getUserObject());
         } else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
             String groupName = JOptionPane.showInputDialog("请输入群聊名");

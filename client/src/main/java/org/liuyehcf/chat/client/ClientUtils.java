@@ -50,7 +50,6 @@ class ClientUtils {
         message.setHeader(header);
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setOpenSessionMessage(true);
 
         connection.offerMessage(message);
@@ -63,7 +62,6 @@ class ClientUtils {
         message.setHeader(header);
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setGroupChat(isGroupSession);
         message.getControl().setCloseSessionMessage(true);
 
@@ -89,7 +87,6 @@ class ClientUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setLoginInMessage(true);
 
         message.getHeader().setParam1(account);
@@ -105,7 +102,6 @@ class ClientUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setSystemMessage(true);
         message.getControl().setLoginOutMessage(true);
 
         message.getHeader().setParam1(account);

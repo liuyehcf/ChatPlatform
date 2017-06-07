@@ -184,9 +184,35 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String toUserName = message.getHeader().getParam2();
 
                 ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
+                //连接存在
                 if (serverConnectionDispatcher.getSessionConnectionMap().containsKey(toConnectionDescription)) {
                     Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
-                    toConnection.offerMessage(message);
+
+                    SessionDescription toSessionDescription = new SessionDescription(toUserName, fromUserName);
+                    //会话也存在
+                    if (toConnection.getConnectionDescription().getSessionDescriptions().contains(toSessionDescription)) {
+                        toConnection.offerMessage(message);
+                    }
+                    //会话不存在
+                    else {
+                        Connection mainConnection;
+                        if ((mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(toUserName)) != null) {
+
+                            //发送一条消息要求客户端代开会话窗口
+                            ServerUtils.sendOpenSessionWindowMessage(
+                                    mainConnection,
+                                    toUserName,
+                                    fromUserName,
+                                    message.getBody().getContent());
+                        } else {
+                            //todo 此时对方已下线
+                            ServerUtils.sendNotOnLineMessage(
+                                    connection,
+                                    fromUserName,
+                                    toUserName,
+                                    "<" + toUserName + ">已经离线");
+                        }
+                    }
                 } else {
                     Connection mainConnection;
                     if ((mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(toUserName)) != null) {

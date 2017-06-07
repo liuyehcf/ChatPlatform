@@ -42,12 +42,6 @@ public class Protocol {
         private static final Pattern CONTROL_PATTERN = Pattern.compile(CONTROL_REGEX);
 
         /**
-         * 是否为系统消息，若是下面几个任何一个，则为系统消息
-         * 不是下面中的任何一个也可以是系统消息，代表系统发给用户的消息，需要用红色显示
-         */
-        private boolean isSystemMessage;
-
-        /**
          * 是否登录
          */
         private boolean isLoginInMessage;
@@ -76,15 +70,6 @@ public class Protocol {
          * 是否为群聊
          */
         private boolean isGroupChat;
-
-
-        public boolean isSystemMessage() {
-            return isSystemMessage;
-        }
-
-        public void setSystemMessage(boolean systemMessage) {
-            isSystemMessage = systemMessage;
-        }
 
         public boolean isLoginInMessage() {
             return isLoginInMessage;
@@ -136,7 +121,6 @@ public class Protocol {
 
         public String getControlString() {
             return CONTROL_PREFIX
-                    + (isSystemMessage ? "1" : "0")
                     + (isLoginInMessage ? "1" : "0")
                     + (isLoginOutMessage ? "1" : "0")
                     + (isRegisterMessage ? "1" : "0")
@@ -151,13 +135,12 @@ public class Protocol {
             Control control = new Control();
             if (m.find()) {
                 String controlString = m.group(1);
-                control.setSystemMessage(controlString.charAt(0) == '1');
-                control.setLoginInMessage(controlString.charAt(1) == '1');
-                control.setLoginOutMessage(controlString.charAt(2) == '1');
-                control.setRegisterMessage(controlString.charAt(3) == '1');
-                control.setOpenSessionMessage(controlString.charAt(4) == '1');
-                control.setCloseSessionMessage(controlString.charAt(5) == '1');
-                control.setGroupChat(controlString.charAt(6) == '1');
+                control.setLoginInMessage(controlString.charAt(0) == '1');
+                control.setLoginOutMessage(controlString.charAt(1) == '1');
+                control.setRegisterMessage(controlString.charAt(2) == '1');
+                control.setOpenSessionMessage(controlString.charAt(3) == '1');
+                control.setCloseSessionMessage(controlString.charAt(4) == '1');
+                control.setGroupChat(controlString.charAt(5) == '1');
             } else {
                 throw new RuntimeException("parse MessageControl failed!");
             }

@@ -93,6 +93,8 @@ public class ClientMainTask extends AbstractPipeLineTask {
         for (Message message : messages) {
             //登录消息
             String userName = message.getHeader().getParam2();
+
+
             if (message.getControl().isLoginInMessage()) {
                 //允许登录
                 if (message.getHeader().getParam3().equals(PERMIT)) {
@@ -112,9 +114,11 @@ public class ClientMainTask extends AbstractPipeLineTask {
                     //刷新好友列表
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
-            }
-            //要求打开会话窗口消息
-            else if (message.getControl().isOpenSessionMessage()) {
+            } else if (message.getControl().isLoginOutMessage()) {
+
+            } else if (message.getControl().isRegisterMessage()) {
+
+            } else if (message.getControl().isOpenSessionMessage()) {
                 String fromUserName = message.getHeader().getParam1();
                 String toUserName = message.getHeader().getParam2();
                 MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(fromUserName);
@@ -126,7 +130,13 @@ public class ClientMainTask extends AbstractPipeLineTask {
                         message.getBody().getContent()
                 );
                 sessionWindow.flushOnWindow(false, false, notSendMessage.getDisplayMessageString());
+
+            } else if (message.getControl().isCloseSessionMessage()) {
+
+            } else {
+
             }
+
         }
     }
 
@@ -160,6 +170,20 @@ public class ClientMainTask extends AbstractPipeLineTask {
             MessageWriter messageWriter = connection.getMessageWriter();
             try {
                 messageWriter.write(message, connection);
+
+                if (message.getControl().isLoginInMessage()) {
+
+                } else if (message.getControl().isLoginOutMessage()) {
+
+                } else if (message.getControl().isRegisterMessage()) {
+
+                } else if (message.getControl().isOpenSessionMessage()) {
+
+                } else if (message.getControl().isCloseSessionMessage()) {
+
+                } else {
+
+                }
 
                 if (message.getControl().isLoginOutMessage()) {
                     connection.getBindPipeLineTask().offLine(connection);
