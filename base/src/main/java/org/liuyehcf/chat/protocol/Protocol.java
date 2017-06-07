@@ -42,6 +42,11 @@ public class Protocol {
         private static final Pattern CONTROL_PATTERN = Pattern.compile(CONTROL_REGEX);
 
         /**
+         * 是否为系统消息，各种各样的提示消息
+         */
+        private boolean isSystemMessage;
+
+        /**
          * 是否登录
          */
         private boolean isLoginInMessage;
@@ -70,6 +75,14 @@ public class Protocol {
          * 是否为群聊
          */
         private boolean isGroupChat;
+
+        public boolean isSystemMessage() {
+            return isSystemMessage;
+        }
+
+        public void setSystemMessage(boolean systemMessage) {
+            isSystemMessage = systemMessage;
+        }
 
         public boolean isLoginInMessage() {
             return isLoginInMessage;
@@ -121,6 +134,7 @@ public class Protocol {
 
         public String getControlString() {
             return CONTROL_PREFIX
+                    + (isSystemMessage ? "1" : "0")
                     + (isLoginInMessage ? "1" : "0")
                     + (isLoginOutMessage ? "1" : "0")
                     + (isRegisterMessage ? "1" : "0")
@@ -135,12 +149,13 @@ public class Protocol {
             Control control = new Control();
             if (m.find()) {
                 String controlString = m.group(1);
-                control.setLoginInMessage(controlString.charAt(0) == '1');
-                control.setLoginOutMessage(controlString.charAt(1) == '1');
-                control.setRegisterMessage(controlString.charAt(2) == '1');
-                control.setOpenSessionMessage(controlString.charAt(3) == '1');
-                control.setCloseSessionMessage(controlString.charAt(4) == '1');
-                control.setGroupChat(controlString.charAt(5) == '1');
+                control.setSystemMessage(controlString.charAt(0) == '1');
+                control.setLoginInMessage(controlString.charAt(1) == '1');
+                control.setLoginOutMessage(controlString.charAt(2) == '1');
+                control.setRegisterMessage(controlString.charAt(3) == '1');
+                control.setOpenSessionMessage(controlString.charAt(4) == '1');
+                control.setCloseSessionMessage(controlString.charAt(5) == '1');
+                control.setGroupChat(controlString.charAt(6) == '1');
             } else {
                 throw new RuntimeException("parse MessageControl failed!");
             }
@@ -171,7 +186,7 @@ public class Protocol {
         /**
          * 消息头匹配正则表达式
          */
-        private static final String HEADER_REGEX = "\\[param1:(.*?),param2:(.*?),param3:(.*?)\\]";
+        private static final String HEADER_REGEX = "\\[param1:(.*?),param2:(.*?),param3:(.*?),param4:(.*?)\\]";
         private static final Pattern HEADER_PATTERN = Pattern.compile(HEADER_REGEX);
 
         /**
@@ -188,6 +203,11 @@ public class Protocol {
          * 参数3
          */
         private String param3 = "";
+
+        /**
+         * 参数4
+         */
+        private String param4 = "";
 
         public String getParam1() {
             return param1;
@@ -213,6 +233,14 @@ public class Protocol {
             this.param3 = param3;
         }
 
+        public String getParam4() {
+            return param4;
+        }
+
+        public void setParam4(String param4) {
+            this.param4 = param4;
+        }
+
         public Header() {
             param1 = "";
             param2 = "";
@@ -222,7 +250,8 @@ public class Protocol {
             return HEADER_PREFIX
                     + "param1:" + param1 + ","
                     + "param2:" + param2 + ","
-                    + "param3:" + param3
+                    + "param3:" + param3 + ","
+                    + "param4:" + param4
                     + HEADER_SUFFIX;
         }
 
@@ -239,6 +268,7 @@ public class Protocol {
                 header.setParam1(matcher.group(1));
                 header.setParam2(matcher.group(2));
                 header.setParam3(matcher.group(3));
+                header.setParam4(matcher.group(4));
             } else {
                 throw new RuntimeException("parse MessageHeader failed!");
             }
