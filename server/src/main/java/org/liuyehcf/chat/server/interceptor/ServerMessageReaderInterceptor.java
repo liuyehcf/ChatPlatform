@@ -187,7 +187,8 @@ public class ServerMessageReaderInterceptor implements MessageInterceptor {
 
             ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
             serverGroupInfo.addConnection(fromUserName, connection);
-            //todo 刷新群聊界面成员列表
+
+            //刷新群成员列表
             serverGroupInfo.offerMessage(
                     null,
                     ServerUtils.createFlushGroupSessionUserListMessage(
@@ -241,7 +242,8 @@ public class ServerMessageReaderInterceptor implements MessageInterceptor {
 
             ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
             serverGroupInfo.removeConnection(fromUserName);
-            //todo 刷新群聊界面成员列表
+
+            //刷新群成员列表
             serverGroupInfo.offerMessage(
                     null,
                     ServerUtils.createFlushGroupSessionUserListMessage(
@@ -374,24 +376,38 @@ public class ServerMessageReaderInterceptor implements MessageInterceptor {
     private void loginOutNotify(Connection connection) {
         //遍历会话连接的所有会话描述符
         for (SessionDescription sessionDescription : connection.getConnectionDescription().getSessionDescriptions()) {
-            String fromUserName = sessionDescription.getFromUserName();
-            String toUserName = sessionDescription.getToUserName();
+            if (sessionDescription.isGroupChat()) {
+                String fromUserName = sessionDescription.getFromUserName();
+                String groupName = sessionDescription.getToUserName();
 
-            ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
-            Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
+                ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
+                serverGroupInfo.removeConnection(fromUserName);
 
-            //connection为null代表已经关闭了
-            if (toConnection != null) {
-                String systemContent = "["
-                        + fromUserName
-                        + "]已断开连接";
-                ServerUtils.sendLoginOutNotifyMessage(
-                        toConnection,
-                        toUserName,
-                        fromUserName,
-                        systemContent);
+                //刷新群成员列表
+                serverGroupInfo.offerMessage(
+                        null,
+                        ServerUtils.createFlushGroupSessionUserListMessage(
+                                serverGroupInfo.getGroupSessionConnectionMap().keySet().toString()
+                        ));
+            } else {
+                String fromUserName = sessionDescription.getFromUserName();
+                String toUserName = sessionDescription.getToUserName();
+
+                ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
+                Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
+
+                //connection为null代表已经关闭了
+                if (toConnection != null) {
+                    String systemContent = "["
+                            + fromUserName
+                            + "]已断开连接";
+                    ServerUtils.sendLoginOutNotifyMessage(
+                            toConnection,
+                            toUserName,
+                            fromUserName,
+                            systemContent);
+                }
             }
         }
-
     }
 }

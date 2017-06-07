@@ -18,6 +18,10 @@ public class SessionDescription {
         return toUserName;
     }
 
+    public boolean isGroupChat() {
+        return isGroupChat;
+    }
+
     public SessionDescription(String fromUserName, String toUserName, boolean isGroupChat) {
         this.fromUserName = fromUserName;
         this.toUserName = toUserName;

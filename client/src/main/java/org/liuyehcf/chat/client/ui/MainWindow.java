@@ -329,6 +329,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             for (SessionWindow sessionWindow : sessionWindowMap.values()) {
                 sessionWindow.dispose();
             }
+
+            for (GroupSessionWindow groupSessionWindow : groupSessionWindowMap.values()) {
+                groupSessionWindow.dispose();
+            }
+
             ClientUtils.sendLoginOutMessage(bindMainConnection, account);
         }
 
