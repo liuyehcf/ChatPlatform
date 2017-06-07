@@ -69,7 +69,6 @@ public class ClientSessionTask extends AbstractPipeLineTask {
 
             iterator.remove();
         }
-
     }
 
     private void readMessageFromConnection(SelectionKey selectionKey) {
@@ -82,8 +81,6 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         } catch (IOException e) {
             ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
             connection.getBindPipeLineTask().offLine(connection);
-            clientConnectionDispatcher.getSessionConnectionMap().remove(
-                    connection.getConnectionDescription());
             return;
         }
 
@@ -101,8 +98,11 @@ public class ClientSessionTask extends AbstractPipeLineTask {
 
                 //参见ServerUtils.sendLogOutMessage方法
                 connection.getSessionWindow(loginOutUserName).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
-            } else
-                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
+            } else if (message.getControl().isSystemMessage()) {
+                connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+            } else {
+                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, false, message.getDisplayMessageString());
+            }
         }
     }
 
@@ -160,13 +160,14 @@ public class ClientSessionTask extends AbstractPipeLineTask {
                     ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
                     connection.removeSessionWindow(toUserName);
 
+                    if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
+                        connection.getBindPipeLineTask().offLine(connection);
+                    }
                 }
             } catch (IOException e) {
                 ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
                 connection.getSessionWindow(toUserName).flushOnWindow(false, true, "[已失去与服务器的连接]");
                 connection.getBindPipeLineTask().offLine(connection);
-                clientConnectionDispatcher.getSessionConnectionMap().remove(
-                        connection.getConnectionDescription());
             }
         }
     }
@@ -179,9 +180,6 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     @Override
     protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
-
         clientConnectionDispatcher.getSessionConnectionMap().remove(connection.getConnectionDescription());
-
-
     }
 }

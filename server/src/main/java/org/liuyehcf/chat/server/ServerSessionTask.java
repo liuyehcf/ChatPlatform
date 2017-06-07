@@ -199,9 +199,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                                 message.getBody().getContent());
                     } else {
                         //todo 此时对方已下线
-                        ServerUtils.sendSystemMessage(
+                        ServerUtils.sendNotOnLineMessage(
                                 connection,
                                 fromUserName,
+                                toUserName,
                                 "<" + toUserName + ">已经离线");
                     }
                 }

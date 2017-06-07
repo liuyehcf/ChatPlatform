@@ -42,8 +42,6 @@ public class ClientMainTask extends AbstractPipeLineTask {
 
             writeMessage();
 
-            checkConnectionStatus();
-
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
             } catch (InterruptedException e) {
@@ -89,8 +87,6 @@ public class ClientMainTask extends AbstractPipeLineTask {
         } catch (IOException e) {
             ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
             connection.getBindPipeLineTask().offLine(connection);
-            clientConnectionDispatcher.getMainWindowMap()
-                    .remove(connection.getConnectionDescription().getSource());
             return;
         }
 
@@ -117,19 +113,6 @@ public class ClientMainTask extends AbstractPipeLineTask {
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
             }
-//            //登出消息
-//            else if (message.getControl().isLoginOutMessage()) {
-//                connection.getBindPipeLineTask().offLine(connection);
-//                clientConnectionDispatcher
-//                        .getMainWindowMap().remove(message.getHeader().getParam2());
-//
-//                ConnectionDescription connectionDescription = new ConnectionDescription(
-//                        message.getHeader().getParam2(),
-//                        Protocol.SERVER_USER_NAME);
-//                Connection sessionConnection = clientConnectionDispatcher.getSessionConnectionMap().get(connectionDescription);
-//                sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
-//                clientConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
-//            }
             //要求打开会话窗口消息
             else if (message.getControl().isOpenSessionMessage()) {
                 String fromUserName = message.getHeader().getParam1();
@@ -178,28 +161,13 @@ public class ClientMainTask extends AbstractPipeLineTask {
             try {
                 messageWriter.write(message, connection);
 
-                //主动断开与服务器的连接，在发出消息之后，断开客户端连接
                 if (message.getControl().isLoginOutMessage()) {
-                    //offLine(connection);
-
+                    connection.getBindPipeLineTask().offLine(connection);
                 }
 
             } catch (IOException e) {
                 ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
                 connection.getBindPipeLineTask().offLine(connection);
-                clientConnectionDispatcher.getMainWindowMap()
-                        .remove(connection.getConnectionDescription().getSource());
-            }
-        }
-    }
-
-    private void checkConnectionStatus(){
-        for(Connection connection:getConnections()){
-            try{
-                connection.getSocketChannel().socket().sendUrgentData(0xFF);
-            }catch(IOException e){
-                clientConnectionDispatcher.getMainWindowMap()
-                        .remove(connection.getConnectionDescription().getSource());
             }
         }
     }
@@ -207,5 +175,6 @@ public class ClientMainTask extends AbstractPipeLineTask {
     @Override
     protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
+        clientConnectionDispatcher.getMainWindowMap().remove(connection.getConnectionDescription().getSource());
     }
 }

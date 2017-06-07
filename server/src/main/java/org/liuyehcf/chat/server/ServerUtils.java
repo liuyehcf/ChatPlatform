@@ -47,7 +47,14 @@ class ServerUtils {
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
 
-    static void sendSystemMessage(Connection connection, String toUserName, String content) {
+    /**
+     * 非在线消息
+     *
+     * @param connection
+     * @param toUserName
+     * @param content
+     */
+    static void sendNotOnLineMessage(Connection connection, String toUserName, String notOnLineUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -58,6 +65,7 @@ class ServerUtils {
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(toUserName);
+        message.getHeader().setParam3(notOnLineUserName);
 
         message.getBody().setContent(content);
 
