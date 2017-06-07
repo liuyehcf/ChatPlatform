@@ -339,7 +339,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String systemContent = "["
                         + fromUserName
                         + "]已断开连接";
-                ServerUtils.sendLogOutMessage(
+                ServerUtils.sendLoginOutNotifyMessage(
                         toConnection,
                         toUserName,
                         fromUserName,

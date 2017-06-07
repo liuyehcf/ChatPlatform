@@ -163,7 +163,7 @@ public class ServerConnectionDispatcher {
 
                 pipeLineTask.registerConnection(newConnection);
                 //发送系统消息关闭会话
-                ServerUtils.sendLogOutMessage(newConnection, "", "", "服务器负载过高，请稍后尝试登陆");
+                //todo ServerUtils.sendLogOutMessage(newConnection, "", "", "服务器负载过高，请稍后尝试登陆");
                 //该链接不再接受任何消息
                 newConnection.cancel();
             } else {

@@ -61,7 +61,9 @@ class ServerUtils {
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getControl().setSystemMessage(true);
+
+        message.getHeader().setParam1("NOT_ONLINE");
         message.getHeader().setParam2(toUserName);
         message.getHeader().setParam3(notOnLineUserName);
 
@@ -78,16 +80,16 @@ class ServerUtils {
      * @param content
      * @return
      */
-    static void sendLogOutMessage(Connection connection, String toUserName, String closingUserName, String content) {
+    static void sendLoginOutNotifyMessage(Connection connection, String toUserName, String closingUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setLoginOutMessage(true);
+        message.getControl().setSystemMessage(true);
 
-        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getHeader().setParam1("LOGIN_OUT_NOTIFY");
         message.getHeader().setParam2(toUserName);
         message.getHeader().setParam3(closingUserName);
 

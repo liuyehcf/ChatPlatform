@@ -86,15 +86,17 @@ public class ClientSessionTask extends AbstractPipeLineTask {
 
         for (Message message : messages) {
 
-            if (message.getControl().isLoginInMessage()) {
+            if (message.getControl().isSystemMessage()) {
+                if (message.getHeader().getParam1().equals("LOGIN_OUT_NOTIFY")) {
+                    //参见ServerUtils.sendLoginOutNotifyMessage方法
+                    connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+                } else if (message.getHeader().getParam1().equals("NOT_ONLINE")) {
+                    //参见ServerUtils.sendNotOnLineMessage方法
+                    connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+                }
+            } else if (message.getControl().isLoginInMessage()) {
 
-            }
-            //这里的LoginOutMessage用于通知某用户已经下线
-            else if (message.getControl().isLoginOutMessage()) {
-                String loginOutUserName = message.getHeader().getParam3();
-
-                //参见ServerUtils.sendLogOutMessage方法
-                connection.getSessionWindow(loginOutUserName).flushOnWindow(false, true, message.getDisplayMessageString());
+            } else if (message.getControl().isLoginOutMessage()) {
 
             } else if (message.getControl().isRegisterMessage()) {
 
@@ -103,12 +105,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             } else if (message.getControl().isCloseSessionMessage()) {
 
             } else {
-                //参见ServerUtils.sendNotOnLineMessage
-                boolean isSystem = !message.getHeader().getParam3().isEmpty();
-                if (!isSystem)
-                    connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, false, message.getDisplayMessageString());
-                else
-                    connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, false, message.getDisplayMessageString());
             }
         }
     }
@@ -145,7 +142,9 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             try {
                 messageWriter.write(message, connection);
 
-                if (message.getControl().isLoginInMessage()) {
+                if (message.getControl().isSystemMessage()) {
+
+                } else if (message.getControl().isLoginInMessage()) {
 
                 } else if (message.getControl().isLoginOutMessage()) {
 

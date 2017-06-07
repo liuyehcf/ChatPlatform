@@ -94,8 +94,9 @@ public class ClientMainTask extends AbstractPipeLineTask {
             //登录消息
             String userName = message.getHeader().getParam2();
 
+            if (message.getControl().isSystemMessage()) {
 
-            if (message.getControl().isLoginInMessage()) {
+            } else if (message.getControl().isLoginInMessage()) {
                 //允许登录
                 if (message.getHeader().getParam3().equals(PERMIT)) {
 
@@ -171,7 +172,9 @@ public class ClientMainTask extends AbstractPipeLineTask {
             try {
                 messageWriter.write(message, connection);
 
-                if (message.getControl().isLoginInMessage()) {
+                if (message.getControl().isSystemMessage()) {
+
+                } else if (message.getControl().isLoginInMessage()) {
 
                 } else if (message.getControl().isLoginOutMessage()) {
 
