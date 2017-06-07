@@ -14,6 +14,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 /**
  * Created by Liuye on 2017/6/7.
@@ -84,6 +85,11 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
      */
     private JTree tree;
 
+    /**
+     * 会话中的成员列表
+     */
+    private DefaultMutableTreeNode sessionUserList;
+
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
     public Protocol.Header getHeader() {
@@ -115,8 +121,8 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
     private void initWindow() {
         //成员列表
         tree = new JTree();
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("群内成员");
-        DefaultTreeModel model = new DefaultTreeModel(root);
+        sessionUserList = new DefaultMutableTreeNode("群内成员");
+        DefaultTreeModel model = new DefaultTreeModel(sessionUserList);
 
         //设置数据模型
         tree.setModel(model);
@@ -262,6 +268,22 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
         JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
     }
+
+
+    public void flushGroupSessionUserList(java.util.List<String> userNames) {
+        sessionUserList.removeAllChildren();
+        for (String userName : userNames) {
+            sessionUserList.add(new DefaultMutableTreeNode(userName));
+        }
+
+        //刷新
+        ((DefaultTreeModel) tree.getModel()).reload();
+
+        //展开节点
+        for (int i = 0; i < tree.getRowCount(); i++)
+            tree.expandRow(i);
+    }
+
 
     @Override
     public void valueChanged(TreeSelectionEvent e) {

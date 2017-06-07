@@ -186,6 +186,22 @@ class ServerUtils {
         connection.offerMessage(message);
     }
 
+    static Message createFlushGroupSessionUserListMessage(String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+
+        message.getHeader().setParam1(FLUSH_GROUP_SESSION_USER_LIST);
+
+        message.getBody().setContent(content);
+
+        return message;
+    }
+
 
     static void ASSERT(boolean flag) {
         if (!flag) throw new RuntimeException();

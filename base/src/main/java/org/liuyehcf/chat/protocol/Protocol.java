@@ -180,6 +180,8 @@ public class Protocol {
 
         public static final String FLUSH_GROUP_LIST = "FLUSH_GROUP_LIST";
 
+        public static final String FLUSH_GROUP_SESSION_USER_LIST = "FLUSH_GROUP_SESSION_USER_LIST";
+
         public static final String NOT_ONLINE = "NOT_ONLINE";
 
         public static final String LOGIN_OUT_NOTIFY = "LOGIN_OUT_NOTIFY";

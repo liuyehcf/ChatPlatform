@@ -191,6 +191,11 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
                     serverGroupInfo.addConnection(fromUserName, connection);
                     //todo 刷新群聊界面成员列表
+                    serverGroupInfo.offerMessage(
+                            null,
+                            ServerUtils.createFlushGroupSessionUserListMessage(
+                                    serverGroupInfo.getGroupSessionConnectionMap().keySet().toString()
+                            ));
                 }
                 //非群聊
                 else {
@@ -236,6 +241,11 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
                     serverGroupInfo.removeConnection(fromUserName);
                     //todo 刷新群聊界面成员列表
+                    serverGroupInfo.offerMessage(
+                            null,
+                            ServerUtils.createFlushGroupSessionUserListMessage(
+                                    serverGroupInfo.getGroupSessionConnectionMap().keySet().toString()
+                            ));
                 }
                 //非群聊
                 else {
@@ -259,12 +269,11 @@ public class ServerSessionTask extends AbstractPipeLineTask {
             else {
                 //群聊
                 if (message.getControl().isGroupChat()) {
-                    String fromUserName = message.getHeader().getParam1();
                     String groupName = message.getHeader().getParam2();
 
                     ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
 
-                    serverGroupInfo.offerMessage(connection,message);
+                    serverGroupInfo.offerMessage(connection, message);
                 }
                 //非群聊
                 else {

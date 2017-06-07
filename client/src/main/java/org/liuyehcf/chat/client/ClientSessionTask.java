@@ -11,6 +11,7 @@ import java.nio.channels.SelectionKey;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static org.liuyehcf.chat.protocol.Protocol.Header.FLUSH_GROUP_SESSION_USER_LIST;
 import static org.liuyehcf.chat.protocol.Protocol.Header.LOGIN_OUT_NOTIFY;
 import static org.liuyehcf.chat.protocol.Protocol.Header.NOT_ONLINE;
 
@@ -90,10 +91,17 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             if (message.getControl().isSystemMessage()) {
                 if (message.getHeader().getParam1().equals(LOGIN_OUT_NOTIFY)) {
                     //参见ServerUtils.sendLoginOutNotifyMessage方法
-                    connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+                    String toUserName = message.getHeader().getParam3();
+                    connection.getSessionWindow(toUserName).flushOnWindow(false, true, message.getDisplayMessageString());
                 } else if (message.getHeader().getParam1().equals(NOT_ONLINE)) {
                     //参见ServerUtils.sendNotOnLineMessage方法
-                    connection.getSessionWindow(message.getHeader().getParam3()).flushOnWindow(false, true, message.getDisplayMessageString());
+                    String toUserName = message.getHeader().getParam3();
+                    connection.getSessionWindow(toUserName).flushOnWindow(false, true, message.getDisplayMessageString());
+                } else if (message.getHeader().getParam1().equals(FLUSH_GROUP_SESSION_USER_LIST)) {
+                    //参见ServerUtils.createFlushGroupSessionUserListMessage以及ServerGroupInfo.offerMessage方法
+                    String groupName = message.getHeader().getParam3();
+                    connection.getGroupSessionWindow(groupName).flushGroupSessionUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
+
                 }
             } else if (message.getControl().isLoginInMessage()) {
 
@@ -160,28 +168,44 @@ public class ClientSessionTask extends AbstractPipeLineTask {
 
                 } else if (message.getControl().isOpenSessionMessage()) {
                     if (message.getControl().isGroupChat()) {
+                        String fromUserName = message.getHeader().getParam1();
+                        String groupName = message.getHeader().getParam2();
                         SessionDescription newSessionDescription = new SessionDescription(
-                                message.getHeader().getParam1(),
-                                message.getHeader().getParam2(),
+                                fromUserName,
+                                groupName,
                                 true);
                         ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
-                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
+                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
                     } else {
+                        String fromUserName = message.getHeader().getParam1();
+                        String toUserName = message.getHeader().getParam2();
                         SessionDescription newSessionDescription = new SessionDescription(
-                                message.getHeader().getParam1(),
-                                message.getHeader().getParam2(),
+                                fromUserName,
+                                toUserName,
                                 false);
                         ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
-                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
+                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
                     }
                 } else if (message.getControl().isCloseSessionMessage()) {
                     if (message.getControl().isGroupChat()) {
+                        String fromUserName = message.getHeader().getParam1();
+                        String groupName = message.getHeader().getParam2();
+                        SessionDescription sessionDescription = new SessionDescription(
+                                fromUserName,
+                                groupName,
+                                true);
+
+                        //如果启动SessionWindow或者GroupSessionWindows失败时，会直接调用dispose方法，因此会话是不存在的，因此允许删除失败
+                        connection.getConnectionDescription().removeSessionDescription(sessionDescription);
+                        ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
+                        connection.removeGroupSessionWindow(groupName);
 
                     } else {
+                        String fromUserName = message.getHeader().getParam1();
                         String toUserName = message.getHeader().getParam2();
                         SessionDescription sessionDescription = new SessionDescription(
-                                message.getHeader().getParam1(),
-                                message.getHeader().getParam2(),
+                                fromUserName,
+                                toUserName,
                                 false);
 
                         //如果启动SessionWindow或者GroupSessionWindows失败时，会直接调用dispose方法，因此会话是不存在的，因此允许删除失败
