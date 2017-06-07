@@ -1,4 +1,4 @@
-package org.liuyehcf.chat.server;
+package org.liuyehcf.chat.server.connection;
 
 /**
  * Created by Liuye on 2017/5/29.

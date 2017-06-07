@@ -1,6 +1,12 @@
 package org.liuyehcf.chat.client;
 
 
+import org.liuyehcf.chat.client.connection.ClientMainConnection;
+import org.liuyehcf.chat.client.connection.ClientSessionConnection;
+import org.liuyehcf.chat.client.pipeline.ClientMainTask;
+import org.liuyehcf.chat.client.pipeline.ClientSessionTask;
+import org.liuyehcf.chat.client.ui.MainWindow;
+import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.pipe.PipeLineTask;
@@ -30,7 +36,7 @@ public class ClientConnectionDispatcher {
     /**
      * 日志
      */
-    static Logger LOGGER = LoggerFactory.getLogger(ClientConnectionDispatcher.class);
+    public static Logger LOGGER = LoggerFactory.getLogger(ClientConnectionDispatcher.class);
 
     /**
      * 该类唯一作用是使得ChatClientDispatcher的单例延迟加载

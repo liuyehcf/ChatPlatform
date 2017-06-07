@@ -2,21 +2,20 @@ package org.liuyehcf.chat.server;
 
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
-import org.liuyehcf.chat.interceptor.MessageInterceptor;
-import org.liuyehcf.chat.interceptor.MessageInvocation;
-import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.pipe.PipeLineTask;
-import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
+import org.liuyehcf.chat.server.connection.ServerConnection;
 import org.liuyehcf.chat.server.interceptor.ServerMessageReaderInterceptor;
+import org.liuyehcf.chat.server.interceptor.ServerMessageWriterInterceptor;
+import org.liuyehcf.chat.server.pipeline.ServerSessionTask;
+import org.liuyehcf.chat.server.utils.ServerGroupInfo;
+import org.liuyehcf.chat.server.utils.ServerUtils;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,7 +117,8 @@ public class ServerConnectionDispatcher {
         messageReaderFactory = DefaultMessageReaderProxyFactory.Builder()
                 .addInterceptor(new ServerMessageReaderInterceptor(this));
 
-        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder();
+        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
+                .addInterceptor(new ServerMessageWriterInterceptor(this));
 
         mainConnectionMap = new ConcurrentHashMap<String, Connection>();
 

@@ -1,5 +1,9 @@
-package org.liuyehcf.chat.client;
+package org.liuyehcf.chat.client.connection;
 
+import org.liuyehcf.chat.client.ClientConnectionDispatcher;
+import org.liuyehcf.chat.client.ui.GroupSessionWindow;
+import org.liuyehcf.chat.client.ui.SessionWindow;
+import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;

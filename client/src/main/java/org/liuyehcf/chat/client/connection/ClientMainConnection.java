@@ -1,8 +1,8 @@
-package org.liuyehcf.chat.client;
+package org.liuyehcf.chat.client.connection;
 
+import org.liuyehcf.chat.client.ui.MainWindow;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
-import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
 

@@ -1,4 +1,4 @@
-package org.liuyehcf.chat.client;
+package org.liuyehcf.chat.client.ui;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;

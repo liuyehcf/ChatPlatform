@@ -1,6 +1,7 @@
-package org.liuyehcf.chat.server;
+package org.liuyehcf.chat.server.ui;
 
 import org.liuyehcf.chat.handler.WindowHandler;
+import org.liuyehcf.chat.server.pipeline.ServerConnectionListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -97,8 +98,8 @@ public class BootWindow {
                 String serverHost;
                 Integer serverPort;
                 try {
-                    serverHost = hostField.getText();
-                    serverPort = Integer.parseInt(portField.getText());
+                    serverHost = hostField.getText().replaceAll(" ", "");
+                    serverPort = Integer.parseInt(portField.getText().replaceAll(" ", ""));
                 } catch (Throwable e) {
                     systemLabel.setText("SYSTEM: WRONG INPUT!");
                     return;

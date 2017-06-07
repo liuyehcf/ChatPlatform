@@ -8,10 +8,10 @@ import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
-import org.liuyehcf.chat.server.ServerConnection;
+import org.liuyehcf.chat.server.connection.ServerConnection;
 import org.liuyehcf.chat.server.ServerConnectionDispatcher;
-import org.liuyehcf.chat.server.ServerGroupInfo;
-import org.liuyehcf.chat.server.ServerUtils;
+import org.liuyehcf.chat.server.utils.ServerGroupInfo;
+import org.liuyehcf.chat.server.utils.ServerUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -67,7 +67,7 @@ public class ServerMessageReaderInterceptor implements MessageInterceptor {
             }
         } catch (IOException e) {
             ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-            Connection connection = (Connection) proxyMethodInvocation.getArguments()[0];
+            ServerConnection connection = (ServerConnection) proxyMethodInvocation.getArguments()[0];
 
             ServerConnectionDispatcher.LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
             connection.getBindPipeLineTask().offLine(connection);

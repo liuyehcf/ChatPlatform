@@ -1,7 +1,8 @@
-package org.liuyehcf.chat.server;
+package org.liuyehcf.chat.server.pipeline;
 
 
 import org.liuyehcf.chat.handler.WindowHandler;
+import org.liuyehcf.chat.server.ServerConnectionDispatcher;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

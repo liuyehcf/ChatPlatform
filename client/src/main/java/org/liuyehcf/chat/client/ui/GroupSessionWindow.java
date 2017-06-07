@@ -1,18 +1,27 @@
-package org.liuyehcf.chat.client;
+package org.liuyehcf.chat.client.ui;
 
+import org.liuyehcf.chat.client.ClientConnectionDispatcher;
+import org.liuyehcf.chat.client.connection.ClientSessionConnection;
+import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.handler.WindowHandler;
 import org.liuyehcf.chat.protocol.Protocol;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.text.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Created by Liuye on 2017/6/2.
+ * Created by Liuye on 2017/6/7.
  */
-public class SessionWindow extends JFrame {
+public class GroupSessionWindow extends JFrame implements TreeSelectionListener {
     /**
      * 服务器主机名或IP
      */
@@ -31,7 +40,7 @@ public class SessionWindow extends JFrame {
     /**
      * 信宿名字
      */
-    private String toUserName;
+    private String groupName;
 
     /**
      * 此会话信息头
@@ -73,6 +82,16 @@ public class SessionWindow extends JFrame {
      */
     private JButton button;
 
+    /**
+     * 群聊成员树
+     */
+    private JTree tree;
+
+    /**
+     * 会话中的成员列表
+     */
+    private DefaultMutableTreeNode sessionUserList;
+
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
     public Protocol.Header getHeader() {
@@ -83,25 +102,49 @@ public class SessionWindow extends JFrame {
         return bindConnection;
     }
 
-    public SessionWindow(MainWindow bindMainWindow, String serverHost, Integer serverPort, String fromUserName, String toUserName, WindowHandler handler) {
+    public GroupSessionWindow(MainWindow bindMainWindow, String serverHost, Integer serverPort, String fromUserName, String groupName, WindowHandler handler) {
         this.bindMainWindow = bindMainWindow;
         this.serverHost = serverHost;
         this.serverPort = serverPort;
         this.fromUserName = fromUserName;
-        this.toUserName = toUserName;
+        this.groupName = groupName;
         this.handler = handler;
 
         this.header = new Protocol.Header();
         this.header.setParam1(this.fromUserName);
-        this.header.setParam2(this.toUserName);
+        this.header.setParam2(this.groupName);
 
-        init();
+        initWindow();
 
-        this.bindMainWindow.addSessionWindow(this.toUserName, this);
+        this.bindMainWindow.addGroupSessionWindow(this.groupName, this);
     }
 
 
-    private void init() {
+    private void initWindow() {
+        //成员列表
+        tree = new JTree();
+        sessionUserList = new DefaultMutableTreeNode("群内成员");
+        DefaultTreeModel model = new DefaultTreeModel(sessionUserList);
+
+        //设置数据模型
+        tree.setModel(model);
+
+        //添加事件
+        tree.addTreeSelectionListener(this);
+
+        //滚动面板
+        JScrollPane jScrollPane = new JScrollPane(tree,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        //添加树到滚动面板
+        jScrollPane.getViewport().add(tree);
+
+        //添加滚动面板到窗口中
+        this.getContentPane().add(jScrollPane);
+
+        jScrollPane.setBounds(25, 25, 100, 600);
+
         //滚动条显示文本框
         textPane = new JTextPane();
         textPane.setFont(GLOBAL_FONT);
@@ -109,7 +152,7 @@ public class SessionWindow extends JFrame {
 
         scrollPane = new JScrollPane(textPane);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setBounds(25, 25, 800, 600);
+        scrollPane.setBounds(125, 25, 700, 600);
 
 
         //设置一个输入文本框以及一个按钮
@@ -152,7 +195,7 @@ public class SessionWindow extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
-                ClientUtils.sendNormalMessage(bindConnection, false, header, content);
+                ClientUtils.sendNormalMessage(bindConnection, true, header, content);
                 textField.setText("");
             }
         });
@@ -161,7 +204,7 @@ public class SessionWindow extends JFrame {
         this.add(panel);
 
         //设置标题
-        this.setTitle("Session <" + fromUserName + "> -- <" + toUserName + ">");
+        this.setTitle("群聊<" + groupName + ">");
 
         //设置大小
         this.setSize(875, 825);
@@ -176,13 +219,13 @@ public class SessionWindow extends JFrame {
     }
 
     public void connect() {
-        //公用一条连接即可
+        //共用一条连接即可
         bindConnection = ClientConnectionDispatcher.getSingleton()
                 .getSessionConnection(fromUserName, serverHost, serverPort);
 
         if (bindConnection != null) {
-            ClientUtils.sendOpenSessionMessage(bindConnection, false, header);
-            bindConnection.addSessionWindow(toUserName, this);
+            ClientUtils.sendOpenSessionMessage(bindConnection, true, header);
+            bindConnection.addGroupSessionWindow(groupName, this);
         } else {
             handler.onFailure();
             this.dispose();
@@ -228,6 +271,27 @@ public class SessionWindow extends JFrame {
         scrollBar.setValue(scrollBar.getMaximum());
     }
 
+
+    public void flushGroupSessionUserList(java.util.List<String> userNames) {
+        sessionUserList.removeAllChildren();
+        for (String userName : userNames) {
+            sessionUserList.add(new DefaultMutableTreeNode(userName));
+        }
+
+        //刷新
+        ((DefaultTreeModel) tree.getModel()).reload();
+
+        //展开节点
+        for (int i = 0; i < tree.getRowCount(); i++)
+            tree.expandRow(i);
+    }
+
+
+    @Override
+    public void valueChanged(TreeSelectionEvent e) {
+
+    }
+
     private final class MyWindowListener implements WindowListener {
         @Override
         public void windowOpened(WindowEvent e) {
@@ -236,14 +300,14 @@ public class SessionWindow extends JFrame {
 
         @Override
         public void windowClosing(WindowEvent e) {
-
+            ClientUtils.sendCloseSessionMessage(bindConnection, true, header);
+            bindMainWindow.removeGroupSessionWindow(groupName);
+            //GroupSessionWindows关联的SessionConnection在发送消息后调用remove方法
         }
 
         @Override
         public void windowClosed(WindowEvent e) {
-            ClientUtils.sendCloseSessionMessage(bindConnection, false, header);
-            bindMainWindow.removeSessionWindow(toUserName);
-            //SessionWindows关联的SessionConnection在发送消息后调用remove方法
+
         }
 
         @Override

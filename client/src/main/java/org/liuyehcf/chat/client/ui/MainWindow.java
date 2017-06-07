@@ -1,5 +1,8 @@
-package org.liuyehcf.chat.client;
+package org.liuyehcf.chat.client.ui;
 
+import org.liuyehcf.chat.client.ClientConnectionDispatcher;
+import org.liuyehcf.chat.client.connection.ClientMainConnection;
+import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.handler.WindowHandler;
 import org.liuyehcf.chat.protocol.Protocol;
 
@@ -219,6 +222,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         //获取选择的节点
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree
                 .getLastSelectedPathComponent();
+
+        //点击了好友列表
         if (node != null && node.getParent() != null
                 && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("在线好友")
                 && node.getUserObject() != null) {
@@ -231,7 +236,9 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 createSessionWindow((String) node.getUserObject());
             }
 
-        } else if (node != null && node.getParent() != null
+        }
+        //点击了群聊列表
+        else if (node != null && node.getParent() != null
                 && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("群聊<点击添加>")
                 && node.getUserObject() != null) {
             if (groupSessionWindowMap.containsKey(node.getUserObject())) {
@@ -241,18 +248,16 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 //开启一个群聊会话窗口
                 createGroupSessionWindow((String) node.getUserObject());
             }
-        } else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
+        }
+        //点击了添加群聊
+        else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
 
-            String groupName = JOptionPane.showInputDialog("请输入群聊名");
+            String groupName = JOptionPane.showInputDialog("请输入群聊名").replaceAll(" ", "");
 
-            while (groupName == null || groupName.equals("")
-                    || groupNames.contains(groupName)) {
+            if (groupName == null || groupName.equals("")) return;
 
-                if (groupName == null || groupName.equals(""))
-                    groupName = JOptionPane.showInputDialog("群聊名不能为空，请重新输入");
-                else
-                    groupName = JOptionPane.showInputDialog("该名称已被占用，请重新输入");
-
+            while (groupNames.contains(groupName)) {
+                groupName = JOptionPane.showInputDialog("该名称已被占用，请重新输入").replaceAll(" ", "");
             }
             ClientUtils.sendApplyGroupNameMessage(bindMainConnection, account, groupName);
         }

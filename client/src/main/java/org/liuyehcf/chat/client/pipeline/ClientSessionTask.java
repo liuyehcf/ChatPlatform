@@ -1,5 +1,8 @@
-package org.liuyehcf.chat.client;
+package org.liuyehcf.chat.client.pipeline;
 
+import org.liuyehcf.chat.client.ClientConnectionDispatcher;
+import org.liuyehcf.chat.client.connection.ClientSessionConnection;
+import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;

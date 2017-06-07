@@ -1,10 +1,13 @@
-package org.liuyehcf.chat.server;
+package org.liuyehcf.chat.server.pipeline;
 
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReader;
+import org.liuyehcf.chat.server.connection.ServerConnection;
+import org.liuyehcf.chat.server.ServerConnectionDispatcher;
+import org.liuyehcf.chat.server.utils.ServerUtils;
 import org.liuyehcf.chat.writer.MessageWriter;
 
 import java.io.IOException;
@@ -83,9 +86,8 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         ServerConnection connection = (ServerConnection) selectionKey.attachment();
 
         MessageReader messageReader = connection.getMessageReader();
-        List<Message> messages;
         try {
-            messages = messageReader.read(connection);
+            messageReader.read(connection);
         } catch (IOException e) {
 
         }
@@ -127,11 +129,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         if (message != null) {
             try {
                 messageWriter.write(message, connection);
-                ServerConnectionDispatcher.LOGGER.debug("Send a message {}", protocol.wrap(message));
             } catch (IOException e) {
-                ServerConnectionDispatcher.LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
-                connection.getBindPipeLineTask().offLine(connection);
+
             }
+            //具体过程交给拦截器处理
         }
     }
 
