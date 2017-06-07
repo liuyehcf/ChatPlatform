@@ -23,6 +23,8 @@ public class ServerSessionTask extends AbstractPipeLineTask {
      */
     private ServerConnectionDispatcher serverConnectionDispatcher = ServerConnectionDispatcher.getSingleton();
 
+    private Protocol protocol = new Protocol();
+
     public ServerSessionTask() {
         serverConnectionDispatcher.getPipeLineTasks().add(this);
     }
@@ -84,12 +86,15 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         try {
             messages = messageReader.read(connection);
         } catch (IOException e) {
-            //已配置拦截器，这里不做处理
+            ServerConnectionDispatcher.LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
+            connection.getBindPipeLineTask().offLine(connection);
             return;
         }
 
         for (Message message : messages) {
             connection.activeNow();
+
+            ServerConnectionDispatcher.LOGGER.debug("Receive a message {}", protocol.wrap(message));
 
             //登录信息
             if (message.getControl().isLoginInMessage()) {
@@ -118,7 +123,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 ServerUtils.ASSERT(serverConnectionDispatcher.getMainConnectionMap().containsKey(userName));
 
                 //关闭主界面连接
-                serverConnectionDispatcher.getMainConnectionMap().remove(userName);
                 connection.getBindPipeLineTask().offLine(connection);
 
                 //找到该主界面对应的会话连接描述符
@@ -135,7 +139,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     loginOutNotify(sessionConnection);
 
                     //关闭会话连接
-                    serverConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
                     sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
                 }
                 //刷新好友列表
@@ -271,9 +274,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         if (message != null) {
             try {
                 messageWriter.write(message, connection);
+                ServerConnectionDispatcher.LOGGER.debug("Send a message {}", protocol.wrap(message));
             } catch (IOException e) {
-                //已配置拦截器，这里不做处理
-                return;
+                ServerConnectionDispatcher.LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
+                connection.getBindPipeLineTask().offLine(connection);
             }
         }
     }

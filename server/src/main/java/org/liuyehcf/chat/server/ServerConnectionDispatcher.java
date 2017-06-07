@@ -114,11 +114,9 @@ public class ServerConnectionDispatcher {
 
         executorService = Executors.newCachedThreadPool();
 
-        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder()
-                .addInterceptor(new ServerMessageReadeInterceptor());
+        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder();
 
-        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
-                .addInterceptor(new ServerMessageWriteInterceptor());
+        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder();
 
         mainConnectionMap = new ConcurrentHashMap<String, Connection>();
 
@@ -336,66 +334,6 @@ public class ServerConnectionDispatcher {
 
                 }
             }
-        }
-    }
-
-    /**
-     * 读取器后处理器，只处理异常
-     */
-    private static class ServerMessageReadeInterceptor implements MessageInterceptor {
-        /**
-         * 协议
-         */
-        private Protocol protocol = new Protocol();
-
-        @Override
-        public Object intercept(MessageInvocation messageInvocation) throws IOException {
-            List<Message> messages;
-            try {
-                messages = (List<Message>) messageInvocation.process();
-            } catch (IOException e) {
-                LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
-                ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                Connection connection = (Connection) proxyMethodInvocation.getArguments()[0];
-                connection.getBindPipeLineTask().offLine(connection);
-                throw e;
-            }
-            for (Message message : messages)
-                LOGGER.debug("Receive a message {}", protocol.wrap(message));
-            return messages;
-        }
-    }
-
-    /**
-     * 离线后处理器
-     */
-    private static class ServerMessageWriteInterceptor implements MessageInterceptor {
-        /**
-         * 协议
-         */
-        private Protocol protocol = new Protocol();
-
-        @Override
-        public Object intercept(MessageInvocation messageInvocation) throws IOException {
-            Object result;
-            try {
-                result = messageInvocation.process();
-            } catch (IOException e) {
-                LOGGER.info("The server is disconnected from the client due to the abnormal offline of client");
-                ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-                Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
-                connection.getBindPipeLineTask().offLine(connection);
-                throw e;
-            }
-            ProxyMethodInvocation proxyMethodInvocation = (ProxyMethodInvocation) messageInvocation;
-            Message message = (Message) proxyMethodInvocation.getArguments()[0];
-            LOGGER.debug("Send a message {}", protocol.wrap(message));
-            //todo
-//            if (message.getControl().isCloseSessionMessage()) {
-//                Connection connection = (Connection) proxyMethodInvocation.getArguments()[1];
-//                connection.getBindPipeLineTask().offLine(connection);
-//            }
-            return result;
         }
     }
 }
