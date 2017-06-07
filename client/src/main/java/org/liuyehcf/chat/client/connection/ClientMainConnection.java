@@ -4,7 +4,9 @@ import org.liuyehcf.chat.client.ui.MainWindow;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
+import org.liuyehcf.chat.reader.MessageReaderFactory;
 import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
+import org.liuyehcf.chat.writer.MessageWriterFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -25,10 +27,12 @@ public class ClientMainConnection extends Connection {
 
     public ClientMainConnection(String source,
                                 String destination,
+                                MessageReaderFactory messageReaderFactory,
+                                MessageWriterFactory messageWriterFactory,
                                 InetSocketAddress inetSocketAddress,
                                 MainWindow bindMainWindow) throws IOException {
-        super(DefaultMessageReaderProxyFactory.Builder(),
-                DefaultMessageWriterProxyFactory.Builder());
+        super(messageReaderFactory,
+                messageWriterFactory);
         setConnectionDescription(new ConnectionDescription(source, destination));
 
         this.bindMainWindow = bindMainWindow;

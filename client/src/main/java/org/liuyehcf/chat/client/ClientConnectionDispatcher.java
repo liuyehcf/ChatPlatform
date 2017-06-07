@@ -3,6 +3,10 @@ package org.liuyehcf.chat.client;
 
 import org.liuyehcf.chat.client.connection.ClientMainConnection;
 import org.liuyehcf.chat.client.connection.ClientSessionConnection;
+import org.liuyehcf.chat.client.interceptor.ClientMainTaskReaderInterceptor;
+import org.liuyehcf.chat.client.interceptor.ClientMainTaskWriterInterceptor;
+import org.liuyehcf.chat.client.interceptor.ClientSessionTaskReaderInterceptor;
+import org.liuyehcf.chat.client.interceptor.ClientSessionTaskWriterInterceptor;
 import org.liuyehcf.chat.client.pipeline.ClientMainTask;
 import org.liuyehcf.chat.client.pipeline.ClientSessionTask;
 import org.liuyehcf.chat.client.ui.MainWindow;
@@ -71,14 +75,24 @@ public class ClientConnectionDispatcher {
     private ReentrantLock loadBalancingLock;
 
     /**
-     * 消息读取器工厂
+     * 主界面连接消息读取器工厂
      */
-    private MessageReaderFactory messageReaderFactory;
+    private MessageReaderFactory mainTaskMessageReaderFactory;
 
     /**
-     * 消息写入器工厂
+     * 会话连接消息读取工厂
      */
-    private MessageWriterFactory messageWriterFactory;
+    private MessageReaderFactory sessionTaskMessageReaderFactory;
+
+    /**
+     * 主界面连接消息写入器工厂
+     */
+    private MessageWriterFactory mainTaskMessageWriterFactory;
+
+    /**
+     * 会话连接消息写入器工厂
+     */
+    private MessageWriterFactory sessionTaskMessageWriterFactory;
 
     /**
      * 线程池
@@ -111,15 +125,39 @@ public class ClientConnectionDispatcher {
         return sessionConnectionMap;
     }
 
+    public MessageReaderFactory getMainTaskMessageReaderFactory() {
+        return mainTaskMessageReaderFactory;
+    }
+
+    public MessageReaderFactory getSessionTaskMessageReaderFactory() {
+        return sessionTaskMessageReaderFactory;
+    }
+
+    public MessageWriterFactory getMainTaskMessageWriterFactory() {
+        return mainTaskMessageWriterFactory;
+    }
+
+    public MessageWriterFactory getSessionTaskMessageWriterFactory() {
+        return sessionTaskMessageWriterFactory;
+    }
+
     private ClientConnectionDispatcher() {
         mainWindowMap = new ConcurrentHashMap<String, MainWindow>();
         pipeLineTasks = new LinkedList<PipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
 
-        messageReaderFactory = DefaultMessageReaderProxyFactory.Builder();
+        mainTaskMessageReaderFactory = DefaultMessageReaderProxyFactory.Builder()
+                .addInterceptor(new ClientMainTaskReaderInterceptor(this));
 
-        messageWriterFactory = DefaultMessageWriterProxyFactory.Builder();
+        sessionTaskMessageReaderFactory = DefaultMessageReaderProxyFactory.Builder()
+                .addInterceptor(new ClientSessionTaskReaderInterceptor(this));
+
+        mainTaskMessageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
+                .addInterceptor(new ClientMainTaskWriterInterceptor(this));
+
+        sessionTaskMessageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
+                .addInterceptor(new ClientSessionTaskWriterInterceptor(this));
 
         executorService = Executors.newCachedThreadPool();
 
@@ -144,8 +182,8 @@ public class ClientConnectionDispatcher {
                 ClientSessionConnection newConnection = new ClientSessionConnection(
                         source,
                         Protocol.SERVER_USER_NAME,
-                        DefaultMessageReaderProxyFactory.Builder(),
-                        DefaultMessageWriterProxyFactory.Builder(),
+                        ClientConnectionDispatcher.getSingleton().getSessionTaskMessageReaderFactory(),
+                        ClientConnectionDispatcher.getSingleton().getSessionTaskMessageWriterFactory(),
                         new InetSocketAddress(serverHost, serverPort)
                 );
                 dispatchSessionConnection(newConnection);

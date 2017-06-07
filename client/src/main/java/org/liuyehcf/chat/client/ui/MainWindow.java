@@ -160,6 +160,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             bindMainConnection = new ClientMainConnection(
                     account,
                     Protocol.SERVER_USER_NAME,
+                    ClientConnectionDispatcher.getSingleton().getMainTaskMessageReaderFactory(),
+                    ClientConnectionDispatcher.getSingleton().getMainTaskMessageWriterFactory(),
                     new InetSocketAddress(serverHost, serverPort),
                     this
             );

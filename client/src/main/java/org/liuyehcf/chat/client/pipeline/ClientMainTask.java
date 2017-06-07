@@ -82,73 +82,12 @@ public class ClientMainTask extends AbstractPipeLineTask {
         ClientMainConnection connection = (ClientMainConnection) selectionKey.attachment();
 
         MessageReader messageReader = connection.getMessageReader();
-        List<Message> messages;
         try {
-            messages = messageReader.read(connection);
+            messageReader.read(connection);
         } catch (IOException e) {
-            ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
-            connection.getBindPipeLineTask().offLine(connection);
-            return;
-        }
-
-        for (Message message : messages) {
-            if (message.getControl().isSystemMessage()) {
-                if (message.getHeader().getParam1().equals(LOGIN_REPLY)) {
-                    //允许登录
-                    if (message.getHeader().getParam3().equals(PERMIT)) {
-                        String userName = message.getHeader().getParam2();
-
-                        //获取主界面
-                        MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
-
-                        //显示主界面
-                        mainWindow.setVisible(true);
-                    } else if (message.getHeader().getParam3().equals(DENY)) {
-                        //拒绝登录
-                    }
-                } else if (message.getHeader().getParam1().equals(FLUSH_FRIEND_LIST)) {
-                    String userName = message.getHeader().getParam2();
-
-                    //获取主界面
-                    MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
-
-                    //刷新好友列表
-                    mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
-                } else if (message.getHeader().getParam1().equals(FLUSH_GROUP_LIST)) {
-                    String userName = message.getHeader().getParam2();
-
-                    //获取主界面
-                    MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
-
-                    //刷新群聊列表
-                    mainWindow.flushGroupList(ClientUtils.retrieveNames(message.getBody().getContent()));
-                }
-            } else if (message.getControl().isLoginInMessage()) {
-
-            } else if (message.getControl().isLoginOutMessage()) {
-
-            } else if (message.getControl().isRegisterMessage()) {
-
-            } else if (message.getControl().isOpenSessionMessage()) {
-                String fromUserName = message.getHeader().getParam1();
-                String toUserName = message.getHeader().getParam2();
-                MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(fromUserName);
-                SessionWindow sessionWindow = mainWindow.createSessionWindow(toUserName);
-
-                Message notSendMessage = ClientUtils.createOpenSessionWindowMessage(
-                        toUserName,
-                        fromUserName,
-                        message.getBody().getContent()
-                );
-                sessionWindow.flushOnWindow(false, false, notSendMessage.getDisplayMessageString());
-
-            } else if (message.getControl().isCloseSessionMessage()) {
-
-            } else {
-
-            }
 
         }
+        //交由拦截器处理
     }
 
     private void writeMessage() {
@@ -181,31 +120,10 @@ public class ClientMainTask extends AbstractPipeLineTask {
             MessageWriter messageWriter = connection.getMessageWriter();
             try {
                 messageWriter.write(message, connection);
-
-                if (message.getControl().isSystemMessage()) {
-
-                } else if (message.getControl().isLoginInMessage()) {
-
-                } else if (message.getControl().isLoginOutMessage()) {
-
-                } else if (message.getControl().isRegisterMessage()) {
-
-                } else if (message.getControl().isOpenSessionMessage()) {
-
-                } else if (message.getControl().isCloseSessionMessage()) {
-
-                } else {
-
-                }
-
-                if (message.getControl().isLoginOutMessage()) {
-                    connection.getBindPipeLineTask().offLine(connection);
-                }
-
             } catch (IOException e) {
-                ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
-                connection.getBindPipeLineTask().offLine(connection);
+
             }
+            //交由拦截器处理
         }
     }
 

@@ -84,50 +84,9 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         try {
             messages = messageReader.read(connection);
         } catch (IOException e) {
-            ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
-            connection.getBindPipeLineTask().offLine(connection);
-            return;
+
         }
-
-        for (Message message : messages) {
-
-            if (message.getControl().isSystemMessage()) {
-                if (message.getHeader().getParam1().equals(LOGIN_OUT_NOTIFY)) {
-                    //参见ServerUtils.sendLoginOutNotifyMessage方法
-                    String toUserName = message.getHeader().getParam3();
-                    connection.getSessionWindow(toUserName).flushOnWindow(false, true, message.getDisplayMessageString());
-                } else if (message.getHeader().getParam1().equals(NOT_ONLINE)) {
-                    //参见ServerUtils.sendNotOnLineMessage方法
-                    String toUserName = message.getHeader().getParam3();
-                    connection.getSessionWindow(toUserName).flushOnWindow(false, true, message.getDisplayMessageString());
-                } else if (message.getHeader().getParam1().equals(FLUSH_GROUP_SESSION_USER_LIST)) {
-                    //参见ServerUtils.createFlushGroupSessionUserListMessage以及ServerGroupInfo.offerMessage方法
-                    String groupName = message.getHeader().getParam3();
-                    connection.getGroupSessionWindow(groupName).flushGroupSessionUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
-
-                }
-            } else if (message.getControl().isLoginInMessage()) {
-
-            } else if (message.getControl().isLoginOutMessage()) {
-
-            } else if (message.getControl().isRegisterMessage()) {
-
-            } else if (message.getControl().isOpenSessionMessage()) {
-
-            } else if (message.getControl().isCloseSessionMessage()) {
-
-            } else {
-                if (message.getControl().isGroupChat()) {
-                    String groupName = message.getHeader().getParam3();
-                    connection.getGroupSessionWindow(groupName)
-                            .flushOnWindow(false, false, message.getDisplayMessageString());
-                } else {
-                    String toUserName = message.getHeader().getParam2();
-                    connection.getSessionWindow(toUserName)
-                            .flushOnWindow(false, false, message.getDisplayMessageString());
-                }
-            }
-        }
+        //交由拦截器处理
     }
 
     private void writeMessage() {
@@ -160,88 +119,11 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             MessageWriter messageWriter = connection.getMessageWriter();
             try {
                 messageWriter.write(message, connection);
-
-                if (message.getControl().isSystemMessage()) {
-
-                } else if (message.getControl().isLoginInMessage()) {
-
-                } else if (message.getControl().isLoginOutMessage()) {
-
-                } else if (message.getControl().isRegisterMessage()) {
-
-                } else if (message.getControl().isOpenSessionMessage()) {
-                    if (message.getControl().isGroupChat()) {
-                        String fromUserName = message.getHeader().getParam1();
-                        String groupName = message.getHeader().getParam2();
-                        SessionDescription newSessionDescription = new SessionDescription(
-                                fromUserName,
-                                groupName,
-                                true);
-                        ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
-                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
-                    } else {
-                        String fromUserName = message.getHeader().getParam1();
-                        String toUserName = message.getHeader().getParam2();
-                        SessionDescription newSessionDescription = new SessionDescription(
-                                fromUserName,
-                                toUserName,
-                                false);
-                        ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
-                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
-                    }
-                } else if (message.getControl().isCloseSessionMessage()) {
-                    if (message.getControl().isGroupChat()) {
-                        String fromUserName = message.getHeader().getParam1();
-                        String groupName = message.getHeader().getParam2();
-                        SessionDescription sessionDescription = new SessionDescription(
-                                fromUserName,
-                                groupName,
-                                true);
-
-                        //如果启动SessionWindow或者GroupSessionWindows失败时，会直接调用dispose方法，因此会话是不存在的，因此允许删除失败
-                        connection.getConnectionDescription().removeSessionDescription(sessionDescription);
-                        ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
-                        connection.removeGroupSessionWindow(groupName);
-
-                    } else {
-                        String fromUserName = message.getHeader().getParam1();
-                        String toUserName = message.getHeader().getParam2();
-                        SessionDescription sessionDescription = new SessionDescription(
-                                fromUserName,
-                                toUserName,
-                                false);
-
-                        //如果启动SessionWindow或者GroupSessionWindows失败时，会直接调用dispose方法，因此会话是不存在的，因此允许删除失败
-                        connection.getConnectionDescription().removeSessionDescription(sessionDescription);
-                        ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
-                        connection.removeSessionWindow(toUserName);
-                    }
-                    if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
-                        connection.getBindPipeLineTask().offLine(connection);
-                    }
-                } else {
-                    if (message.getControl().isGroupChat()) {
-                        String groupName = message.getHeader().getParam2();
-                        connection.getGroupSessionWindow(groupName).flushOnWindow(true, false, message.getDisplayMessageString());
-                    } else {
-                        String toUserName = message.getHeader().getParam2();
-                        connection.getSessionWindow(toUserName).flushOnWindow(true, false, message.getDisplayMessageString());
-                    }
-                }
-
             } catch (IOException e) {
-                ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
 
-                if (message.getControl().isGroupChat()) {
-                    String groupName = message.getHeader().getParam2();
-                    connection.getGroupSessionWindow(groupName).flushOnWindow(false, true, "[已失去与服务器的连接]");
-                } else {
-                    String toUserName = message.getHeader().getParam2();
-                    connection.getSessionWindow(toUserName).flushOnWindow(false, true, "[已失去与服务器的连接]");
-                }
-                connection.getBindPipeLineTask().offLine(connection);
             }
         }
+        //交由拦截器处理
     }
 
     /**
