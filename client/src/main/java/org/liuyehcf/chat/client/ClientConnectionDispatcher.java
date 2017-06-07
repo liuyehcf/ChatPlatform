@@ -55,11 +55,6 @@ public class ClientConnectionDispatcher {
     }
 
     /**
-     * 列表界面
-     */
-    private Map<String, MainWindow> mainWindowMap;
-
-    /**
      * 主界面线程，一个主界面线程可能管理多个主界面
      */
     private PipeLineTask mainTask;
@@ -100,6 +95,11 @@ public class ClientConnectionDispatcher {
     private ExecutorService executorService;
 
     /**
+     * 列表界面
+     */
+    private Map<String, MainWindow> mainWindowMap;
+
+    /**
      * Connection描述符到Connection的映射，多个PipeLineTask共享
      */
     private Map<ConnectionDescription, ClientSessionConnection> sessionConnectionMap;
@@ -109,16 +109,16 @@ public class ClientConnectionDispatcher {
      */
     private long nextLoadBalancingTimeStamp = 0;
 
-    public Map<String, MainWindow> getMainWindowMap() {
-        return mainWindowMap;
-    }
-
     public void setMainTask(PipeLineTask mainTask) {
         this.mainTask = mainTask;
     }
 
     public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
+    }
+
+    public Map<String, MainWindow> getMainWindowMap() {
+        return mainWindowMap;
     }
 
     public Map<ConnectionDescription, ClientSessionConnection> getSessionConnectionMap() {
@@ -195,8 +195,19 @@ public class ClientConnectionDispatcher {
         }
     }
 
-    //todo 如果一个线程管理多个主界面，那么也是需要加锁的哦
-    public void dispatcherMainConnection(ClientMainConnection connection, String account, String password) {
+    /**
+     * 分配一个主界面连接，异常情况或者达到登录上限，返回null
+     *
+     * @param account
+     * @param inetSocketAddress
+     * @param password
+     * @param bindMainWindow
+     * @return
+     */
+    synchronized public ClientMainConnection getMainConnection(String account,
+                                                               InetSocketAddress inetSocketAddress,
+                                                               String password,
+                                                               MainWindow bindMainWindow) {
         if (mainTask == null) {
             mainTask = new ClientMainTask();
             executorService.execute(mainTask);
@@ -204,16 +215,32 @@ public class ClientConnectionDispatcher {
         }
 
         if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAIN_WINDOW_PER_MAIN_TASK) {
-            mainTask.registerConnection(connection);
-            ClientUtils.sendLoginOutMessage(connection, account);
-            connection.cancel();
-            //注销操作等消息发送成功后再执行
+            return null;
         } else {
-            mainTask.registerConnection(connection);
-            ClientUtils.sendLoginInMessage(connection, account, password);
+            try {
+                ClientMainConnection newMainConnection = new ClientMainConnection(
+                        account,
+                        Protocol.SERVER_USER_NAME,
+                        ClientConnectionDispatcher.getSingleton().getMainTaskMessageReaderFactory(),
+                        ClientConnectionDispatcher.getSingleton().getMainTaskMessageWriterFactory(),
+                        inetSocketAddress,
+                        bindMainWindow
+                );
+
+                mainTask.registerConnection(newMainConnection);
+                ClientUtils.sendLoginInMessage(newMainConnection, account, password);
+                return newMainConnection;
+            } catch (Exception e) {
+                return null;
+            }
         }
     }
 
+    /**
+     * 将生成的SessionConnection分配到PipeLineTask中去
+     *
+     * @param connection
+     */
     public void dispatchSessionConnection(ClientSessionConnection connection) {
         //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
         if (System.currentTimeMillis() < nextLoadBalancingTimeStamp) {

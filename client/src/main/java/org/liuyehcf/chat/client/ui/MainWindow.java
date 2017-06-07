@@ -154,27 +154,22 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
      * 每一个MainWindow对应一个ClientMainConnection
      */
     public void connect() {
-        try {
-            bindMainConnection = new ClientMainConnection(
-                    account,
-                    Protocol.SERVER_USER_NAME,
-                    ClientConnectionDispatcher.getSingleton().getMainTaskMessageReaderFactory(),
-                    ClientConnectionDispatcher.getSingleton().getMainTaskMessageWriterFactory(),
-                    new InetSocketAddress(serverHost, serverPort),
-                    this
-            );
-        } catch (Exception e) {
-            //如果抛出异常，那么MainWindow启动失败，执行失败回调
+        bindMainConnection = ClientConnectionDispatcher.getSingleton().getMainConnection(
+                account,
+                new InetSocketAddress(serverHost, serverPort),
+                password,
+                this);
+
+
+        if (bindMainConnection == null) {
+            //如果抛出异常或者达到上限，那么MainWindow启动失败，执行失败回调
             handler.onFailure();
             //关闭主界面
             this.dispose();
-            return;
+        } else {
+            ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
+            handler.onSuccessful();
         }
-
-        ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
-
-        ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(bindMainConnection, account, password);
-        handler.onSuccessful();
     }
 
 

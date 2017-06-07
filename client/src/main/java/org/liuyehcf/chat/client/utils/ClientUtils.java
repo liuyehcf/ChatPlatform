@@ -18,7 +18,7 @@ public class ClientUtils {
     /**
      * 主界面线程管理的主界面最大数量
      */
-    public static final int MAX_MAIN_WINDOW_PER_MAIN_TASK = 6;
+    public static final int MAX_MAIN_WINDOW_PER_MAIN_TASK = 1;
 
     /**
      * 每个线程管理的channel数量的最大值
