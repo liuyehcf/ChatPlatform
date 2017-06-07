@@ -208,7 +208,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                                     fromUserName,
                                     message.getBody().getContent());
                         } else {
-                            //todo 此时对方已下线
                             ServerUtils.sendNotOnLineMessage(
                                     connection,
                                     fromUserName,
@@ -227,7 +226,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                                 fromUserName,
                                 message.getBody().getContent());
                     } else {
-                        //todo 此时对方已下线
                         ServerUtils.sendNotOnLineMessage(
                                 connection,
                                 fromUserName,

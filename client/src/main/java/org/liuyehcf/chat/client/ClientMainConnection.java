@@ -27,8 +27,6 @@ public class ClientMainConnection extends Connection {
                                 String destination,
                                 InetSocketAddress inetSocketAddress,
                                 MainWindow bindMainWindow) throws IOException {
-        //todo 为ListService配置工厂
-        //让MainConnection和SessionConnection在Server端加以区别
         super(DefaultMessageReaderProxyFactory.Builder(),
                 DefaultMessageWriterProxyFactory.Builder());
         setConnectionDescription(new ConnectionDescription(source, destination));

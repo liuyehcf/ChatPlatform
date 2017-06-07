@@ -95,9 +95,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         sessionWindowMap = new ConcurrentHashMap<String, SessionWindow>();
         groupSessionWindowMap = new ConcurrentHashMap<String, GroupSessionWindow>();
 
-        if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
-            throw new RuntimeException();//todo
-        }
+        ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account));
+
         ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
 
         init();
@@ -180,12 +179,10 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 new WindowHandler() {
                     @Override
                     public void onSuccessful() {
-                        //todo
                     }
 
                     @Override
                     public void onFailure() {
-                        //todo
                     }
                 });
         newSessionWindow.connect();
@@ -202,12 +199,10 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 new WindowHandler() {
                     @Override
                     public void onSuccessful() {
-                        //todo
                     }
 
                     @Override
                     public void onFailure() {
-                        //todo
                     }
                 });
         newGroupSessionWindow.connect();

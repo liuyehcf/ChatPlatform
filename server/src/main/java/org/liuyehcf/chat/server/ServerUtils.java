@@ -48,7 +48,7 @@ class ServerUtils {
 
 
     /**
-     * 非在线消息
+     * 提示客户端，该客户端所连的客户端还没上线
      *
      * @param connection
      * @param toUserName
@@ -74,7 +74,7 @@ class ServerUtils {
 
 
     /**
-     * 创建一条系统消息
+     * 提示客户端，该客户端所连接的另一个客户端已下线
      *
      * @param toUserName
      * @param content

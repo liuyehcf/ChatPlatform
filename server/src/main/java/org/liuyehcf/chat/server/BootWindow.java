@@ -108,8 +108,7 @@ public class BootWindow {
                     systemLabel.setText("SYSTEM: Server is already started!");
                     return;
                 }
-                //todo 如何退出该线程???  需要写个脚本杀死该进程
-                //todo 正常启动后，如何关闭GUI
+
                 listenThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
