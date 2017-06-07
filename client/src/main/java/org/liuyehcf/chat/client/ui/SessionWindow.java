@@ -100,8 +100,6 @@ public class SessionWindow extends JFrame {
         this.header.setParam2(this.toUserName);
 
         init();
-
-        this.bindMainWindow.addSessionWindow(this.toUserName, this);
     }
 
 
@@ -187,6 +185,7 @@ public class SessionWindow extends JFrame {
         if (bindConnection != null) {
             ClientUtils.sendOpenSessionMessage(bindConnection, false, header);
             bindConnection.addSessionWindow(toUserName, this);
+            this.bindMainWindow.addSessionWindow(this.toUserName, this);
         } else {
             handler.onFailure();
             this.dispose();

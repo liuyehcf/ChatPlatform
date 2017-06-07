@@ -116,7 +116,6 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
 
         initWindow();
 
-        this.bindMainWindow.addGroupSessionWindow(this.groupName, this);
     }
 
 
@@ -226,6 +225,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
         if (bindConnection != null) {
             ClientUtils.sendOpenSessionMessage(bindConnection, true, header);
             bindConnection.addGroupSessionWindow(groupName, this);
+            this.bindMainWindow.addGroupSessionWindow(this.groupName, this);
         } else {
             handler.onFailure();
             this.dispose();

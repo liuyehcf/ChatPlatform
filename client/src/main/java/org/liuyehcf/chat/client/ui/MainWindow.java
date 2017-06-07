@@ -104,8 +104,6 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
         ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account));
 
-        ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
-
         init();
     }
 
@@ -172,6 +170,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             this.dispose();
             return;
         }
+
+        ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
 
         ClientConnectionDispatcher.getSingleton().dispatcherMainConnection(bindMainConnection, account, password);
         handler.onSuccessful();
