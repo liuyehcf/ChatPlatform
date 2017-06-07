@@ -80,9 +80,8 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         ClientSessionConnection connection = (ClientSessionConnection) selectionKey.attachment();
 
         MessageReader messageReader = connection.getMessageReader();
-        List<Message> messages;
         try {
-            messages = messageReader.read(connection);
+            messageReader.read(connection);
         } catch (IOException e) {
 
         }
