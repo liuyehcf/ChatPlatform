@@ -151,6 +151,9 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 if (connection.getConnectionDescription() == null) {
                     connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
                     connection.setMainConnection(false);
+
+                    ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+                    serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
                 }
 
                 //增加一条会话描述符
@@ -158,9 +161,6 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
                         newSessionDescription));
 
-                ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
-
-                serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
                 ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
 
             }
@@ -170,8 +170,8 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String toUserName = message.getHeader().getParam2();
 
                 SessionDescription sessionDescription = new SessionDescription(fromUserName, toUserName);
-                ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
                 ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
+                ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
 
                 //该连接没有会话了
                 if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
@@ -261,11 +261,11 @@ public class ServerSessionTask extends AbstractPipeLineTask {
         for (Connection connection : getConnections()) {
             if (currentStamp - connection.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
                 //发送消息关闭会话
-                ServerUtils.sendCloseSessionMessage(
-                        connection,
-                        connection.getConnectionDescription().getSource(),
-                        "占着茅坑不拉屎，你可以滚了!!!"
-                );
+//                ServerUtils.sendLogOutMessage(
+//                        connection,
+//                        connection.getConnectionDescription().getSource(),
+//                        "占着茅坑不拉屎，你可以滚了!!!"
+//                );
             }
         }
     }
@@ -312,9 +312,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String systemContent = "["
                         + fromUserName
                         + "]已断开连接";
-                ServerUtils.sendCloseSessionMessage(
+                ServerUtils.sendLogOutMessage(
                         toConnection,
                         toUserName,
+                        fromUserName,
                         systemContent);
             }
         }
@@ -334,7 +335,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 //            String systemContent = "["
 //                    + fromUserName
 //                    + "]已断开连接";
-//            serverGroupInfo.offerMessage(connection, ServerUtils.sendCloseSessionMessage(
+//            serverGroupInfo.offerMessage(connection, ServerUtils.sendLogOutMessage(
 //                    false,
 //                    "",
 //                    systemContent

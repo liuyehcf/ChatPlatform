@@ -72,7 +72,7 @@ class ServerUtils {
      * @param content
      * @return
      */
-    static void sendCloseSessionMessage(Connection connection, String toUserName, String content) {
+    static void sendLogOutMessage(Connection connection, String toUserName, String closingUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -80,10 +80,11 @@ class ServerUtils {
         message.setBody(new Protocol.Body());
 
         message.getControl().setSystemMessage(true);
-        message.getControl().setCloseSessionMessage(true);
+        message.getControl().setLoginOutMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(toUserName);
+        message.getHeader().setParam3(closingUserName);
 
         message.getBody().setContent(content);
 

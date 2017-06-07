@@ -181,8 +181,8 @@ public class SessionWindow extends JFrame {
                 .getSessionConnection(fromUserName, serverHost, serverPort);
 
         if (bindConnection != null) {
-            ClientUtils.sendSessionHelloMessage(bindConnection, header);
-            bindConnection.addSessionWindow(fromUserName, this);
+            ClientUtils.sendOpenSessionMessage(bindConnection, header);
+            bindConnection.addSessionWindow(toUserName, this);
         } else {
             handler.onFailure();
             this.dispose();
@@ -236,14 +236,14 @@ public class SessionWindow extends JFrame {
 
         @Override
         public void windowClosing(WindowEvent e) {
-            ClientUtils.sendCloseSessionMessage(bindConnection, header);
-            bindMainWindow.removeSessionWindow(toUserName);
-            //SessionWindows关联的SessionConnection在发送消息后调用remove方法
+
         }
 
         @Override
         public void windowClosed(WindowEvent e) {
-
+            ClientUtils.sendCloseSessionMessage(bindConnection, false, header);
+            bindMainWindow.removeSessionWindow(toUserName);
+            //SessionWindows关联的SessionConnection在发送消息后调用remove方法
         }
 
         @Override

@@ -108,7 +108,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
 
         initWindow();
 
-        //todo this.bindMainWindow.addSessionWindow(this);
+        this.bindMainWindow.addGroupSessionWindow(this.groupName, this);
     }
 
 
@@ -216,8 +216,8 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
                 .getSessionConnection(fromUserName, serverHost, serverPort);
 
         if (bindConnection != null) {
-            ClientUtils.sendSessionHelloMessage(bindConnection, header);
-            //todo bindConnection.addSessionWindow(fromUserName, this);
+            ClientUtils.sendOpenSessionMessage(bindConnection, header);
+            bindConnection.addGroupSessionWindow(groupName, this);
         } else {
             handler.onFailure();
             this.dispose();
@@ -276,10 +276,9 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
 
         @Override
         public void windowClosing(WindowEvent e) {
-            //todo
-            //ClientUtils.sendCloseSessionMessage(bindConnection, header);
-            //bindMainWindow.removeSessionWindow(SessionWindow.this);
-            //SessionWindows关联的SessionConnection在发送消息后调用remove方法
+            ClientUtils.sendCloseSessionMessage(bindConnection, true, header);
+            bindMainWindow.removeGroupSessionWindow(groupName);
+            //GroupSessionWindows关联的SessionConnection在发送消息后调用remove方法
         }
 
         @Override
@@ -306,14 +305,5 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
         public void windowDeactivated(WindowEvent e) {
 
         }
-    }
-
-    private GroupSessionWindow() {
-        initWindow();
-        bindMainWindow = null;
-    }
-
-    public static void main(String[] args) {
-        new GroupSessionWindow();
     }
 }

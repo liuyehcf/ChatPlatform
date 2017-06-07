@@ -92,6 +92,7 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
         if (socketChannel.isOpen()) {
             try {
+                socketChannel.socket().close();
                 socketChannel.close();
             } catch (IOException e) {
             }

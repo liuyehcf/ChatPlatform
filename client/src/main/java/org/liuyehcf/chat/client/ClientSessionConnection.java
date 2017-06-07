@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by HCF on 2017/5/30.
@@ -18,7 +18,12 @@ public class ClientSessionConnection extends Connection {
     /**
      * 绑定在该连接上的SessionWindow
      */
-    private Map<String, SessionWindow> chatWindowMap;
+    private Map<String, SessionWindow> sessionWindowMap;
+
+    /**
+     * 绑定在该连接上的GroupSessionWindow
+     */
+    private Map<String, GroupSessionWindow> groupSessionWindowMap;
 
     /**
      * 构造函数，允许抛出异常，交给ChatWindows处理
@@ -42,24 +47,34 @@ public class ClientSessionConnection extends Connection {
         socketChannel = SocketChannel.open();
         socketChannel.connect(inetSocketAddress);
 
-        chatWindowMap = new HashMap<String, SessionWindow>();
+        sessionWindowMap = new ConcurrentHashMap<String, SessionWindow>();
+        groupSessionWindowMap = new ConcurrentHashMap<String, GroupSessionWindow>();
 
         ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().put(getConnectionDescription(), this);
     }
 
     public void addSessionWindow(String userName, SessionWindow sessionWindow) {
-        if (chatWindowMap.containsKey(userName))
-            throw new RuntimeException();
-        chatWindowMap.put(userName, sessionWindow);
+        ClientUtils.ASSERT(!sessionWindowMap.containsKey(userName));
+        sessionWindowMap.put(userName, sessionWindow);
     }
 
     public void removeSessionWindow(String userName) {
-        if (!chatWindowMap.containsKey(userName))
-            throw new RuntimeException();
-        chatWindowMap.remove(userName);
+        ClientUtils.ASSERT(sessionWindowMap.containsKey(userName));
+        sessionWindowMap.remove(userName);
     }
 
     public SessionWindow getSessionWindow(String userName) {
-        return chatWindowMap.get(userName);
+        return sessionWindowMap.get(userName);
+    }
+
+
+    public void addGroupSessionWindow(String groupName, GroupSessionWindow groupSessionWindow) {
+        ClientUtils.ASSERT(!groupSessionWindowMap.containsKey(groupName));
+        groupSessionWindowMap.put(groupName, groupSessionWindow);
+    }
+
+    public void removeGroupSessionWindow(String groupName) {
+        ClientUtils.ASSERT(groupSessionWindowMap.containsKey(groupName));
+        groupSessionWindowMap.remove(groupName);
     }
 }

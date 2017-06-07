@@ -1,7 +1,9 @@
 package org.liuyehcf.chat.client;
 
+import org.liuyehcf.chat.connect.ConnectionDescription;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
+import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.reader.MessageReader;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.writer.MessageWriter;
@@ -39,6 +41,8 @@ public class ClientMainTask extends AbstractPipeLineTask {
             readMessage();
 
             writeMessage();
+
+            checkConnectionStatus();
 
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
@@ -85,6 +89,8 @@ public class ClientMainTask extends AbstractPipeLineTask {
         } catch (IOException e) {
             ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
             connection.getBindPipeLineTask().offLine(connection);
+            clientConnectionDispatcher.getMainWindowMap()
+                    .remove(connection.getConnectionDescription().getSource());
             return;
         }
 
@@ -110,11 +116,26 @@ public class ClientMainTask extends AbstractPipeLineTask {
                     //刷新好友列表
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
-            } else if (message.getControl().isOpenSessionMessage()) {
+            }
+//            //登出消息
+//            else if (message.getControl().isLoginOutMessage()) {
+//                connection.getBindPipeLineTask().offLine(connection);
+//                clientConnectionDispatcher
+//                        .getMainWindowMap().remove(message.getHeader().getParam2());
+//
+//                ConnectionDescription connectionDescription = new ConnectionDescription(
+//                        message.getHeader().getParam2(),
+//                        Protocol.SERVER_USER_NAME);
+//                Connection sessionConnection = clientConnectionDispatcher.getSessionConnectionMap().get(connectionDescription);
+//                sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
+//                clientConnectionDispatcher.getSessionConnectionMap().remove(connectionDescription);
+//            }
+            //要求打开会话窗口消息
+            else if (message.getControl().isOpenSessionMessage()) {
                 String fromUserName = message.getHeader().getParam1();
                 String toUserName = message.getHeader().getParam2();
                 MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(fromUserName);
-                SessionWindow sessionWindow = mainWindow.createSessionWindow(fromUserName, toUserName);
+                SessionWindow sessionWindow = mainWindow.createSessionWindow(toUserName);
 
                 Message notSendMessage = ClientUtils.createOpenSessionWindowMessage(
                         toUserName,
@@ -159,14 +180,26 @@ public class ClientMainTask extends AbstractPipeLineTask {
 
                 //主动断开与服务器的连接，在发出消息之后，断开客户端连接
                 if (message.getControl().isLoginOutMessage()) {
-                    offLine(connection);
-                    clientConnectionDispatcher
-                            .getMainWindowMap().remove(message.getHeader().getParam1());
+                    //offLine(connection);
+
                 }
 
             } catch (IOException e) {
                 ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
                 connection.getBindPipeLineTask().offLine(connection);
+                clientConnectionDispatcher.getMainWindowMap()
+                        .remove(connection.getConnectionDescription().getSource());
+            }
+        }
+    }
+
+    private void checkConnectionStatus(){
+        for(Connection connection:getConnections()){
+            try{
+                connection.getSocketChannel().socket().sendUrgentData(0xFF);
+            }catch(IOException e){
+                clientConnectionDispatcher.getMainWindowMap()
+                        .remove(connection.getConnectionDescription().getSource());
             }
         }
     }

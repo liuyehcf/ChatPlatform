@@ -43,7 +43,7 @@ class ClientUtils {
      */
     static final int LOAD_BALANCE_FREQUENCY = 1;
 
-    static void sendSessionHelloMessage(Connection connection, Protocol.Header header) {
+    static void sendOpenSessionMessage(Connection connection, Protocol.Header header) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -56,7 +56,7 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
-    static void sendCloseSessionMessage(Connection connection, Protocol.Header header) {
+    static void sendCloseSessionMessage(Connection connection, boolean isGroupSession, Protocol.Header header) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -64,6 +64,7 @@ class ClientUtils {
         message.setBody(new Protocol.Body());
 
         message.getControl().setSystemMessage(true);
+        message.getControl().setGroupChat(isGroupSession);
         message.getControl().setCloseSessionMessage(true);
 
         connection.offerMessage(message);

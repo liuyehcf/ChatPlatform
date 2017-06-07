@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Liuye on 2017/6/5.
@@ -91,8 +92,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.password = password;
         this.handler = handler;
 
-        sessionWindowMap = new HashMap<String, SessionWindow>();
-        groupSessionWindowMap = new HashMap<String, GroupSessionWindow>();
+        sessionWindowMap = new ConcurrentHashMap<String, SessionWindow>();
+        groupSessionWindowMap = new ConcurrentHashMap<String, GroupSessionWindow>();
 
         if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
             throw new RuntimeException();//todo
@@ -169,13 +170,12 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
 
-    public SessionWindow createSessionWindow(String fromUserName, String toUserName) {
-        if (!fromUserName.equals(account)) throw new RuntimeException();
+    public SessionWindow createSessionWindow(String toUserName) {
         SessionWindow newSessionWindow = new SessionWindow(
                 this,
                 serverHost,
                 serverPort,
-                fromUserName,
+                account,
                 toUserName,
                 new WindowHandler() {
                     @Override
@@ -193,7 +193,24 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
     public void createGroupSessionWindow(String groupName) {
+        GroupSessionWindow newGroupSessionWindow = new GroupSessionWindow(
+                this,
+                serverHost,
+                serverPort,
+                account,
+                groupName,
+                new WindowHandler() {
+                    @Override
+                    public void onSuccessful() {
+                        //todo
+                    }
 
+                    @Override
+                    public void onFailure() {
+                        //todo
+                    }
+                });
+        newGroupSessionWindow.connect();
     }
 
 
@@ -206,11 +223,14 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("在线好友")
                 && node.getUserObject() != null) {
             if (onlineFriends.contains(node.getUserObject()))
-                createSessionWindow(account, (String) node.getUserObject());
+                createSessionWindow((String) node.getUserObject());
         } else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
             String groupName = JOptionPane.showInputDialog("请输入群聊名");
-            while (groupSessionWindowMap.containsKey(groupName)) {
-                groupName = JOptionPane.showInputDialog("名字重复请重新输入");
+            while (groupName == null || groupName.equals("") || groupSessionWindowMap.containsKey(groupName)) {
+                if (groupName == null || groupName.equals(""))
+                    groupName = JOptionPane.showInputDialog("群聊名不能为空，请重新输入");
+                else
+                    groupName = JOptionPane.showInputDialog("该名称已被占用，请重新输入");
             }
             createGroupSessionWindow(groupName);
         }
@@ -244,6 +264,15 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         sessionWindowMap.remove(userName);
     }
 
+    public void addGroupSessionWindow(String groupName, GroupSessionWindow groupSessionWindow) {
+        ClientUtils.ASSERT(!groupSessionWindowMap.containsKey(groupName));
+        groupSessionWindowMap.put(groupName, groupSessionWindow);
+    }
+
+    public void removeGroupSessionWindow(String groupName) {
+        ClientUtils.ASSERT(groupSessionWindowMap.containsKey(groupName));
+        groupSessionWindowMap.remove(groupName);
+    }
 
     private final class MyWindowListener implements WindowListener {
         @Override

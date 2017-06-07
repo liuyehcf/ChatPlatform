@@ -147,7 +147,7 @@ public class ServerConnectionDispatcher {
         }
     }
 
-    //todo 如果是主链接，不拒绝，会话连接，则拒绝
+    //todo 如果是主链接，不拒绝，会话连接，则拒绝，这个方法也有问题
     private void doDispatcher(SocketChannel socketChannel) {
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
@@ -163,7 +163,7 @@ public class ServerConnectionDispatcher {
 
                 pipeLineTask.registerConnection(newConnection);
                 //发送系统消息关闭会话
-                ServerUtils.sendCloseSessionMessage(newConnection, "", "服务器负载过高，请稍后尝试登陆");
+                ServerUtils.sendLogOutMessage(newConnection, "", "", "服务器负载过高，请稍后尝试登陆");
                 //该链接不再接受任何消息
                 newConnection.cancel();
             } else {
@@ -293,11 +293,11 @@ public class ServerConnectionDispatcher {
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
             for (Connection connection : pipeLineTask.getConnections()) {
 
-                ServerUtils.sendCloseSessionMessage(
-                        connection,
-                        connection.getConnectionDescription().getSource(),
-                        "[很抱歉通知您，服务器已关闭]");
-                connection.cancel();
+//                ServerUtils.sendLogOutMessage(
+//                        connection,
+//                        connection.getConnectionDescription().getSource(),
+//                        "[很抱歉通知您，服务器已关闭]");
+//                connection.cancel();
             }
         }
 

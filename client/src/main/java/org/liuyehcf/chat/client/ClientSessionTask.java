@@ -81,11 +81,28 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             messages = messageReader.read(connection);
         } catch (IOException e) {
             ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
+            connection.getBindPipeLineTask().offLine(connection);
+            clientConnectionDispatcher.getSessionConnectionMap().remove(
+                    connection.getConnectionDescription());
             return;
         }
 
         for (Message message : messages) {
-            connection.getSessionWindow(message.getHeader().getParam2()).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
+            if (message.getControl().isLoginOutMessage()) {
+                String userName = message.getHeader().getParam2();
+                String loginOutUserName = message.getHeader().getParam3();
+
+                SessionDescription sessionDescription = new SessionDescription(
+                        userName,
+                        loginOutUserName);
+
+                connection.getConnectionDescription().removeSessionDescription(sessionDescription);
+                ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", userName, sessionDescription);
+
+                //参见ServerUtils.sendLogOutMessage方法
+                connection.getSessionWindow(loginOutUserName).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
+            } else
+                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, message.getControl().isSystemMessage(), message.getDisplayMessageString());
         }
     }
 
@@ -117,21 +134,39 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         Message message = connection.pollMessage();
         if (message != null) {
             MessageWriter messageWriter = connection.getMessageWriter();
-            String userName = message.getHeader().getParam1();
+            String toUserName = message.getHeader().getParam2();
             try {
                 messageWriter.write(message, connection);
 
                 //如果不是系统消息就打印到会话窗口
-                if (!message.getControl().isSystemMessage())
-                    connection.getSessionWindow(userName).flushOnWindow(true, false, message.getDisplayMessageString());
+                if (!message.getControl().isSystemMessage()) {
+                    connection.getSessionWindow(toUserName).flushOnWindow(true, false, message.getDisplayMessageString());
+                }
+                //如果是会话打开消息
+                else if (message.getControl().isOpenSessionMessage()) {
+                    SessionDescription newSessionDescription = new SessionDescription(
+                            message.getHeader().getParam1(),
+                            message.getHeader().getParam2());
+                    ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
+                    ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
+                }
                 //如果是会话关闭消息
-                if (message.getControl().isCloseSessionMessage()) {
-                    connection.getBindPipeLineTask().offLine(connection);
-                    connection.removeSessionWindow(message.getHeader().getParam1());
+                else if (message.getControl().isCloseSessionMessage()) {
+                    SessionDescription sessionDescription = new SessionDescription(
+                            message.getHeader().getParam1(),
+                            message.getHeader().getParam2());
+
+                    ClientUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
+                    ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
+                    connection.removeSessionWindow(toUserName);
+
                 }
             } catch (IOException e) {
-                connection.getSessionWindow(userName).flushOnWindow(false, true, "[已失去与服务器的连接]");
+                ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
+                connection.getSessionWindow(toUserName).flushOnWindow(false, true, "[已失去与服务器的连接]");
                 connection.getBindPipeLineTask().offLine(connection);
+                clientConnectionDispatcher.getSessionConnectionMap().remove(
+                        connection.getConnectionDescription());
             }
         }
     }
