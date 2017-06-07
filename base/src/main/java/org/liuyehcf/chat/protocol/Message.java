@@ -66,11 +66,9 @@ public class Message {
     public Message getClonedMessage() {
         Message message = new Message();
         message.setControl(this.getControl());
-        message.setHeader(new Protocol.Header());
+        message.setHeader(this.getHeader());
         message.setBody(this.getBody());
 
-        message.getHeader().setParam1(this.getHeader().getParam1());
-        message.getHeader().setParam2(this.getHeader().getParam2());
         return message;
     }
 }

@@ -181,7 +181,7 @@ public class SessionWindow extends JFrame {
                 .getSessionConnection(fromUserName, serverHost, serverPort);
 
         if (bindConnection != null) {
-            ClientUtils.sendOpenSessionMessage(bindConnection, header);
+            ClientUtils.sendOpenSessionMessage(bindConnection, false, header);
             bindConnection.addSessionWindow(toUserName, this);
         } else {
             handler.onFailure();

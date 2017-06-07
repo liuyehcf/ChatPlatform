@@ -93,9 +93,10 @@ class ClientUtils {
      * 打开会话
      *
      * @param connection
+     * @param isGroupSession
      * @param header
      */
-    static void sendOpenSessionMessage(Connection connection, Protocol.Header header) {
+    static void sendOpenSessionMessage(Connection connection, boolean isGroupSession, Protocol.Header header) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -103,6 +104,7 @@ class ClientUtils {
         message.setBody(new Protocol.Body());
 
         message.getControl().setOpenSessionMessage(true);
+        message.getControl().setGroupChat(isGroupSession);
 
         connection.offerMessage(message);
     }

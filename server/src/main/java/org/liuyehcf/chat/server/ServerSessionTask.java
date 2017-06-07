@@ -163,67 +163,147 @@ public class ServerSessionTask extends AbstractPipeLineTask {
             }
             //是否是新建会话消息
             else if (message.getControl().isOpenSessionMessage()) {
-                String fromUserName = message.getHeader().getParam1();
-                String toUserName = message.getHeader().getParam2();
-                ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session", fromUserName);
+                //群聊
+                if (message.getControl().isGroupChat()) {
+                    String fromUserName = message.getHeader().getParam1();
+                    String groupName = message.getHeader().getParam2();
+                    ServerConnectionDispatcher.LOGGER.info("Client {} open a new GroupSession {}", fromUserName, groupName);
 
-                //该Connection第一次建立，服务端Connection建立时是没有描述符的，因为没有接到任何消息
-                if (connection.getConnectionDescription() == null) {
-                    connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
-                    connection.setMainConnection(false);
+                    //该Connection第一次建立，服务端Connection建立时是没有描述符的，因为没有接到任何消息
+                    if (connection.getConnectionDescription() == null) {
+                        connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
+                        connection.setMainConnection(false);
 
-                    ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
-                    serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
+                        ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+                        serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
+                    }
+
+                    //增加一条会话描述符
+                    SessionDescription newSessionDescription = new SessionDescription(
+                            fromUserName,
+                            groupName,
+                            true);
+                    ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
+                            newSessionDescription));
+
+                    ServerConnectionDispatcher.LOGGER.info("Client {} open a new GroupSession {} successfully", fromUserName, newSessionDescription);
+
+                    ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
+                    serverGroupInfo.addConnection(fromUserName, connection);
+                    //todo 刷新群聊界面成员列表
                 }
+                //非群聊
+                else {
+                    String fromUserName = message.getHeader().getParam1();
+                    String toUserName = message.getHeader().getParam2();
+                    ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session", fromUserName);
 
-                //增加一条会话描述符
-                SessionDescription newSessionDescription = new SessionDescription(
-                        fromUserName,
-                        toUserName,
-                        false);
-                ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
-                        newSessionDescription));
+                    //该Connection第一次建立，服务端Connection建立时是没有描述符的，因为没有接到任何消息
+                    if (connection.getConnectionDescription() == null) {
+                        connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
+                        connection.setMainConnection(false);
 
-                ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
+                        ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+                        serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
+                    }
 
+                    //增加一条会话描述符
+                    SessionDescription newSessionDescription = new SessionDescription(
+                            fromUserName,
+                            toUserName,
+                            false);
+                    ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
+                            newSessionDescription));
+
+                    ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
+
+                }
             }
             //客户端要求断开连接
             else if (message.getControl().isCloseSessionMessage()) {
-                String fromUserName = message.getHeader().getParam1();
-                String toUserName = message.getHeader().getParam2();
+                //群聊
+                if (message.getControl().isGroupChat()) {
+                    String fromUserName = message.getHeader().getParam1();
+                    String groupName = message.getHeader().getParam2();
 
-                SessionDescription sessionDescription = new SessionDescription(
-                        fromUserName,
-                        toUserName,
-                        false);
-                ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
-                ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
+                    SessionDescription sessionDescription = new SessionDescription(
+                            fromUserName,
+                            groupName,
+                            true);
+                    ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
+                    ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
 
+                    ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
+                    serverGroupInfo.removeConnection(fromUserName);
+                    //todo 刷新群聊界面成员列表
+                }
+                //非群聊
+                else {
+                    String fromUserName = message.getHeader().getParam1();
+                    String toUserName = message.getHeader().getParam2();
+
+                    SessionDescription sessionDescription = new SessionDescription(
+                            fromUserName,
+                            toUserName,
+                            false);
+                    ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
+                    ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
+
+                }
                 //该连接没有会话了
                 if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
                     connection.getBindPipeLineTask().offLine(connection);
                 }
             }
-            //私聊
+            //一般信息
             else {
-                String fromUserName = message.getHeader().getParam1();
-                String toUserName = message.getHeader().getParam2();
+                //群聊
+                if (message.getControl().isGroupChat()) {
+                    String fromUserName = message.getHeader().getParam1();
+                    String groupName = message.getHeader().getParam2();
 
-                ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
-                //连接存在
-                if (serverConnectionDispatcher.getSessionConnectionMap().containsKey(toConnectionDescription)) {
-                    Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
+                    ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
 
-                    SessionDescription toSessionDescription = new SessionDescription(
-                            toUserName,
-                            fromUserName,
-                            false);
-                    //会话也存在
-                    if (toConnection.getConnectionDescription().getSessionDescriptions().contains(toSessionDescription)) {
-                        toConnection.offerMessage(message);
-                    }
-                    //会话不存在
-                    else {
+                    serverGroupInfo.offerMessage(connection,message);
+                }
+                //非群聊
+                else {
+                    String fromUserName = message.getHeader().getParam1();
+                    String toUserName = message.getHeader().getParam2();
+
+                    ConnectionDescription toConnectionDescription = new ConnectionDescription(Protocol.SERVER_USER_NAME, toUserName);
+                    //连接存在
+                    if (serverConnectionDispatcher.getSessionConnectionMap().containsKey(toConnectionDescription)) {
+                        Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
+
+                        SessionDescription toSessionDescription = new SessionDescription(
+                                toUserName,
+                                fromUserName,
+                                false);
+                        //会话也存在
+                        if (toConnection.getConnectionDescription().getSessionDescriptions().contains(toSessionDescription)) {
+                            toConnection.offerMessage(message);
+                        }
+                        //会话不存在
+                        else {
+                            Connection mainConnection;
+                            if ((mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(toUserName)) != null) {
+
+                                //发送一条消息要求客户端代开会话窗口
+                                ServerUtils.sendOpenSessionWindowMessage(
+                                        mainConnection,
+                                        toUserName,
+                                        fromUserName,
+                                        message.getBody().getContent());
+                            } else {
+                                ServerUtils.sendNotOnLineMessage(
+                                        connection,
+                                        fromUserName,
+                                        toUserName,
+                                        "<" + toUserName + ">已经离线");
+                            }
+                        }
+                    } else {
                         Connection mainConnection;
                         if ((mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(toUserName)) != null) {
 
@@ -241,24 +321,8 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                                     "<" + toUserName + ">已经离线");
                         }
                     }
-                } else {
-                    Connection mainConnection;
-                    if ((mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(toUserName)) != null) {
-
-                        //发送一条消息要求客户端代开会话窗口
-                        ServerUtils.sendOpenSessionWindowMessage(
-                                mainConnection,
-                                toUserName,
-                                fromUserName,
-                                message.getBody().getContent());
-                    } else {
-                        ServerUtils.sendNotOnLineMessage(
-                                connection,
-                                fromUserName,
-                                toUserName,
-                                "<" + toUserName + ">已经离线");
-                    }
                 }
+
             }
         }
     }

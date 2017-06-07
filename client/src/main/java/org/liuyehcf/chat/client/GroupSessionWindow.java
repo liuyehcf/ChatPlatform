@@ -216,7 +216,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
                 .getSessionConnection(fromUserName, serverHost, serverPort);
 
         if (bindConnection != null) {
-            ClientUtils.sendOpenSessionMessage(bindConnection, header);
+            ClientUtils.sendOpenSessionMessage(bindConnection, true, header);
             bindConnection.addGroupSessionWindow(groupName, this);
         } else {
             handler.onFailure();

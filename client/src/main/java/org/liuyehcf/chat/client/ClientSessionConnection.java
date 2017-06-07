@@ -77,4 +77,9 @@ public class ClientSessionConnection extends Connection {
         ClientUtils.ASSERT(groupSessionWindowMap.containsKey(groupName));
         groupSessionWindowMap.remove(groupName);
     }
+
+    public GroupSessionWindow getGroupSessionWindow(String groupName) {
+        return groupSessionWindowMap.get(groupName);
+    }
+
 }

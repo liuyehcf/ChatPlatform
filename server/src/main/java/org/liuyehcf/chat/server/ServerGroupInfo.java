@@ -4,6 +4,7 @@ import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by HCF on 2017/5/30.
@@ -16,9 +17,9 @@ public class ServerGroupInfo {
     private final String groupName;
 
     /**
-     * 当前群聊的Connection集合
+     * 当前群聊的Connection映射
      */
-    private Set<Connection> connections;
+    private Map<String, Connection> groupSessionConnectionMap;
 
     public String getGroupName() {
         return groupName;
@@ -26,40 +27,46 @@ public class ServerGroupInfo {
 
     public ServerGroupInfo(String groupName) {
         this.groupName = groupName;
-        connections = new HashSet<Connection>();
+        groupSessionConnectionMap = new ConcurrentHashMap<String, Connection>();
     }
 
-    public boolean addConnection(Connection connection) {
-        synchronized (connections) {
-            return connections.add(connection);
-        }
+    public void addConnection(String userName, Connection connection) {
+        ServerUtils.ASSERT(!groupSessionConnectionMap.containsKey(userName));
+        groupSessionConnectionMap.put(userName, connection);
     }
 
-    public boolean removeConnection(Connection connection) {
-        synchronized (connections) {
-            return connections.remove(connection);
-        }
+    public void removeConnection(String userName) {
+        ServerUtils.ASSERT(groupSessionConnectionMap.containsKey(userName));
+        groupSessionConnectionMap.remove(userName);
+
     }
 
-    public boolean isGroupEmpty() {
-        synchronized (connections) {
-            return connections.isEmpty();
-        }
+    public Map<String, Connection> getGroupSessionConnectionMap() {
+        return groupSessionConnectionMap;
     }
 
     public void offerMessage(Connection fromConnection, Message message) {
-        synchronized (connections) {
-            for (Connection toConnection : connections) {
-                if (toConnection != fromConnection) {
-                    toConnection.offerMessage(getModifiedMessage(toConnection, message));
-                }
+        for (Connection toConnection : groupSessionConnectionMap.values()) {
+            if (toConnection != fromConnection) {
+                toConnection.offerMessage(getModifiedMessage(toConnection, message));
             }
         }
     }
 
+    /**
+     * 改造Message
+     * param1：信息发送者
+     * param2：connection代表的用户
+     * param3：组名
+     *
+     * @param connection
+     * @param message
+     * @return
+     */
     private Message getModifiedMessage(Connection connection, Message message) {
         Message modifiedMessage = message.getClonedMessage();
         modifiedMessage.getHeader().setParam2(connection.getConnectionDescription().getSource());
+        modifiedMessage.getHeader().setParam3(groupName);
         return modifiedMessage;
     }
 }

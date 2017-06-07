@@ -106,7 +106,15 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             } else if (message.getControl().isCloseSessionMessage()) {
 
             } else {
-                connection.getSessionWindow(message.getHeader().getParam1()).flushOnWindow(false, false, message.getDisplayMessageString());
+                if (message.getControl().isGroupChat()) {
+                    String groupName = message.getHeader().getParam3();
+                    connection.getGroupSessionWindow(groupName)
+                            .flushOnWindow(false, false, message.getDisplayMessageString());
+                } else {
+                    String toUserName = message.getHeader().getParam2();
+                    connection.getSessionWindow(toUserName)
+                            .flushOnWindow(false, false, message.getDisplayMessageString());
+                }
             }
         }
     }
@@ -139,7 +147,6 @@ public class ClientSessionTask extends AbstractPipeLineTask {
         Message message = connection.pollMessage();
         if (message != null) {
             MessageWriter messageWriter = connection.getMessageWriter();
-            String toUserName = message.getHeader().getParam2();
             try {
                 messageWriter.write(message, connection);
 
@@ -171,6 +178,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
                     if (message.getControl().isGroupChat()) {
 
                     } else {
+                        String toUserName = message.getHeader().getParam2();
                         SessionDescription sessionDescription = new SessionDescription(
                                 message.getHeader().getParam1(),
                                 message.getHeader().getParam2(),
@@ -185,12 +193,25 @@ public class ClientSessionTask extends AbstractPipeLineTask {
                         connection.getBindPipeLineTask().offLine(connection);
                     }
                 } else {
-                    connection.getSessionWindow(toUserName).flushOnWindow(true, false, message.getDisplayMessageString());
+                    if (message.getControl().isGroupChat()) {
+                        String groupName = message.getHeader().getParam2();
+                        connection.getGroupSessionWindow(groupName).flushOnWindow(true, false, message.getDisplayMessageString());
+                    } else {
+                        String toUserName = message.getHeader().getParam2();
+                        connection.getSessionWindow(toUserName).flushOnWindow(true, false, message.getDisplayMessageString());
+                    }
                 }
 
             } catch (IOException e) {
                 ClientConnectionDispatcher.LOGGER.info("MainConnection {} 已失去与服务器的连接", connection);
-                connection.getSessionWindow(toUserName).flushOnWindow(false, true, "[已失去与服务器的连接]");
+
+                if (message.getControl().isGroupChat()) {
+                    String groupName = message.getHeader().getParam2();
+                    connection.getGroupSessionWindow(groupName).flushOnWindow(false, true, "[已失去与服务器的连接]");
+                } else {
+                    String toUserName = message.getHeader().getParam2();
+                    connection.getSessionWindow(toUserName).flushOnWindow(false, true, "[已失去与服务器的连接]");
+                }
                 connection.getBindPipeLineTask().offLine(connection);
             }
         }
