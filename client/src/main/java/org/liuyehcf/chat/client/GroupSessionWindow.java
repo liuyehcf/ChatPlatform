@@ -187,7 +187,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
             public void actionPerformed(ActionEvent e) {
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
-                ClientUtils.sendNormalMessage(bindConnection, header, content);
+                ClientUtils.sendNormalMessage(bindConnection, true, header, content);
                 textField.setText("");
             }
         });
@@ -211,7 +211,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
     }
 
     public void connect() {
-        //公用一条连接即可
+        //共用一条连接即可
         bindConnection = ClientConnectionDispatcher.getSingleton()
                 .getSessionConnection(fromUserName, serverHost, serverPort);
 

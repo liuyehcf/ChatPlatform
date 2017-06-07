@@ -152,7 +152,7 @@ public class SessionWindow extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
-                ClientUtils.sendNormalMessage(bindConnection, header, content);
+                ClientUtils.sendNormalMessage(bindConnection, false, header, content);
                 textField.setText("");
             }
         });

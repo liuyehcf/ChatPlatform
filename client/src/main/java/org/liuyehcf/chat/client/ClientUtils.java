@@ -131,10 +131,11 @@ class ClientUtils {
      * 正常消息
      *
      * @param connection
+     * @param isGroup
      * @param header
      * @param content
      */
-    static void sendNormalMessage(Connection connection, Protocol.Header header, String content) {
+    static void sendNormalMessage(Connection connection, boolean isGroup, Protocol.Header header, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -142,6 +143,7 @@ class ClientUtils {
         message.setBody(new Protocol.Body());
 
         message.getBody().setContent(content);
+        message.getControl().setGroupChat(isGroup);
 
         connection.offerMessage(message);
     }

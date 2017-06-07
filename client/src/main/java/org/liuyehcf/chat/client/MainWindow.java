@@ -224,11 +224,23 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 && node.getUserObject() != null) {
 
             if (sessionWindowMap.containsKey(node.getUserObject())) {
+                //置于最前端
                 sessionWindowMap.get(node.getUserObject()).toFront();
             } else {
+                //开启一个会话窗口
                 createSessionWindow((String) node.getUserObject());
             }
 
+        } else if (node != null && node.getParent() != null
+                && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("群聊<点击添加>")
+                && node.getUserObject() != null) {
+            if (groupSessionWindowMap.containsKey(node.getUserObject())) {
+                //置于最前端
+                groupSessionWindowMap.get(node.getUserObject()).toFront();
+            } else {
+                //开启一个群聊会话窗口
+                createGroupSessionWindow((String) node.getUserObject());
+            }
         } else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
 
             String groupName = JOptionPane.showInputDialog("请输入群聊名");

@@ -8,6 +8,8 @@ public class SessionDescription {
 
     private final String toUserName;
 
+    private final boolean isGroupChat;
+
     public String getFromUserName() {
         return fromUserName;
     }
@@ -16,9 +18,10 @@ public class SessionDescription {
         return toUserName;
     }
 
-    public SessionDescription(String fromUserName, String toUserName) {
+    public SessionDescription(String fromUserName, String toUserName, boolean isGroupChat) {
         this.fromUserName = fromUserName;
         this.toUserName = toUserName;
+        this.isGroupChat = isGroupChat;
     }
 
     @Override
@@ -36,6 +39,8 @@ public class SessionDescription {
 
     @Override
     public String toString() {
-        return fromUserName + ":" + toUserName;
+        return fromUserName
+                + ":" + toUserName
+                + ":" + (isGroupChat ? "GROUP" : "SINGLE");
     }
 }

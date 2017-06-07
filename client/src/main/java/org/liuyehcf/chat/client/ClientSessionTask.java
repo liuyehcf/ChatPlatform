@@ -8,8 +8,6 @@ import org.liuyehcf.chat.writer.MessageWriter;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -154,21 +152,35 @@ public class ClientSessionTask extends AbstractPipeLineTask {
                 } else if (message.getControl().isRegisterMessage()) {
 
                 } else if (message.getControl().isOpenSessionMessage()) {
-                    SessionDescription newSessionDescription = new SessionDescription(
-                            message.getHeader().getParam1(),
-                            message.getHeader().getParam2());
-                    ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
-                    ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
-
+                    if (message.getControl().isGroupChat()) {
+                        SessionDescription newSessionDescription = new SessionDescription(
+                                message.getHeader().getParam1(),
+                                message.getHeader().getParam2(),
+                                true);
+                        ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
+                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
+                    } else {
+                        SessionDescription newSessionDescription = new SessionDescription(
+                                message.getHeader().getParam1(),
+                                message.getHeader().getParam2(),
+                                false);
+                        ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
+                        ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", message.getHeader().getParam1(), newSessionDescription);
+                    }
                 } else if (message.getControl().isCloseSessionMessage()) {
-                    SessionDescription sessionDescription = new SessionDescription(
-                            message.getHeader().getParam1(),
-                            message.getHeader().getParam2());
+                    if (message.getControl().isGroupChat()) {
 
-                    ClientUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
-                    ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
-                    connection.removeSessionWindow(toUserName);
+                    } else {
+                        SessionDescription sessionDescription = new SessionDescription(
+                                message.getHeader().getParam1(),
+                                message.getHeader().getParam2(),
+                                false);
 
+                        //如果启动SessionWindow或者GroupSessionWindows失败时，会直接调用dispose方法，因此会话是不存在的，因此允许删除失败
+                        connection.getConnectionDescription().removeSessionDescription(sessionDescription);
+                        ClientConnectionDispatcher.LOGGER.info("Client {} close a Session {} successfully", message.getHeader().getParam1(), sessionDescription);
+                        connection.removeSessionWindow(toUserName);
+                    }
                     if (connection.getConnectionDescription().getSessionDescriptions().isEmpty()) {
                         connection.getBindPipeLineTask().offLine(connection);
                     }

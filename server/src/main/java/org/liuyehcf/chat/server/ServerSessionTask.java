@@ -177,7 +177,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 }
 
                 //增加一条会话描述符
-                SessionDescription newSessionDescription = new SessionDescription(fromUserName, toUserName);
+                SessionDescription newSessionDescription = new SessionDescription(
+                        fromUserName,
+                        toUserName,
+                        false);
                 ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
                         newSessionDescription));
 
@@ -189,7 +192,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 String fromUserName = message.getHeader().getParam1();
                 String toUserName = message.getHeader().getParam2();
 
-                SessionDescription sessionDescription = new SessionDescription(fromUserName, toUserName);
+                SessionDescription sessionDescription = new SessionDescription(
+                        fromUserName,
+                        toUserName,
+                        false);
                 ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
                 ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
 
@@ -208,7 +214,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                 if (serverConnectionDispatcher.getSessionConnectionMap().containsKey(toConnectionDescription)) {
                     Connection toConnection = serverConnectionDispatcher.getSessionConnectionMap().get(toConnectionDescription);
 
-                    SessionDescription toSessionDescription = new SessionDescription(toUserName, fromUserName);
+                    SessionDescription toSessionDescription = new SessionDescription(
+                            toUserName,
+                            fromUserName,
+                            false);
                     //会话也存在
                     if (toConnection.getConnectionDescription().getSessionDescriptions().contains(toSessionDescription)) {
                         toConnection.offerMessage(message);
