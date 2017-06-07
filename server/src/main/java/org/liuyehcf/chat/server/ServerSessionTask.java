@@ -129,6 +129,9 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
                 //刷新好友列表
                 refreshFriendList();
+
+                //刷新群聊列表
+                refreshGroupList();
                 //todo 何时deny
             }
             //注销信息

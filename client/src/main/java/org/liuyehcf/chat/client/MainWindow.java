@@ -55,6 +55,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     private Map<String, GroupSessionWindow> groupSessionWindowMap;
 
     /**
+     * 组
+     */
+    private Set<String> groupNames;
+
+    /**
      * 登录回调
      */
     private WindowHandler handler;
@@ -62,7 +67,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 树组件
      */
-    private JTree jTree;
+    private JTree tree;
 
     /**
      * 树根节点
@@ -77,9 +82,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     /**
      * 一级节点，离线好友
      */
-    private DefaultMutableTreeNode offlineList;
-
-    private Set<String> onlineFriends;
+    private DefaultMutableTreeNode groupList;
 
     public MainWindow(String serverHost,
                       Integer serverPort,
@@ -94,6 +97,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
         sessionWindowMap = new ConcurrentHashMap<String, SessionWindow>();
         groupSessionWindowMap = new ConcurrentHashMap<String, GroupSessionWindow>();
+        groupNames = new HashSet<String>();
 
         ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account));
 
@@ -103,31 +107,31 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
     private void init() {
-        jTree = new JTree();
+        tree = new JTree();
 
         //树节点的相关数据
         rootList = new DefaultMutableTreeNode("好友");
 
         onlineList = new DefaultMutableTreeNode("在线好友");
-        offlineList = new DefaultMutableTreeNode("群聊<点击添加>");
+        groupList = new DefaultMutableTreeNode("群聊<点击添加>");
 
         rootList.add(new DefaultMutableTreeNode("<" + account + ">"));
         rootList.add(onlineList);
-        rootList.add(offlineList);
+        rootList.add(groupList);
 
         //设置数据模型
-        jTree.setModel(new DefaultTreeModel(rootList));
+        tree.setModel(new DefaultTreeModel(rootList));
 
         //添加事件
-        jTree.addTreeSelectionListener(this);
+        tree.addTreeSelectionListener(this);
 
         //滚动面板
-        JScrollPane jScrollPane = new JScrollPane(jTree,
+        JScrollPane jScrollPane = new JScrollPane(tree,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         //添加树到滚动面板
-        jScrollPane.getViewport().add(jTree);
+        jScrollPane.getViewport().add(tree);
 
         //添加滚动面板到窗口中
         this.getContentPane().add(jScrollPane);
@@ -213,7 +217,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     @Override
     public void valueChanged(TreeSelectionEvent e) {
         //获取选择的节点
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) jTree
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree
                 .getLastSelectedPathComponent();
         if (node != null && node.getParent() != null
                 && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("在线好友")
@@ -230,7 +234,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             String groupName = JOptionPane.showInputDialog("请输入群聊名");
 
             while (groupName == null || groupName.equals("")
-                    || groupSessionWindowMap.containsKey(groupName)) {
+                    || groupNames.contains(groupName)) {
 
                 if (groupName == null || groupName.equals(""))
                     groupName = JOptionPane.showInputDialog("群聊名不能为空，请重新输入");
@@ -244,7 +248,6 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
 
     public void flushUserList(List<String> userNames) {
-        onlineFriends = new HashSet<String>(userNames);
         onlineList.removeAllChildren();
         for (String userName : userNames) {
             if (!userName.equals(account)) {
@@ -253,11 +256,26 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         }
 
         //刷新
-        ((DefaultTreeModel) jTree.getModel()).reload();
+        ((DefaultTreeModel) tree.getModel()).reload();
 
         //展开节点
-        for (int i = 0; i < jTree.getRowCount(); i++)
-            jTree.expandRow(i);
+        for (int i = 0; i < tree.getRowCount(); i++)
+            tree.expandRow(i);
+    }
+
+    public void flushGroupList(List<String> groupNames) {
+        this.groupNames = new HashSet<String>(groupNames);
+        groupList.removeAllChildren();
+        for (String groupName : groupNames) {
+            groupList.add(new DefaultMutableTreeNode(groupName));
+        }
+
+        //刷新
+        ((DefaultTreeModel) tree.getModel()).reload();
+
+        //展开节点
+        for (int i = 0; i < tree.getRowCount(); i++)
+            tree.expandRow(i);
     }
 
     public void addSessionWindow(String userName, SessionWindow sessionWindow) {

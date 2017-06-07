@@ -110,7 +110,13 @@ public class ClientMainTask extends AbstractPipeLineTask {
                     //刷新好友列表
                     mainWindow.flushUserList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 } else if (message.getHeader().getParam1().equals(FLUSH_GROUP_LIST)) {
+                    String userName = message.getHeader().getParam2();
 
+                    //获取主界面
+                    MainWindow mainWindow = clientConnectionDispatcher.getMainWindowMap().get(userName);
+
+                    //刷新群聊列表
+                    mainWindow.flushGroupList(ClientUtils.retrieveNames(message.getBody().getContent()));
                 }
             } else if (message.getControl().isLoginInMessage()) {
 
