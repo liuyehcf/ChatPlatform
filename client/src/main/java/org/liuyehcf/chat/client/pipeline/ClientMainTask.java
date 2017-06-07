@@ -130,6 +130,7 @@ public class ClientMainTask extends AbstractPipeLineTask {
     @Override
     protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
+        ClientUtils.ASSERT(clientConnectionDispatcher.getMainWindowMap().containsKey(connection.getConnectionDescription().getSource()));
         clientConnectionDispatcher.getMainWindowMap().remove(connection.getConnectionDescription().getSource());
     }
 }
