@@ -22,11 +22,11 @@ public class LoginWindow extends JFrame {
     private static final Font GLOBAL_FONT = new Font("alias", Font.BOLD, 20);
 
     public LoginWindow() {
-        initWindow();
+        init();
     }
 
 
-    private void initWindow() {
+    private void init() {
 
         this.setSize(450, 350);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

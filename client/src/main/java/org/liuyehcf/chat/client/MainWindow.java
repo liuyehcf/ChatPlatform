@@ -11,9 +11,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Liuye on 2017/6/5.
@@ -45,9 +43,15 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     private ClientMainConnection bindMainConnection;
 
     /**
-     * 会话窗口界面
+     * [对方名称--会话窗口]的映射
      */
-    private Set<SessionWindow> sessionWindows;
+    private Map<String, SessionWindow> sessionWindowMap;
+
+    /**
+     * 群聊窗口界面
+     * [群聊名称--群聊会话窗口]的映射
+     */
+    private Map<String, GroupSessionWindow> groupSessionWindowMap;
 
     /**
      * 登录回调
@@ -87,7 +91,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.password = password;
         this.handler = handler;
 
-        sessionWindows = new HashSet<SessionWindow>();
+        sessionWindowMap = new HashMap<String, SessionWindow>();
+        groupSessionWindowMap = new HashMap<String, GroupSessionWindow>();
 
         if (ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account)) {
             throw new RuntimeException();//todo
@@ -104,7 +109,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         rootList = new DefaultMutableTreeNode("好友");
 
         onlineList = new DefaultMutableTreeNode("在线好友");
-        offlineList = new DefaultMutableTreeNode("离线好友");
+        offlineList = new DefaultMutableTreeNode("群聊<点击添加>");
 
         rootList.add(new DefaultMutableTreeNode("<" + account + ">"));
         rootList.add(onlineList);
@@ -137,8 +142,6 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         this.addWindowListener(new MyWindowListener());
 
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-
     }
 
 
@@ -189,15 +192,28 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         return newSessionWindow;
     }
 
+    public void createGroupSessionWindow(String groupName) {
+
+    }
+
 
     @Override
     public void valueChanged(TreeSelectionEvent e) {
         //获取选择的节点
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) jTree
                 .getLastSelectedPathComponent();
-        if (node != null && node.getUserObject() != null)
+        if (node != null && node.getParent() != null
+                && ((DefaultMutableTreeNode) node.getParent()).getUserObject().equals("在线好友")
+                && node.getUserObject() != null) {
             if (onlineFriends.contains(node.getUserObject()))
                 createSessionWindow(account, (String) node.getUserObject());
+        } else if (node != null && node.getUserObject().equals("群聊<点击添加>")) {
+            String groupName = JOptionPane.showInputDialog("请输入群聊名");
+            while (groupSessionWindowMap.containsKey(groupName)) {
+                groupName = JOptionPane.showInputDialog("名字重复请重新输入");
+            }
+            createGroupSessionWindow(groupName);
+        }
     }
 
 
@@ -218,12 +234,14 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             jTree.expandRow(i);
     }
 
-    public void addSessionWindow(SessionWindow sessionWindow) {
-        sessionWindows.add(sessionWindow);
+    public void addSessionWindow(String userName, SessionWindow sessionWindow) {
+        ClientUtils.ASSERT(!sessionWindowMap.containsKey(userName));
+        sessionWindowMap.put(userName, sessionWindow);
     }
 
-    public void removeSessionWindow(SessionWindow sessionWindow) {
-        sessionWindows.remove(sessionWindow);
+    public void removeSessionWindow(String userName) {
+        ClientUtils.ASSERT(sessionWindowMap.containsKey(userName));
+        sessionWindowMap.remove(userName);
     }
 
 
@@ -236,7 +254,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         @Override
         public void windowClosing(WindowEvent e) {
             //需要关闭当前主界面对应的所有会话连接
-            for (SessionWindow sessionWindow : sessionWindows) {
+            for (SessionWindow sessionWindow : sessionWindowMap.values()) {
                 sessionWindow.dispose();
             }
             ClientUtils.sendLoginOutMessage(bindMainConnection, account);

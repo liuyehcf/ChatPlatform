@@ -95,13 +95,13 @@ public class SessionWindow extends JFrame {
         this.header.setParam1(this.fromUserName);
         this.header.setParam2(this.toUserName);
 
-        initWindow();
+        init();
 
-        this.bindMainWindow.addSessionWindow(this);
+        this.bindMainWindow.addSessionWindow(this.toUserName, this);
     }
 
 
-    private void initWindow() {
+    private void init() {
         //滚动条显示文本框
         textPane = new JTextPane();
         textPane.setFont(GLOBAL_FONT);
@@ -236,8 +236,8 @@ public class SessionWindow extends JFrame {
 
         @Override
         public void windowClosing(WindowEvent e) {
-            ClientUtils.sendSessionOffLineMessage(bindConnection, header);
-            bindMainWindow.removeSessionWindow(SessionWindow.this);
+            ClientUtils.sendCloseSessionMessage(bindConnection, header);
+            bindMainWindow.removeSessionWindow(toUserName);
             //SessionWindows关联的SessionConnection在发送消息后调用remove方法
         }
 

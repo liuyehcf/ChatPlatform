@@ -121,8 +121,10 @@ public class ClientSessionTask extends AbstractPipeLineTask {
             try {
                 messageWriter.write(message, connection);
 
-                if (!message.getControl().isOpenSessionMessage() && !message.getControl().isCloseSessionMessage())
+                //如果不是系统消息就打印到会话窗口
+                if (!message.getControl().isSystemMessage())
                     connection.getSessionWindow(userName).flushOnWindow(true, false, message.getDisplayMessageString());
+                //如果是会话关闭消息
                 if (message.getControl().isCloseSessionMessage()) {
                     connection.getBindPipeLineTask().offLine(connection);
                     connection.removeSessionWindow(message.getHeader().getParam1());

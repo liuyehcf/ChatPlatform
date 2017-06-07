@@ -56,7 +56,7 @@ class ClientUtils {
         connection.offerMessage(message);
     }
 
-    static void sendSessionOffLineMessage(Connection connection, Protocol.Header header) {
+    static void sendCloseSessionMessage(Connection connection, Protocol.Header header) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -131,5 +131,9 @@ class ClientUtils {
         s = s.replaceAll("[\\[\\] ]", "");
         String[] names = s.split(",");
         return new ArrayList<String>(Arrays.asList(names));
+    }
+
+    static void ASSERT(boolean flag) {
+        if (!flag) throw new RuntimeException();
     }
 }
