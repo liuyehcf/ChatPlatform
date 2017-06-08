@@ -114,7 +114,7 @@ public class ClientSessionTaskWriterInterceptor implements MessageInterceptor {
                     fromUserName,
                     groupName,
                     true);
-            ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
+            connection.getConnectionDescription().addSessionDescription(newSessionDescription);
             ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
         } else {
             String fromUserName = message.getHeader().getParam1();
@@ -123,7 +123,7 @@ public class ClientSessionTaskWriterInterceptor implements MessageInterceptor {
                     fromUserName,
                     toUserName,
                     false);
-            ClientUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(newSessionDescription));
+            connection.getConnectionDescription().addSessionDescription(newSessionDescription);
             ClientConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
         }
     }

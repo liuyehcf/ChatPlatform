@@ -132,10 +132,10 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
         if (connection instanceof ClientMainConnection) {
-            ClientUtils.ASSERT(clientConnectionDispatcher.getMainConnectionMap().containsKey(connection.getConnectionDescription().getSource()));
+            //ClientUtils.ASSERT(clientConnectionDispatcher.getMainConnectionMap().containsKey(connection.getConnectionDescription().getSource()));
             clientConnectionDispatcher.getMainConnectionMap().remove(connection.getConnectionDescription().getSource());
         } else if (connection instanceof ClientSessionConnection) {
-            ClientUtils.ASSERT(clientConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+            //ClientUtils.ASSERT(clientConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
             clientConnectionDispatcher.getSessionConnectionMap().remove(connection.getConnectionDescription());
         }
     }

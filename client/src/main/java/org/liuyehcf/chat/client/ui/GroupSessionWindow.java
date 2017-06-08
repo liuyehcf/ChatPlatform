@@ -305,15 +305,15 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
 
         @Override
         public void windowClosing(WindowEvent e) {
-            if (bindConnection.isActive())
-                ClientUtils.sendCloseSessionMessage(bindConnection, true, header);
-            bindMainWindow.removeGroupSessionWindow(groupName);
-            //GroupSessionWindows关联的SessionConnection在发送消息后调用remove方法
+
         }
 
         @Override
         public void windowClosed(WindowEvent e) {
-
+            if (bindConnection.isActive())
+                ClientUtils.sendCloseSessionMessage(bindConnection, true, header);
+            bindMainWindow.removeGroupSessionWindow(groupName);
+            //GroupSessionWindows关联的SessionConnection在发送消息后调用remove方法
         }
 
         @Override

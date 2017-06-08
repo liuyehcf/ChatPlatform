@@ -96,7 +96,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
 
         if (connection.isRefused()) {
             String account = message.getHeader().getParam1();
-            ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
+            //ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
 
             serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
 
@@ -108,7 +108,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
         } else {
 
             String account = message.getHeader().getParam1();
-            ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
+            //ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
 
             serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
 
@@ -133,7 +133,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
      */
     private void processLogOutMessage(ServerConnection connection, Message message) {
         String userName = message.getHeader().getParam1();
-        ServerUtils.ASSERT(serverConnectionDispatcher.getMainConnectionMap().containsKey(userName));
+        //ServerUtils.ASSERT(serverConnectionDispatcher.getMainConnectionMap().containsKey(userName));
 
         //关闭主界面连接
         connection.getBindPipeLineTask().offLine(connection);
@@ -174,7 +174,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
                 connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
                 connection.setMainConnection(false);
 
-                ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+                //ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
                 serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
             }
 
@@ -183,8 +183,8 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
                     fromUserName,
                     groupName,
                     true);
-            ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
-                    newSessionDescription));
+            connection.getConnectionDescription().addSessionDescription(
+                    newSessionDescription);
 
             ServerConnectionDispatcher.LOGGER.info("Client {} open a new GroupSession {} successfully", fromUserName, newSessionDescription);
 
@@ -209,7 +209,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
                 connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, fromUserName));
                 connection.setMainConnection(false);
 
-                ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+                //ServerUtils.ASSERT(!serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
                 serverConnectionDispatcher.getSessionConnectionMap().put(connection.getConnectionDescription(), connection);
             }
 
@@ -218,8 +218,8 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
                     fromUserName,
                     toUserName,
                     false);
-            ServerUtils.ASSERT(connection.getConnectionDescription().addSessionDescription(
-                    newSessionDescription));
+            connection.getConnectionDescription().addSessionDescription(
+                    newSessionDescription);
 
             ServerConnectionDispatcher.LOGGER.info("Client {} open a new Session {} successfully", fromUserName, newSessionDescription);
 
@@ -240,7 +240,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
                     fromUserName,
                     groupName,
                     true);
-            ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
+            connection.getConnectionDescription().removeSessionDescription(sessionDescription);
             ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
 
             ServerGroupInfo serverGroupInfo = serverConnectionDispatcher.getGroupInfoMap().get(groupName);
@@ -262,7 +262,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
                     fromUserName,
                     toUserName,
                     false);
-            ServerUtils.ASSERT(connection.getConnectionDescription().removeSessionDescription(sessionDescription));
+            connection.getConnectionDescription().removeSessionDescription(sessionDescription);
             ServerConnectionDispatcher.LOGGER.info("The client {} close the session {}", fromUserName, sessionDescription);
 
         }

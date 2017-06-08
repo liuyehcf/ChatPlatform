@@ -32,12 +32,17 @@ public class ServerGroupInfo {
     }
 
     public void addConnection(String userName, ServerConnection connection) {
-        ServerUtils.ASSERT(!groupSessionConnectionMap.containsKey(userName));
+        //ServerUtils.ASSERT(!groupSessionConnectionMap.containsKey(userName));
         groupSessionConnectionMap.put(userName, connection);
     }
 
     public void removeConnection(String userName) {
-        ServerUtils.ASSERT(groupSessionConnectionMap.containsKey(userName));
+        //ServerUtils.ASSERT(groupSessionConnectionMap.containsKey(userName));
+        /*
+         * 这里未必删除成功，如果客户端关闭了主界面，发送了LogOutMessage和CloseSessionMessage
+         * 且LogOutMessage先被处理，执行了logOutNotify方法，该方法会调用removeConnection一次
+         * CloseSessionMessage后处理，该方法也会调用removeConnection一次
+         */
         groupSessionConnectionMap.remove(userName);
 
     }

@@ -166,7 +166,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         } else {
             bindMainConnection.setBindMainWindow(this);
 
-            ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainConnectionMap().containsKey(account));
+            //ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainConnectionMap().containsKey(account));
 
             ClientConnectionDispatcher.getSingleton().getMainConnectionMap().put(account, bindMainConnection);
 
@@ -307,22 +307,22 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
     }
 
     public void addSessionWindow(String userName, SessionWindow sessionWindow) {
-        ClientUtils.ASSERT(!sessionWindowMap.containsKey(userName));
+        //ClientUtils.ASSERT(!sessionWindowMap.containsKey(userName));
         sessionWindowMap.put(userName, sessionWindow);
     }
 
     public void removeSessionWindow(String userName) {
-        ClientUtils.ASSERT(sessionWindowMap.containsKey(userName));
+        //ClientUtils.ASSERT(sessionWindowMap.containsKey(userName));
         sessionWindowMap.remove(userName);
     }
 
     public void addGroupSessionWindow(String groupName, GroupSessionWindow groupSessionWindow) {
-        ClientUtils.ASSERT(!groupSessionWindowMap.containsKey(groupName));
+        //ClientUtils.ASSERT(!groupSessionWindowMap.containsKey(groupName));
         groupSessionWindowMap.put(groupName, groupSessionWindow);
     }
 
     public void removeGroupSessionWindow(String groupName) {
-        ClientUtils.ASSERT(groupSessionWindowMap.containsKey(groupName));
+        //ClientUtils.ASSERT(groupSessionWindowMap.containsKey(groupName));
         groupSessionWindowMap.remove(groupName);
     }
 
