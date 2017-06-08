@@ -49,12 +49,12 @@ public class Protocol {
         /**
          * 是否登录
          */
-        private boolean isLoginInMessage;
+        private boolean isLogInMessage;
 
         /**
          * 是否注销
          */
-        private boolean isLoginOutMessage;
+        private boolean isLogOutMessage;
 
         /**
          * 是否注册
@@ -84,20 +84,20 @@ public class Protocol {
             isSystemMessage = systemMessage;
         }
 
-        public boolean isLoginInMessage() {
-            return isLoginInMessage;
+        public boolean isLogInMessage() {
+            return isLogInMessage;
         }
 
-        public void setLoginInMessage(boolean loginInMessage) {
-            isLoginInMessage = loginInMessage;
+        public void setLogInMessage(boolean logInMessage) {
+            isLogInMessage = logInMessage;
         }
 
-        public boolean isLoginOutMessage() {
-            return isLoginOutMessage;
+        public boolean isLogOutMessage() {
+            return isLogOutMessage;
         }
 
-        public void setLoginOutMessage(boolean loginOutMessage) {
-            isLoginOutMessage = loginOutMessage;
+        public void setLogOutMessage(boolean logOutMessage) {
+            isLogOutMessage = logOutMessage;
         }
 
         public boolean isRegisterMessage() {
@@ -135,8 +135,8 @@ public class Protocol {
         public String getControlString() {
             return CONTROL_PREFIX
                     + (isSystemMessage ? "1" : "0")
-                    + (isLoginInMessage ? "1" : "0")
-                    + (isLoginOutMessage ? "1" : "0")
+                    + (isLogInMessage ? "1" : "0")
+                    + (isLogOutMessage ? "1" : "0")
                     + (isRegisterMessage ? "1" : "0")
                     + (isOpenSessionMessage ? "1" : "0")
                     + (isCloseSessionMessage ? "1" : "0")
@@ -150,8 +150,8 @@ public class Protocol {
             if (m.find()) {
                 String controlString = m.group(1);
                 control.setSystemMessage(controlString.charAt(0) == '1');
-                control.setLoginInMessage(controlString.charAt(1) == '1');
-                control.setLoginOutMessage(controlString.charAt(2) == '1');
+                control.setLogInMessage(controlString.charAt(1) == '1');
+                control.setLogOutMessage(controlString.charAt(2) == '1');
                 control.setRegisterMessage(controlString.charAt(3) == '1');
                 control.setOpenSessionMessage(controlString.charAt(4) == '1');
                 control.setCloseSessionMessage(controlString.charAt(5) == '1');

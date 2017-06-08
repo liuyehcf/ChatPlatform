@@ -68,7 +68,7 @@ public class AbstractServerMessageInterceptor implements MessageInterceptor {
      *
      * @param connection
      */
-    protected void loginOutNotify(Connection connection) {
+    protected void logOutNotify(Connection connection) {
         //遍历会话连接的所有会话描述符
         for (SessionDescription sessionDescription : connection.getConnectionDescription().getSessionDescriptions()) {
             if (sessionDescription.isGroupChat()) {
@@ -96,7 +96,7 @@ public class AbstractServerMessageInterceptor implements MessageInterceptor {
                     String systemContent = "["
                             + fromUserName
                             + "]已断开连接";
-                    ServerUtils.sendLoginOutNotifyMessage(
+                    ServerUtils.sendLogOutNotifyMessage(
                             toConnection,
                             toUserName,
                             fromUserName,

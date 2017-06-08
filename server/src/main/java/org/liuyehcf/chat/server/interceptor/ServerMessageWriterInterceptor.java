@@ -34,10 +34,10 @@ public class ServerMessageWriterInterceptor extends AbstractServerMessageInterce
 
             if (message.getControl().isSystemMessage()) {
                 processSystemMessage(connection, message);
-            } else if (message.getControl().isLoginInMessage()) {
-                processLoginInMessage(connection, message);
-            } else if (message.getControl().isLoginOutMessage()) {
-                processLoginOutMessage(connection, message);
+            } else if (message.getControl().isLogInMessage()) {
+                processLogInMessage(connection, message);
+            } else if (message.getControl().isLogOutMessage()) {
+                processLogOutMessage(connection, message);
             } else if (message.getControl().isOpenSessionMessage()) {
                 processOpenSessionMessage(connection, message);
             } else if (message.getControl().isCloseSessionMessage()) {
@@ -69,7 +69,7 @@ public class ServerMessageWriterInterceptor extends AbstractServerMessageInterce
      * @param connection
      * @param message
      */
-    private void processLoginInMessage(ServerConnection connection, Message message) {
+    private void processLogInMessage(ServerConnection connection, Message message) {
 
     }
 
@@ -77,7 +77,7 @@ public class ServerMessageWriterInterceptor extends AbstractServerMessageInterce
      * @param mainConnection
      * @param message
      */
-    private void processLoginOutMessage(ServerConnection mainConnection, Message message) {
+    private void processLogOutMessage(ServerConnection mainConnection, Message message) {
         ServerUtils.ASSERT(mainConnection.isMainConnection());
 
         mainConnection.getBindPipeLineTask().offLine(mainConnection);

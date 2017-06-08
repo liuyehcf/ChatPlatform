@@ -42,10 +42,10 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
 
                 if (message.getControl().isSystemMessage()) {
                     processSystemMessage(connection, message);
-                } else if (message.getControl().isLoginInMessage()) {
-                    processLoginInMessage(connection, message);
-                } else if (message.getControl().isLoginOutMessage()) {
-                    processLoginOutMessage(connection, message);
+                } else if (message.getControl().isLogInMessage()) {
+                    processLogInMessage(connection, message);
+                } else if (message.getControl().isLogOutMessage()) {
+                    processLogOutMessage(connection, message);
                 } else if (message.getControl().isOpenSessionMessage()) {
                     processOpenSessionMessage(connection, message);
                 } else if (message.getControl().isCloseSessionMessage()) {
@@ -90,7 +90,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
      * @param connection
      * @param message
      */
-    private void processLoginInMessage(ServerConnection connection, Message message) {
+    private void processLogInMessage(ServerConnection connection, Message message) {
         connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, message.getHeader().getParam1()));
         connection.setMainConnection(true);
 
@@ -100,7 +100,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
 
             serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
 
-            ServerUtils.sendForceLoginOutMessage(
+            ServerUtils.sendForceLogOutMessage(
                     connection,
                     account,
                     "服务器忙碌，拒绝连接");
@@ -113,7 +113,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
             serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
 
             //发送消息，允许客户端登录
-            ServerUtils.sendReplyLoginInMessage(
+            ServerUtils.sendReplyLogInMessage(
                     connection,
                     true,
                     account);
@@ -131,7 +131,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
      * @param connection
      * @param message
      */
-    private void processLoginOutMessage(ServerConnection connection, Message message) {
+    private void processLogOutMessage(ServerConnection connection, Message message) {
         String userName = message.getHeader().getParam1();
         ServerUtils.ASSERT(serverConnectionDispatcher.getMainConnectionMap().containsKey(userName));
 
@@ -149,7 +149,7 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
         //若为空，则代表该用户没有开启任何会话
         if (sessionConnection != null) {
             //注销通知
-            loginOutNotify(sessionConnection);
+            logOutNotify(sessionConnection);
 
             //关闭会话连接
             sessionConnection.getBindPipeLineTask().offLine(sessionConnection);

@@ -297,7 +297,7 @@ public class ServerConnectionDispatcher {
                 if (serverConnection.isMainConnection()) {
                     String userName = serverConnection.getConnectionDescription().getDestination();
                     //发送强制下线消息，真正下线操作在写入信息之后处理
-                    ServerUtils.sendForceLoginOutMessage(serverConnection,
+                    ServerUtils.sendForceLogOutMessage(serverConnection,
                             userName,
                             "非常抱歉，服务器已暂停服务");
                     serverConnection.cancel();

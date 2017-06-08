@@ -45,10 +45,10 @@ public class ClientSessionTaskWriterInterceptor implements MessageInterceptor {
 
             if (message.getControl().isSystemMessage()) {
                 processSystemMessage(connection, message);
-            } else if (message.getControl().isLoginInMessage()) {
-                processLoginInMessage(connection, message);
-            } else if (message.getControl().isLoginOutMessage()) {
-                processLoginOutMessage(connection, message);
+            } else if (message.getControl().isLogInMessage()) {
+                processLogInMessage(connection, message);
+            } else if (message.getControl().isLogOutMessage()) {
+                processLogOutMessage(connection, message);
             } else if (message.getControl().isOpenSessionMessage()) {
                 processOpenSessionMessage(connection, message);
             } else if (message.getControl().isCloseSessionMessage()) {
@@ -90,7 +90,7 @@ public class ClientSessionTaskWriterInterceptor implements MessageInterceptor {
      * @param connection
      * @param message
      */
-    private void processLoginInMessage(ClientSessionConnection connection, Message message) {
+    private void processLogInMessage(ClientSessionConnection connection, Message message) {
 
     }
 
@@ -98,7 +98,7 @@ public class ClientSessionTaskWriterInterceptor implements MessageInterceptor {
      * @param connection
      * @param message
      */
-    private void processLoginOutMessage(ClientSessionConnection connection, Message message) {
+    private void processLogOutMessage(ClientSessionConnection connection, Message message) {
 
     }
 

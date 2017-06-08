@@ -152,7 +152,7 @@ public class ServerSessionTask extends AbstractPipeLineTask {
                     if (currentStamp - mainConnection.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
 
                         //发送强制下线消息，真正下线操作在写入信息之后处理
-                        ServerUtils.sendForceLoginOutMessage(mainConnection,
+                        ServerUtils.sendForceLogOutMessage(mainConnection,
                                 userName,
                                 "您长时间处于非活跃状态，服务器采取强制离线措施");
                         mainConnection.cancel();

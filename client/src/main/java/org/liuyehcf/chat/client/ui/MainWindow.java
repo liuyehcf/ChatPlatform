@@ -345,7 +345,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             }
 
             if (bindMainConnection.isActive()) {
-                ClientUtils.sendLoginOutMessage(bindMainConnection, account);
+                ClientUtils.sendLogOutMessage(bindMainConnection, account);
                 bindMainConnection.cancel();
             }
         }

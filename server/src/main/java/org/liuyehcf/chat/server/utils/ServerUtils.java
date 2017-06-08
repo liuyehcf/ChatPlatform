@@ -50,7 +50,7 @@ public class ServerUtils {
      * @param toUserName
      * @return
      */
-    public static void sendReplyLoginInMessage(Connection connection, boolean isPermit, String toUserName) {
+    public static void sendReplyLogInMessage(Connection connection, boolean isPermit, String toUserName) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -73,14 +73,14 @@ public class ServerUtils {
      * @param toUserName
      * @param content
      */
-    public static void sendForceLoginOutMessage(Connection connection, String toUserName, String content) {
+    public static void sendForceLogOutMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setLoginOutMessage(true);
+        message.getControl().setLogOutMessage(true);
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(toUserName);
@@ -218,7 +218,7 @@ public class ServerUtils {
      * @param content
      * @return
      */
-    public static void sendLoginOutNotifyMessage(Connection connection, String toUserName, String closingUserName, String content) {
+    public static void sendLogOutNotifyMessage(Connection connection, String toUserName, String closingUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());

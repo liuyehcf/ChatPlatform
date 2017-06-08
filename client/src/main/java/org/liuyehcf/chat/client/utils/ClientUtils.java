@@ -48,14 +48,14 @@ public class ClientUtils {
      * @param account
      * @param password
      */
-    public static void sendLoginInMessage(Connection connection, String account, String password) {
+    public static void sendLogInMessage(Connection connection, String account, String password) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setLoginInMessage(true);
+        message.getControl().setLogInMessage(true);
 
         message.getHeader().setParam1(account);
         message.getHeader().setParam2(password);
@@ -69,14 +69,14 @@ public class ClientUtils {
      * @param connection
      * @param account
      */
-    public static void sendLoginOutMessage(Connection connection, String account) {
+    public static void sendLogOutMessage(Connection connection, String account) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setLoginOutMessage(true);
+        message.getControl().setLogOutMessage(true);
 
         message.getHeader().setParam1(account);
         message.getHeader().setParam2(Protocol.SERVER_USER_NAME);

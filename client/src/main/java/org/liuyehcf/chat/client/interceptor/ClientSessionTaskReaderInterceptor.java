@@ -48,10 +48,10 @@ public class ClientSessionTaskReaderInterceptor implements MessageInterceptor {
 
                 if (message.getControl().isSystemMessage()) {
                     processSystemMessage(connection, message);
-                } else if (message.getControl().isLoginInMessage()) {
-                    processLoginInMessage(connection, message);
-                } else if (message.getControl().isLoginOutMessage()) {
-                    processLoginOutMessage(connection, message);
+                } else if (message.getControl().isLogInMessage()) {
+                    processLogInMessage(connection, message);
+                } else if (message.getControl().isLogOutMessage()) {
+                    processLogOutMessage(connection, message);
                 } else if (message.getControl().isOpenSessionMessage()) {
                     processOpenSessionMessage(connection, message);
                 } else if (message.getControl().isCloseSessionMessage()) {
@@ -80,7 +80,7 @@ public class ClientSessionTaskReaderInterceptor implements MessageInterceptor {
      */
     private void processSystemMessage(ClientSessionConnection connection, Message message) {
         if (message.getHeader().getParam1().equals(LOGIN_OUT_NOTIFY)) {
-            //参见ServerUtils.sendLoginOutNotifyMessage方法
+            //参见ServerUtils.sendLogOutNotifyMessage方法
             String toUserName = message.getHeader().getParam3();
             connection.getSessionWindow(toUserName).flushOnWindow(false, true, message.getDisplayMessageString());
         } else if (message.getHeader().getParam1().equals(NOT_ONLINE)) {
@@ -98,7 +98,7 @@ public class ClientSessionTaskReaderInterceptor implements MessageInterceptor {
      * @param connection
      * @param message
      */
-    private void processLoginInMessage(ClientSessionConnection connection, Message message) {
+    private void processLogInMessage(ClientSessionConnection connection, Message message) {
 
     }
 
@@ -106,7 +106,7 @@ public class ClientSessionTaskReaderInterceptor implements MessageInterceptor {
      * @param connection
      * @param message
      */
-    private void processLoginOutMessage(ClientSessionConnection connection, Message message) {
+    private void processLogOutMessage(ClientSessionConnection connection, Message message) {
 
     }
 
