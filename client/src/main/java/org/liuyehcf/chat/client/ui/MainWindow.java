@@ -151,11 +151,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
      * 每一个MainWindow对应一个ClientMainConnection
      */
     public void connect() {
-        bindMainConnection = ClientConnectionDispatcher.getSingleton().createMainConnection(
+        bindMainConnection = (ClientMainConnection) ClientConnectionDispatcher.getSingleton().createAndDispatch(
                 account,
                 new InetSocketAddress(serverHost, serverPort),
-                password,
-                this);
+                true,
+                password);
 
 
         if (bindMainConnection == null) {
@@ -164,6 +164,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             //关闭主界面
             this.dispose();
         } else {
+            bindMainConnection.setBindMainWindow(this);
+
             ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainConnectionMap().containsKey(account));
             ClientConnectionDispatcher.getSingleton().getMainConnectionMap().put(account, bindMainConnection);
             handler.onSuccessful();

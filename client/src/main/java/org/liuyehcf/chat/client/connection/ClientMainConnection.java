@@ -19,7 +19,11 @@ public class ClientMainConnection extends Connection {
     /**
      * 绑定的列表窗口
      */
-    private final MainWindow bindMainWindow;
+    private MainWindow bindMainWindow;
+
+    public void setBindMainWindow(MainWindow bindMainWindow) {
+        this.bindMainWindow = bindMainWindow;
+    }
 
     public MainWindow getBindMainWindow() {
         return bindMainWindow;
@@ -29,13 +33,10 @@ public class ClientMainConnection extends Connection {
                                 String destination,
                                 MessageReaderFactory messageReaderFactory,
                                 MessageWriterFactory messageWriterFactory,
-                                InetSocketAddress inetSocketAddress,
-                                MainWindow bindMainWindow) throws IOException {
+                                InetSocketAddress inetSocketAddress) throws IOException {
         super(messageReaderFactory,
                 messageWriterFactory);
         setConnectionDescription(new ConnectionDescription(source, destination));
-
-        this.bindMainWindow = bindMainWindow;
 
         socketChannel = SocketChannel.open();
         socketChannel.connect(inetSocketAddress);

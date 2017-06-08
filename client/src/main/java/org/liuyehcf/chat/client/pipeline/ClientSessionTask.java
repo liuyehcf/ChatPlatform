@@ -1,8 +1,6 @@
 package org.liuyehcf.chat.client.pipeline;
 
 import org.liuyehcf.chat.client.ClientConnectionDispatcher;
-import org.liuyehcf.chat.client.connection.ClientSessionConnection;
-import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
@@ -14,9 +12,6 @@ import java.nio.channels.SelectionKey;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static org.liuyehcf.chat.protocol.Protocol.Header.FLUSH_GROUP_SESSION_USER_LIST;
-import static org.liuyehcf.chat.protocol.Protocol.Header.LOGIN_OUT_NOTIFY;
-import static org.liuyehcf.chat.protocol.Protocol.Header.NOT_ONLINE;
 
 /**
  * Created by HCF on 2017/5/30.
@@ -77,7 +72,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     }
 
     private void readMessageFromConnection(SelectionKey selectionKey) {
-        ClientSessionConnection connection = (ClientSessionConnection) selectionKey.attachment();
+        Connection connection = (Connection) selectionKey.attachment();
 
         MessageReader messageReader = connection.getMessageReader();
         try {
@@ -111,7 +106,7 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     }
 
     private void writeMessageToConnection(SelectionKey selectionKey) {
-        ClientSessionConnection connection = (ClientSessionConnection) selectionKey.attachment();
+        Connection connection = (Connection) selectionKey.attachment();
 
         Message message = connection.pollMessage();
         if (message != null) {

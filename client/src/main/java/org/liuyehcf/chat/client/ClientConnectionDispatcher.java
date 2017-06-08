@@ -7,9 +7,7 @@ import org.liuyehcf.chat.client.interceptor.ClientMainTaskReaderInterceptor;
 import org.liuyehcf.chat.client.interceptor.ClientMainTaskWriterInterceptor;
 import org.liuyehcf.chat.client.interceptor.ClientSessionTaskReaderInterceptor;
 import org.liuyehcf.chat.client.interceptor.ClientSessionTaskWriterInterceptor;
-import org.liuyehcf.chat.client.pipeline.ClientMainTask;
 import org.liuyehcf.chat.client.pipeline.ClientSessionTask;
-import org.liuyehcf.chat.client.ui.MainWindow;
 import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
@@ -53,11 +51,6 @@ public class ClientConnectionDispatcher {
     public static ClientConnectionDispatcher getSingleton() {
         return LazyInitializeSingleton.clientConnectionDispatcher;
     }
-
-    /**
-     * 主界面线程，一个主界面线程可能管理多个主界面
-     */
-    private PipeLineTask mainTask;
 
     /**
      * 保存着所有的ClientPipeLineTask，用于客户端负载均衡
@@ -108,10 +101,6 @@ public class ClientConnectionDispatcher {
      * 下一次做负载均衡的时刻，取自System.currentTimeMillis()
      */
     private long nextLoadBalancingTimeStamp = 0;
-
-    public void setMainTask(PipeLineTask mainTask) {
-        this.mainTask = mainTask;
-    }
 
     public List<PipeLineTask> getPipeLineTasks() {
         return pipeLineTasks;
@@ -168,110 +157,156 @@ public class ClientConnectionDispatcher {
      * 目前，一个用户的所有会话都绑定到一个SessionConnection当中
      * 如果已存在，则返回该会话，如果不存在，新建
      *
-     * @param source
+     * @param account
      * @param serverHost
      * @param serverPort
      * @return
      */
-    public ClientSessionConnection getSessionConnection(String source, String serverHost, Integer serverPort) {
-        ConnectionDescription connectionDescription = new ConnectionDescription(source, Protocol.SERVER_USER_NAME);
+    public ClientSessionConnection getSessionConnection(String account, String serverHost, Integer serverPort) {
+        ConnectionDescription connectionDescription = new ConnectionDescription(account, Protocol.SERVER_USER_NAME);
         if (sessionConnectionMap.containsKey(connectionDescription)) {
             return sessionConnectionMap.get(connectionDescription);
         } else {
-            try {
-                ClientSessionConnection newConnection = new ClientSessionConnection(
-                        source,
-                        Protocol.SERVER_USER_NAME,
-                        ClientConnectionDispatcher.getSingleton().getSessionTaskMessageReaderFactory(),
-                        ClientConnectionDispatcher.getSingleton().getSessionTaskMessageWriterFactory(),
-                        new InetSocketAddress(serverHost, serverPort)
-                );
-                dispatchSessionConnection(newConnection);
-                sessionConnectionMap.put(connectionDescription, newConnection);
-                return newConnection;
-            } catch (IOException e) {
-                return null;
-            }
+            return (ClientSessionConnection) createAndDispatch(
+                    account,
+                    new InetSocketAddress(serverHost, serverPort),
+                    false,
+                    "");
         }
     }
 
     /**
-     * 分配一个主界面连接，异常情况或者达到登录上限，返回null
+     * 生成Connection并且分配到PipeLineTask中去
      *
      * @param account
      * @param inetSocketAddress
+     * @param isMainConnection
      * @param password
-     * @param bindMainWindow
      * @return
      */
-    synchronized public ClientMainConnection createMainConnection(String account,
-                                                                  InetSocketAddress inetSocketAddress,
-                                                                  String password,
-                                                                  MainWindow bindMainWindow) {
-        if (mainTask == null) {
-            mainTask = new ClientMainTask();
-            executorService.execute(mainTask);
-            LOGGER.info("Start the Main Task {}", mainTask);
-        }
-
-        if (mainTask.getConnectionNum() >= ClientUtils.MAX_LOGIN_NUM) {
-            return null;
-        } else {
-            try {
-                ClientMainConnection newMainConnection = new ClientMainConnection(
-                        account,
-                        Protocol.SERVER_USER_NAME,
-                        ClientConnectionDispatcher.getSingleton().getMainTaskMessageReaderFactory(),
-                        ClientConnectionDispatcher.getSingleton().getMainTaskMessageWriterFactory(),
-                        inetSocketAddress,
-                        bindMainWindow
-                );
-
-                mainTask.registerConnection(newMainConnection);
-                ClientUtils.sendLoginInMessage(newMainConnection, account, password);
-                return newMainConnection;
-            } catch (Exception e) {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * 将生成的SessionConnection分配到PipeLineTask中去
-     *
-     * @param connection
-     */
-    public void dispatchSessionConnection(ClientSessionConnection connection) {
+    public Connection createAndDispatch(String account,
+                                        InetSocketAddress inetSocketAddress,
+                                        boolean isMainConnection,
+                                        String password) {
         //如果当前时刻小于做负载均衡的约定时刻，那么直接返回，不需要排队通过该安全点
         if (System.currentTimeMillis() < nextLoadBalancingTimeStamp) {
-            doDispatchSessionConnection(connection);
+            return doCreateAndDispatch(account,
+                    inetSocketAddress,
+                    isMainConnection,
+                    password);
         } else {
             //如果需要做负载均衡，则必须加锁，保证负载均衡时所有线程处于安全点
             try {
                 loadBalancingLock.lock();
-                doDispatchSessionConnection(connection);
+                return doCreateAndDispatch(account,
+                        inetSocketAddress,
+                        isMainConnection,
+                        password);
             } finally {
                 loadBalancingLock.unlock();
             }
         }
     }
 
-    private void doDispatchSessionConnection(ClientSessionConnection connection) {
+    private Connection doCreateAndDispatch(String account,
+                                           InetSocketAddress inetSocketAddress,
+                                           boolean isMainConnection,
+                                           String password) {
+        //需要新建PipeLineTask
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
 
-            PipeLineTask newPipeLineTask = new ClientSessionTask();
-            LOGGER.info("Add a new SessionConnection to {}", newPipeLineTask);
+            if (isMainConnection) {
+                //若当前PipeLineTask数量已达上限
+                if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
+                    LOGGER.info("Refuse to create a MainConnection!");
+                    return null;
+                } else {
+                    try {
+                        ClientMainConnection newMainConnection = new ClientMainConnection(
+                                account,
+                                Protocol.SERVER_USER_NAME,
+                                ClientConnectionDispatcher.getSingleton().getMainTaskMessageReaderFactory(),
+                                ClientConnectionDispatcher.getSingleton().getMainTaskMessageWriterFactory(),
+                                inetSocketAddress);
 
-            newPipeLineTask.registerConnection(connection);
+                        PipeLineTask newPipeLineTask = new ClientSessionTask();
+                        LOGGER.info("Create a new PipeLineTask {}", newPipeLineTask);
+                        executorService.execute(newPipeLineTask);
 
-            executorService.execute(newPipeLineTask);
+                        LOGGER.info("Add a new MainConnection to a new {}", newPipeLineTask);
+                        newPipeLineTask.registerConnection(newMainConnection);
+                        ClientUtils.sendLoginInMessage(newMainConnection, account, password);
 
+                        return newMainConnection;
+                    } catch (IOException e) {
+                        return null;
+                    }
+                }
+            } else {
+                try {
+                    ConnectionDescription connectionDescription = new ConnectionDescription(account, Protocol.SERVER_USER_NAME);
+
+                    ClientSessionConnection newConnection = new ClientSessionConnection(
+                            account,
+                            Protocol.SERVER_USER_NAME,
+                            ClientConnectionDispatcher.getSingleton().getSessionTaskMessageReaderFactory(),
+                            ClientConnectionDispatcher.getSingleton().getSessionTaskMessageWriterFactory(),
+                            inetSocketAddress);
+
+                    PipeLineTask newPipeLineTask = new ClientSessionTask();
+                    LOGGER.info("Create a new PipeLineTask {}", newPipeLineTask);
+                    executorService.execute(newPipeLineTask);
+
+                    LOGGER.info("Add a new SessionConnection to a new {}", newPipeLineTask);
+                    newPipeLineTask.registerConnection(newConnection);
+
+                    return newConnection;
+                } catch (IOException e) {
+                    return null;
+                }
+            }
         } else {
-            PipeLineTask pipeLineTask = getIdlePipeLineTask();
-            LOGGER.info("Add a new SessionConnection to an existing {}", pipeLineTask);
+            if (isMainConnection) {
+                try {
+                    ClientMainConnection newMainConnection = new ClientMainConnection(
+                            account,
+                            Protocol.SERVER_USER_NAME,
+                            ClientConnectionDispatcher.getSingleton().getMainTaskMessageReaderFactory(),
+                            ClientConnectionDispatcher.getSingleton().getMainTaskMessageWriterFactory(),
+                            inetSocketAddress);
 
-            pipeLineTask.registerConnection(connection);
+                    PipeLineTask pipeLineTask = getIdlePipeLineTask();
+
+                    LOGGER.info("Add a new MainConnection to an existing {}", pipeLineTask);
+                    pipeLineTask.registerConnection(newMainConnection);
+                    ClientUtils.sendLoginInMessage(newMainConnection, account, password);
+
+                    return newMainConnection;
+                } catch (IOException e) {
+                    return null;
+                }
+            } else {
+                try {
+                    ConnectionDescription connectionDescription = new ConnectionDescription(account, Protocol.SERVER_USER_NAME);
+
+                    ClientSessionConnection newConnection = new ClientSessionConnection(
+                            account,
+                            Protocol.SERVER_USER_NAME,
+                            ClientConnectionDispatcher.getSingleton().getSessionTaskMessageReaderFactory(),
+                            ClientConnectionDispatcher.getSingleton().getSessionTaskMessageWriterFactory(),
+                            inetSocketAddress);
+
+                    PipeLineTask pipeLineTask = getIdlePipeLineTask();
+
+                    LOGGER.info("Add a new SessionConnection to an existing {}", pipeLineTask);
+                    pipeLineTask.registerConnection(newConnection);
+
+                    return newConnection;
+                } catch (IOException e) {
+                    return null;
+                }
+            }
         }
     }
 

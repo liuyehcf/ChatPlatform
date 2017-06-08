@@ -54,6 +54,7 @@ public class ClientSessionConnection extends Connection {
         sessionWindowMap = new ConcurrentHashMap<String, SessionWindow>();
         groupSessionWindowMap = new ConcurrentHashMap<String, GroupSessionWindow>();
 
+        ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().containsKey(getConnectionDescription()));
         ClientConnectionDispatcher.getSingleton().getSessionConnectionMap().put(getConnectionDescription(), this);
     }
 
