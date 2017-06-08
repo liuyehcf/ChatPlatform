@@ -20,7 +20,7 @@ public class ServerUtils {
     /**
      * 允许最长不活跃时间，单位分钟
      */
-    public static final int MAX_INACTIVE_TIME = 1;
+    public static final int MAX_INACTIVE_TIME = 10;
 
     /**
      * 最大线程数量

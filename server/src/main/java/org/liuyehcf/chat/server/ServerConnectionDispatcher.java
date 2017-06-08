@@ -123,7 +123,10 @@ public class ServerConnectionDispatcher {
 
 
         sessionConnectionMap = new ConcurrentHashMap<ConnectionDescription, ServerConnection>();
+
         groupInfoMap = new ConcurrentHashMap<String, ServerGroupInfo>();
+        groupInfoMap.put("会员专属聊天室", new ServerGroupInfo("会员专属聊天室"));
+
     }
 
     /**
