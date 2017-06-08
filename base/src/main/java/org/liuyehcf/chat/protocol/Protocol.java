@@ -184,6 +184,8 @@ public class Protocol {
 
         public static final String NOT_ONLINE = "NOT_ONLINE";
 
+        public static final String OPEN_SESSION_WINDOW = "OPEN_SESSION_WINDOW";
+
         public static final String LOGIN_OUT_NOTIFY = "LOGIN_OUT_NOTIFY";
 
         /**

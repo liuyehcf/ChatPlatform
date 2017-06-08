@@ -4,7 +4,6 @@ import org.liuyehcf.chat.client.ClientConnectionDispatcher;
 import org.liuyehcf.chat.client.connection.ClientMainConnection;
 import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.handler.WindowHandler;
-import org.liuyehcf.chat.protocol.Protocol;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -102,8 +101,6 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
         groupSessionWindowMap = new ConcurrentHashMap<String, GroupSessionWindow>();
         groupNames = new HashSet<String>();
 
-        ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account));
-
         init();
     }
 
@@ -154,7 +151,7 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
      * 每一个MainWindow对应一个ClientMainConnection
      */
     public void connect() {
-        bindMainConnection = ClientConnectionDispatcher.getSingleton().getMainConnection(
+        bindMainConnection = ClientConnectionDispatcher.getSingleton().createMainConnection(
                 account,
                 new InetSocketAddress(serverHost, serverPort),
                 password,
@@ -167,8 +164,8 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             //关闭主界面
             this.dispose();
         } else {
-            ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainWindowMap().containsKey(account));
-            ClientConnectionDispatcher.getSingleton().getMainWindowMap().put(account, this);
+            ClientUtils.ASSERT(!ClientConnectionDispatcher.getSingleton().getMainConnectionMap().containsKey(account));
+            ClientConnectionDispatcher.getSingleton().getMainConnectionMap().put(account, bindMainConnection);
             handler.onSuccessful();
         }
     }

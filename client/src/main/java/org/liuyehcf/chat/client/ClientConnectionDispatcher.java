@@ -97,7 +97,7 @@ public class ClientConnectionDispatcher {
     /**
      * 列表界面
      */
-    private Map<String, MainWindow> mainWindowMap;
+    private Map<String, ClientMainConnection> mainConnectionMap;
 
     /**
      * Connection描述符到Connection的映射，多个PipeLineTask共享
@@ -117,8 +117,8 @@ public class ClientConnectionDispatcher {
         return pipeLineTasks;
     }
 
-    public Map<String, MainWindow> getMainWindowMap() {
-        return mainWindowMap;
+    public Map<String, ClientMainConnection> getMainConnectionMap() {
+        return mainConnectionMap;
     }
 
     public Map<ConnectionDescription, ClientSessionConnection> getSessionConnectionMap() {
@@ -142,7 +142,7 @@ public class ClientConnectionDispatcher {
     }
 
     private ClientConnectionDispatcher() {
-        mainWindowMap = new ConcurrentHashMap<String, MainWindow>();
+        mainConnectionMap = new ConcurrentHashMap<String, ClientMainConnection>();
         pipeLineTasks = new LinkedList<PipeLineTask>();
 
         loadBalancingLock = new ReentrantLock(true);
@@ -204,10 +204,10 @@ public class ClientConnectionDispatcher {
      * @param bindMainWindow
      * @return
      */
-    synchronized public ClientMainConnection getMainConnection(String account,
-                                                               InetSocketAddress inetSocketAddress,
-                                                               String password,
-                                                               MainWindow bindMainWindow) {
+    synchronized public ClientMainConnection createMainConnection(String account,
+                                                                  InetSocketAddress inetSocketAddress,
+                                                                  String password,
+                                                                  MainWindow bindMainWindow) {
         if (mainTask == null) {
             mainTask = new ClientMainTask();
             executorService.execute(mainTask);

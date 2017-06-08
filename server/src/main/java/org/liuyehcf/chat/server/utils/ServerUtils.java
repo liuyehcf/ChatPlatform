@@ -161,24 +161,25 @@ public class ServerUtils {
     }
 
     /**
-     * 该条信息的含义为：希望fromUserName用户，开启一个fromUserName到toUserName的会话
+     * 该条信息的含义为：希望toUserName用户，开启一个toUserName到fromUserName的会话窗口
      *
-     * @param fromUserName
+     * @param connection
      * @param toUserName
+     * @param fromUserName
      * @param content
-     * @return
      */
-    public static void sendOpenSessionWindowMessage(Connection connection, String fromUserName, String toUserName, String content) {
+    public static void sendOpenSessionWindowMessage(Connection connection, String toUserName, String fromUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
         message.setHeader(new Protocol.Header());
         message.setBody(new Protocol.Body());
 
-        message.getControl().setOpenSessionMessage(true);
+        message.getControl().setSystemMessage(true);
 
-        message.getHeader().setParam1(fromUserName);
+        message.getHeader().setParam1(OPEN_SESSION_WINDOW);
         message.getHeader().setParam2(toUserName);
+        message.getHeader().setParam3(fromUserName);
 
         message.getBody().setContent(content);
 
