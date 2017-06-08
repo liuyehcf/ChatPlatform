@@ -1,10 +1,8 @@
 package org.liuyehcf.chat.server.interceptor;
 
-import org.liuyehcf.chat.interceptor.MessageInterceptor;
 import org.liuyehcf.chat.interceptor.MessageInvocation;
 import org.liuyehcf.chat.interceptor.ProxyMethodInvocation;
 import org.liuyehcf.chat.protocol.Message;
-import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.server.connection.ServerConnection;
 import org.liuyehcf.chat.server.ServerConnectionDispatcher;
 import org.liuyehcf.chat.server.utils.ServerGroupInfo;
@@ -15,19 +13,10 @@ import java.io.IOException;
 /**
  * Created by Liuye on 2017/6/7.
  */
-public class ServerMessageWriterInterceptor implements MessageInterceptor {
-    /**
-     * 单例对象，这里不能直接调用静态方法进行初始化，会造成死循环
-     */
-    private final ServerConnectionDispatcher serverConnectionDispatcher;
-
-    /**
-     * 协议
-     */
-    private Protocol protocol = new Protocol();
+public class ServerMessageWriterInterceptor extends AbstractServerMessageInterceptor {
 
     public ServerMessageWriterInterceptor(ServerConnectionDispatcher serverConnectionDispatcher) {
-        this.serverConnectionDispatcher = serverConnectionDispatcher;
+        super(serverConnectionDispatcher);
     }
 
     @Override
@@ -114,6 +103,9 @@ public class ServerMessageWriterInterceptor implements MessageInterceptor {
                         ));
             }
         }
+
+        //刷新好友列表
+        refreshFriendList();
     }
 
     /**
