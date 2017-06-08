@@ -66,7 +66,14 @@ public class ServerUtils {
         connection.offerMessage(message);
     }
 
-    public static void sendForceLoginOutMessage(Connection connection, String toUserName) {
+    /**
+     * 发送强制下线消息
+     *
+     * @param connection
+     * @param toUserName
+     * @param content
+     */
+    public static void sendForceLoginOutMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
         message.setControl(new Protocol.Control());
@@ -77,6 +84,8 @@ public class ServerUtils {
 
         message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
         message.getHeader().setParam2(toUserName);
+
+        message.getBody().setContent(content);
 
         connection.offerMessage(message);
     }

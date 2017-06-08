@@ -299,6 +299,11 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
             tree.expandRow(i);
     }
 
+    public void showMessage(String content) {
+        JOptionPane.showMessageDialog(null,
+                content);
+    }
+
     public void addSessionWindow(String userName, SessionWindow sessionWindow) {
         ClientUtils.ASSERT(!sessionWindowMap.containsKey(userName));
         sessionWindowMap.put(userName, sessionWindow);

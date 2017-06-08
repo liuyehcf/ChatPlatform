@@ -126,6 +126,8 @@ public class ClientMainTaskReaderInterceptor implements MessageInterceptor {
      * @param message
      */
     private void processLoginOutMessage(ClientMainConnection connection, Message message) {
+        connection.getBindMainWindow().showMessage(message.getBody().getContent());
+
         connection.getBindPipeLineTask().offLine(connection);
 
         ClientSessionConnection sessionConnection = clientConnectionDispatcher.getSessionConnectionMap().get(connection.getConnectionDescription());
