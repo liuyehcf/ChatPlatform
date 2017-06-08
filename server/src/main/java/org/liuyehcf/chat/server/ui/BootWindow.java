@@ -1,6 +1,7 @@
 package org.liuyehcf.chat.server.ui;
 
 import org.liuyehcf.chat.handler.WindowHandler;
+import org.liuyehcf.chat.server.ServerConnectionDispatcher;
 import org.liuyehcf.chat.server.pipeline.ServerConnectionListener;
 
 import javax.swing.*;

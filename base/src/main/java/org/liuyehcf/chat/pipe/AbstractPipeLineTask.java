@@ -70,11 +70,16 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
 
         connection.registerSelector(getReadSelector(), SelectionKey.OP_READ);
         connection.registerSelector(getWriteSelector(), SelectionKey.OP_WRITE);
-        getConnections().add(connection);
+
+        synchronized (getConnections()) {
+            getConnections().add(connection);
+        }
     }
 
     @Override
     final public void offLine(Connection connection) {
+        connection.cancel();
+
         SocketChannel socketChannel = connection.getSocketChannel();
 
         for (Selector selector : connection.getSelectors()) {
@@ -98,7 +103,13 @@ public abstract class AbstractPipeLineTask implements PipeLineTask {
             }
         }
 
-        getConnections().remove(connection);
+        /**
+         * 执行remove操作的不一定只有当前pipeLine对应的线程
+         * 例如Server强制下线操作，会在MainConnection下线时一并将SessionConnection下线
+         */
+        synchronized (getConnections()) {
+            getConnections().remove(connection);
+        }
 
         if (getConnections().isEmpty()) {
             getBindThread().interrupt();

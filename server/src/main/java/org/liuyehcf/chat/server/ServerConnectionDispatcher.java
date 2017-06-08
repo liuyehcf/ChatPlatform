@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -74,12 +73,12 @@ public class ServerConnectionDispatcher {
     /**
      * 主界面连接映射
      */
-    private Map<String, Connection> mainConnectionMap;
+    private Map<String, ServerConnection> mainConnectionMap;
 
     /**
      * Connection描述符到Connection的映射
      */
-    private Map<ConnectionDescription, Connection> sessionConnectionMap;
+    private Map<ConnectionDescription, ServerConnection> sessionConnectionMap;
 
     /**
      * 用户组名到ServerGroupInfo的映射
@@ -95,11 +94,11 @@ public class ServerConnectionDispatcher {
         return pipeLineTasks;
     }
 
-    public Map<String, Connection> getMainConnectionMap() {
+    public Map<String, ServerConnection> getMainConnectionMap() {
         return mainConnectionMap;
     }
 
-    public Map<ConnectionDescription, Connection> getSessionConnectionMap() {
+    public Map<ConnectionDescription, ServerConnection> getSessionConnectionMap() {
         return sessionConnectionMap;
     }
 
@@ -120,10 +119,10 @@ public class ServerConnectionDispatcher {
         messageWriterFactory = DefaultMessageWriterProxyFactory.Builder()
                 .addInterceptor(new ServerMessageWriterInterceptor(this));
 
-        mainConnectionMap = new ConcurrentHashMap<String, Connection>();
+        mainConnectionMap = new ConcurrentHashMap<String, ServerConnection>();
 
 
-        sessionConnectionMap = new ConcurrentHashMap<ConnectionDescription, Connection>();
+        sessionConnectionMap = new ConcurrentHashMap<ConnectionDescription, ServerConnection>();
         groupInfoMap = new ConcurrentHashMap<String, ServerGroupInfo>();
     }
 
@@ -287,53 +286,21 @@ public class ServerConnectionDispatcher {
         }
     }
 
-    //todo 这个方法有问题
+    /**
+     * 关闭服务器
+     * 关闭时是由监听线程调用的，此时监听线程已经退出while循环，不会再有新连接了
+     */
     public void stop() {
         //首先给所有活跃用户发送离线消息
         for (PipeLineTask pipeLineTask : pipeLineTasks) {
             for (Connection connection : pipeLineTask.getConnections()) {
 
-//                ServerUtils.sendLogOutMessage(
-//                        connection,
-//                        connection.getConnectionDescription().getSource(),
-//                        "[很抱歉通知您，服务器已关闭]");
-//                connection.cancel();
-            }
-        }
-
-        boolean canStop = false;
-        while (!canStop) {
-            try {
-                loadBalancingLock.lock();
-
-                /*
-                 * 该方法只有ChatServerListener所处的线程才会调用，因此必须所有PipeLineTask都位于阻塞状态才行
-                 * 这一点与负载均衡不同，负载均衡时由PipeLineTask中的任意一个线程来做的
-                 */
-                while (loadBalancingLock.getQueueLength() < pipeLineTasks.size()) ;
-
-                for (PipeLineTask pipeLineTask : pipeLineTasks) {
-                    for (Connection connection : pipeLineTask.getConnections()) {
-                        if (connection.getWriteMessages().isEmpty()) {
-                            pipeLineTask.offLine(connection);
-                        }
-                        //否则等待剩余消息发送完毕
-                    }
-                }
-
-                if (pipeLineTasks.isEmpty())
-                    canStop = true;
-
-            } finally {
-                loadBalancingLock.unlock();
-            }
-
-            //尚不能结束，则等待剩余Message发送完毕
-            if (!canStop) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(500);
-                } catch (InterruptedException e) {
-
+                ServerConnection serverConnection = (ServerConnection) connection;
+                if (serverConnection.isMainConnection()) {
+                    String userName = serverConnection.getConnectionDescription().getDestination();
+                    //发送强制下线消息，真正下线操作在写入信息之后处理
+                    ServerUtils.sendForceLoginOutMessage(serverConnection, userName);
+                    serverConnection.cancel();
                 }
             }
         }

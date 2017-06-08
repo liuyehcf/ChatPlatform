@@ -214,7 +214,7 @@ public class ClientConnectionDispatcher {
             LOGGER.info("Start the Main Task {}", mainTask);
         }
 
-        if (mainTask.getConnectionNum() >= ClientUtils.MAX_MAIN_WINDOW_PER_MAIN_TASK) {
+        if (mainTask.getConnectionNum() >= ClientUtils.MAX_LOGIN_NUM) {
             return null;
         } else {
             try {
@@ -259,23 +259,17 @@ public class ClientConnectionDispatcher {
     private void doDispatchSessionConnection(ClientSessionConnection connection) {
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ClientUtils.MAX_CONNECTION_PER_TASK) {
-            if (pipeLineTasks.size() >= ClientUtils.MAX_THREAD_NUM) {
-                LOGGER.info("Client is overload");
-                //todo 客户端负载过高,直接拒绝新连接
-//                SessionWindow chatWindow = connection.getBindChatWindow();
-//                ((ClientSessionConnection) connection).getBindChatWindow().flushOnWindow(false, true, "客户端负载过大，当前连接已被拒绝，请关闭本窗口，稍后尝试连接");
 
-            } else {
-                PipeLineTask newPipeLineTask = new ClientSessionTask();
-                LOGGER.info("Add a new connection to {}", newPipeLineTask);
+            PipeLineTask newPipeLineTask = new ClientSessionTask();
+            LOGGER.info("Add a new SessionConnection to {}", newPipeLineTask);
 
-                newPipeLineTask.registerConnection(connection);
+            newPipeLineTask.registerConnection(connection);
 
-                executorService.execute(newPipeLineTask);
-            }
+            executorService.execute(newPipeLineTask);
+
         } else {
             PipeLineTask pipeLineTask = getIdlePipeLineTask();
-            LOGGER.info("Add a new connection to an existing {}", pipeLineTask);
+            LOGGER.info("Add a new SessionConnection to an existing {}", pipeLineTask);
 
             pipeLineTask.registerConnection(connection);
         }

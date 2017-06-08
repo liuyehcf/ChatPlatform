@@ -217,6 +217,12 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
     @Override
     public void valueChanged(TreeSelectionEvent e) {
+        if (!bindMainConnection.isActive()) {
+            JOptionPane.showMessageDialog(null,
+                    "您已断线，请关闭此窗口");
+            return;
+        }
+
         //获取选择的节点
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree
                 .getLastSelectedPathComponent();
@@ -321,6 +327,10 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
 
         @Override
         public void windowClosing(WindowEvent e) {
+        }
+
+        @Override
+        public void windowClosed(WindowEvent e) {
             //需要关闭当前主界面对应的所有会话连接
             for (SessionWindow sessionWindow : sessionWindowMap.values()) {
                 sessionWindow.dispose();
@@ -330,12 +340,10 @@ public class MainWindow extends JFrame implements TreeSelectionListener {
                 groupSessionWindow.dispose();
             }
 
-            ClientUtils.sendLoginOutMessage(bindMainConnection, account);
-        }
-
-        @Override
-        public void windowClosed(WindowEvent e) {
-
+            if (bindMainConnection.isActive()) {
+                ClientUtils.sendLoginOutMessage(bindMainConnection, account);
+                bindMainConnection.cancel();
+            }
         }
 
         @Override

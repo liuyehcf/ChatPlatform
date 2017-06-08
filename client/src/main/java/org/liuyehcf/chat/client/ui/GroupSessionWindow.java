@@ -192,6 +192,11 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
         button.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (!bindConnection.isActive()) {
+                    JOptionPane.showMessageDialog(null,
+                            "您已断线，请关闭此窗口");
+                    return;
+                }
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
                 ClientUtils.sendNormalMessage(bindConnection, true, header, content);
@@ -300,7 +305,8 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
 
         @Override
         public void windowClosing(WindowEvent e) {
-            ClientUtils.sendCloseSessionMessage(bindConnection, true, header);
+            if (bindConnection.isActive())
+                ClientUtils.sendCloseSessionMessage(bindConnection, true, header);
             bindMainWindow.removeGroupSessionWindow(groupName);
             //GroupSessionWindows关联的SessionConnection在发送消息后调用remove方法
         }

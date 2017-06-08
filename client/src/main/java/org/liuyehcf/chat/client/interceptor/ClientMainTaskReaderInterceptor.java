@@ -2,6 +2,7 @@ package org.liuyehcf.chat.client.interceptor;
 
 import org.liuyehcf.chat.client.ClientConnectionDispatcher;
 import org.liuyehcf.chat.client.connection.ClientMainConnection;
+import org.liuyehcf.chat.client.connection.ClientSessionConnection;
 import org.liuyehcf.chat.client.ui.MainWindow;
 import org.liuyehcf.chat.client.ui.SessionWindow;
 import org.liuyehcf.chat.client.utils.ClientUtils;
@@ -125,7 +126,12 @@ public class ClientMainTaskReaderInterceptor implements MessageInterceptor {
      * @param message
      */
     private void processLoginOutMessage(ClientMainConnection connection, Message message) {
+        connection.getBindPipeLineTask().offLine(connection);
 
+        ClientSessionConnection sessionConnection = clientConnectionDispatcher.getSessionConnectionMap().get(connection.getConnectionDescription());
+
+        if (sessionConnection != null)
+            sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
     }
 
     /**

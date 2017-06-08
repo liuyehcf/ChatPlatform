@@ -7,6 +7,7 @@ import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.server.connection.ServerConnection;
 import org.liuyehcf.chat.server.ServerConnectionDispatcher;
+import org.liuyehcf.chat.server.utils.ServerUtils;
 
 import java.io.IOException;
 
@@ -83,11 +84,19 @@ public class ServerMessageWriterInterceptor implements MessageInterceptor {
     }
 
     /**
-     * @param connection
+     * @param mainConnection
      * @param message
      */
-    private void processLoginOutMessage(ServerConnection connection, Message message) {
+    private void processLoginOutMessage(ServerConnection mainConnection, Message message) {
+        ServerUtils.ASSERT(mainConnection.isMainConnection());
 
+        ServerConnection sessionConnection = serverConnectionDispatcher.getSessionConnectionMap().get(mainConnection.getConnectionDescription());
+
+        mainConnection.getBindPipeLineTask().offLine(mainConnection);
+
+        //可能有些连接就没有会话存在
+        if (sessionConnection != null)
+            sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
     }
 
     /**

@@ -165,6 +165,10 @@ public abstract class Connection {
         status = CANCEL;
     }
 
+    public boolean isActive() {
+        return status == NORMAL;
+    }
+
     /**
      * 更新时间戳
      */

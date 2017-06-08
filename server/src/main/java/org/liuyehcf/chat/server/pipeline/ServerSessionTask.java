@@ -140,20 +140,26 @@ public class ServerSessionTask extends AbstractPipeLineTask {
      * 检查处于Connection是否处于活跃状态
      * 超过一定时间就强制下线
      */
-    //todo 这个方法有问题
     private void checkActive() {
         long currentStamp = System.currentTimeMillis();
         for (Connection connection : getConnections()) {
-            if (currentStamp - connection.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
-                //发送消息关闭会话
-//                ServerUtils.sendLogOutMessage(
-//                        connection,
-//                        connection.getConnectionDescription().getSource(),
-//                        "占着茅坑不拉屎，你可以滚了!!!"
-//                );
+            ServerConnection serverConnection = (ServerConnection) connection;
+            if (!serverConnection.isMainConnection()) {
+                if (currentStamp - connection.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
+                    String userName = serverConnection.getConnectionDescription().getDestination();
+                    ServerConnection mainConnection = serverConnectionDispatcher.getMainConnectionMap().get(userName);
+
+                    if (currentStamp - mainConnection.getRecentActiveTimeStamp() > ServerUtils.MAX_INACTIVE_TIME * 60 * 1000L) {
+
+                        //发送强制下线消息，真正下线操作在写入信息之后处理
+                        ServerUtils.sendForceLoginOutMessage(mainConnection, userName);
+                        mainConnection.cancel();
+                    }
+                }
             }
         }
     }
+
 
     /**
      * 离线的后续处理

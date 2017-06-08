@@ -152,6 +152,11 @@ public class SessionWindow extends JFrame {
         button.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (!bindConnection.isActive()) {
+                    JOptionPane.showMessageDialog(null,
+                            "您已断线，请关闭此窗口");
+                    return;
+                }
                 String content = textField.getText();
                 if (content == null || content.equals("")) return;
                 ClientUtils.sendNormalMessage(bindConnection, false, header, content);
@@ -244,7 +249,8 @@ public class SessionWindow extends JFrame {
 
         @Override
         public void windowClosed(WindowEvent e) {
-            ClientUtils.sendCloseSessionMessage(bindConnection, false, header);
+            if (bindConnection.isActive())
+                ClientUtils.sendCloseSessionMessage(bindConnection, false, header);
             bindMainWindow.removeSessionWindow(toUserName);
             //SessionWindows关联的SessionConnection在发送消息后调用remove方法
         }

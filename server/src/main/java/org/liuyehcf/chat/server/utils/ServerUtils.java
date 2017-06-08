@@ -20,7 +20,7 @@ public class ServerUtils {
     /**
      * 允许最长不活跃时间，单位分钟
      */
-    public static final int MAX_INACTIVE_TIME = 100;
+    public static final int MAX_INACTIVE_TIME = 10;
 
     /**
      * 最大线程数量
@@ -66,6 +66,20 @@ public class ServerUtils {
         connection.offerMessage(message);
     }
 
+    public static void sendForceLoginOutMessage(Connection connection, String toUserName) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setLoginOutMessage(true);
+
+        message.getHeader().setParam1(Protocol.SERVER_USER_NAME);
+        message.getHeader().setParam2(toUserName);
+
+        connection.offerMessage(message);
+    }
 
     /**
      * 上线刷新列表消息
@@ -91,6 +105,13 @@ public class ServerUtils {
         connection.offerMessage(message);
     }
 
+    /**
+     * 刷新群列表信息
+     *
+     * @param connection
+     * @param toUserName
+     * @param content
+     */
     public static void sendFlushGroupListMessage(Connection connection, String toUserName, String content) {
         Message message = new Message();
 
@@ -108,6 +129,27 @@ public class ServerUtils {
         connection.offerMessage(message);
     }
 
+    /**
+     * 刷新群内成员列表信息
+     *
+     * @param content
+     * @return
+     */
+    public static Message createFlushGroupSessionUserListMessage(String content) {
+        Message message = new Message();
+
+        message.setControl(new Protocol.Control());
+        message.setHeader(new Protocol.Header());
+        message.setBody(new Protocol.Body());
+
+        message.getControl().setSystemMessage(true);
+
+        message.getHeader().setParam1(FLUSH_GROUP_SESSION_USER_LIST);
+
+        message.getBody().setContent(content);
+
+        return message;
+    }
 
     /**
      * 该条信息的含义为：希望fromUserName用户，开启一个fromUserName到toUserName的会话
@@ -134,7 +176,6 @@ public class ServerUtils {
         connection.offerMessage(message);
     }
 
-
     /**
      * 提示客户端，该客户端所连的客户端还没上线
      *
@@ -160,7 +201,6 @@ public class ServerUtils {
         connection.offerMessage(message);
     }
 
-
     /**
      * 提示客户端，该客户端所连接的另一个客户端已下线
      *
@@ -184,22 +224,6 @@ public class ServerUtils {
         message.getBody().setContent(content);
 
         connection.offerMessage(message);
-    }
-
-    public static Message createFlushGroupSessionUserListMessage(String content) {
-        Message message = new Message();
-
-        message.setControl(new Protocol.Control());
-        message.setHeader(new Protocol.Header());
-        message.setBody(new Protocol.Body());
-
-        message.getControl().setSystemMessage(true);
-
-        message.getHeader().setParam1(FLUSH_GROUP_SESSION_USER_LIST);
-
-        message.getBody().setContent(content);
-
-        return message;
     }
 
 
