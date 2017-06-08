@@ -2,7 +2,6 @@ package org.liuyehcf.chat.client.ui;
 
 import org.liuyehcf.chat.client.ClientConnectionDispatcher;
 import org.liuyehcf.chat.client.connection.ClientSessionConnection;
-import org.liuyehcf.chat.client.ui.MainWindow;
 import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.handler.WindowHandler;
 import org.liuyehcf.chat.protocol.Protocol;

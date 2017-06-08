@@ -245,8 +245,6 @@ public class ClientConnectionDispatcher {
                 }
             } else {
                 try {
-                    ConnectionDescription connectionDescription = new ConnectionDescription(account, Protocol.SERVER_USER_NAME);
-
                     ClientSessionConnection newConnection = new ClientSessionConnection(
                             account,
                             Protocol.SERVER_USER_NAME,
@@ -288,8 +286,6 @@ public class ClientConnectionDispatcher {
                 }
             } else {
                 try {
-                    ConnectionDescription connectionDescription = new ConnectionDescription(account, Protocol.SERVER_USER_NAME);
-
                     ClientSessionConnection newConnection = new ClientSessionConnection(
                             account,
                             Protocol.SERVER_USER_NAME,

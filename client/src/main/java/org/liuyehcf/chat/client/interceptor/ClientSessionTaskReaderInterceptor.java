@@ -1,9 +1,7 @@
 package org.liuyehcf.chat.client.interceptor;
 
 import org.liuyehcf.chat.client.ClientConnectionDispatcher;
-import org.liuyehcf.chat.client.connection.ClientMainConnection;
 import org.liuyehcf.chat.client.connection.ClientSessionConnection;
-import org.liuyehcf.chat.client.ui.SessionWindow;
 import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.interceptor.MessageInterceptor;
 import org.liuyehcf.chat.interceptor.MessageInvocation;

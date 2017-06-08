@@ -3,7 +3,6 @@ package org.liuyehcf.chat.server.utils;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.server.connection.ServerConnection;
-import org.liuyehcf.chat.server.utils.ServerUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

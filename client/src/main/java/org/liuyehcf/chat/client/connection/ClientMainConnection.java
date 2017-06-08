@@ -3,9 +3,7 @@ package org.liuyehcf.chat.client.connection;
 import org.liuyehcf.chat.client.ui.MainWindow;
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.connect.ConnectionDescription;
-import org.liuyehcf.chat.reader.DefaultMessageReaderProxyFactory;
 import org.liuyehcf.chat.reader.MessageReaderFactory;
-import org.liuyehcf.chat.writer.DefaultMessageWriterProxyFactory;
 import org.liuyehcf.chat.writer.MessageWriterFactory;
 
 import java.io.IOException;
