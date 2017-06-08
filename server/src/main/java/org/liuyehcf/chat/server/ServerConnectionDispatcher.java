@@ -146,7 +146,6 @@ public class ServerConnectionDispatcher {
         }
     }
 
-    //todo 如果是主链接，不拒绝，会话连接，则拒绝，这个方法也有问题
     private void doDispatcher(SocketChannel socketChannel) {
         if (pipeLineTasks.isEmpty() ||
                 getIdlePipeLineTask().getConnectionNum() >= ServerUtils.MAX_CONNECTION_PER_TASK) {
@@ -155,16 +154,15 @@ public class ServerConnectionDispatcher {
 
                 PipeLineTask pipeLineTask = getIdlePipeLineTask();
 
-                Connection newConnection = new ServerConnection(
+                ServerConnection newConnection = new ServerConnection(
                         messageReaderFactory,
                         messageWriterFactory,
                         socketChannel);
 
+                newConnection.setRefused(true);
                 pipeLineTask.registerConnection(newConnection);
-                //发送系统消息关闭会话
-                //todo ServerUtils.sendLogOutMessage(newConnection, "", "", "服务器负载过高，请稍后尝试登陆");
-                //该链接不再接受任何消息
-                newConnection.cancel();
+
+                //这里设置该连接为拒绝，如果是Session连接，那么不会真正被拒绝，如果是主界面连接，则会拒绝
             } else {
                 PipeLineTask newPipeLineTask = new ServerSessionTask();
                 LOGGER.info("Add a new connection to a new {}", newPipeLineTask);
@@ -299,7 +297,9 @@ public class ServerConnectionDispatcher {
                 if (serverConnection.isMainConnection()) {
                     String userName = serverConnection.getConnectionDescription().getDestination();
                     //发送强制下线消息，真正下线操作在写入信息之后处理
-                    ServerUtils.sendForceLoginOutMessage(serverConnection, userName, "非常抱歉，服务器已暂停服务");
+                    ServerUtils.sendForceLoginOutMessage(serverConnection,
+                            userName,
+                            "非常抱歉，服务器已暂停服务");
                     serverConnection.cancel();
                 }
             }

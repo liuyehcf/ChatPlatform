@@ -15,7 +15,7 @@ public class ServerUtils {
     /**
      * 每个线程管理的channel数量的最大值
      */
-    public static final int MAX_CONNECTION_PER_TASK = 3;
+    public static final int MAX_CONNECTION_PER_TASK = 1;
 
     /**
      * 允许最长不活跃时间，单位分钟
@@ -25,7 +25,7 @@ public class ServerUtils {
     /**
      * 最大线程数量
      */
-    public static final int MAX_THREAD_NUM = 4;
+    public static final int MAX_THREAD_NUM = 1;
 
     /**
      * 当每个任务管理的连接数量与每个任务可管理最大连接数量之比

@@ -94,23 +94,37 @@ public class ServerMessageReaderInterceptor extends AbstractServerMessageInterce
         connection.setConnectionDescription(new ConnectionDescription(Protocol.SERVER_USER_NAME, message.getHeader().getParam1()));
         connection.setMainConnection(true);
 
-        String account = message.getHeader().getParam1();
-        ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
+        if (connection.isRefused()) {
+            String account = message.getHeader().getParam1();
+            ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
 
-        serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
+            serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
 
-        //发送消息，允许客户端登录
-        ServerUtils.sendReplyLoginInMessage(
-                connection,
-                true,
-                account);
+            ServerUtils.sendForceLoginOutMessage(
+                    connection,
+                    account,
+                    "服务器忙碌，拒绝连接");
+            connection.cancel();
+        } else {
 
-        //刷新好友列表
-        refreshFriendList();
+            String account = message.getHeader().getParam1();
+            ServerUtils.ASSERT(!serverConnectionDispatcher.getMainConnectionMap().containsKey(account));
 
-        //刷新群聊列表
-        refreshGroupList();
-        //todo 何时deny
+            serverConnectionDispatcher.getMainConnectionMap().put(account, connection);
+
+            //发送消息，允许客户端登录
+            ServerUtils.sendReplyLoginInMessage(
+                    connection,
+                    true,
+                    account);
+
+            //刷新好友列表
+            refreshFriendList();
+
+            //刷新群聊列表
+            refreshGroupList();
+            //todo 何时deny
+        }
     }
 
     /**
