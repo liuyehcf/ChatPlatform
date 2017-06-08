@@ -236,7 +236,6 @@ public class ClientConnectionDispatcher {
 
                         LOGGER.info("Add a new MainConnection to a new {}", newPipeLineTask);
                         newPipeLineTask.registerConnection(newMainConnection);
-                        ClientUtils.sendLogInMessage(newMainConnection, account, password);
 
                         return newMainConnection;
                     } catch (IOException e) {
@@ -278,7 +277,6 @@ public class ClientConnectionDispatcher {
 
                     LOGGER.info("Add a new MainConnection to an existing {}", pipeLineTask);
                     pipeLineTask.registerConnection(newMainConnection);
-                    ClientUtils.sendLogInMessage(newMainConnection, account, password);
 
                     return newMainConnection;
                 } catch (IOException e) {
