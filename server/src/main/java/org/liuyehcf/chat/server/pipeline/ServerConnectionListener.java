@@ -50,7 +50,7 @@ public class ServerConnectionListener {
             //阻塞模式的ServerSocketChannel
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.bind(new InetSocketAddress(serverHost, serverPort));
-        } catch (IOException e) {
+        } catch (Exception e) {
             ServerConnectionDispatcher.LOGGER.info("The server starts failed!");
             handler.onFailure();
             return;

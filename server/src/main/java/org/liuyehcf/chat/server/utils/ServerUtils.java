@@ -15,12 +15,12 @@ public class ServerUtils {
     /**
      * 每个线程管理的channel数量的最大值
      */
-    public static final int MAX_CONNECTION_PER_TASK = 1;
+    public static final int MAX_CONNECTION_PER_TASK = 5;
 
     /**
      * 允许最长不活跃时间，单位分钟
      */
-    public static final int MAX_INACTIVE_TIME = 10;
+    public static final int MAX_INACTIVE_TIME = 1;
 
     /**
      * 最大线程数量

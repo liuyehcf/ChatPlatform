@@ -208,7 +208,7 @@ public class GroupSessionWindow extends JFrame implements TreeSelectionListener 
         this.add(panel);
 
         //设置标题
-        this.setTitle("群聊<" + groupName + ">");
+        this.setTitle("["+fromUserName+"] ==> 群聊<" + groupName + ">");
 
         //设置大小
         this.setSize(875, 825);

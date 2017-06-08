@@ -134,6 +134,8 @@ public class BootWindow {
                 });
 
                 listenThread.start();
+
+                systemLabel.setText("Booting now, please wait!");
             }
         });
 
