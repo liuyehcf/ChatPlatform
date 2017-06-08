@@ -80,9 +80,9 @@ public class ServerMessageWriterInterceptor extends AbstractServerMessageInterce
     private void processLoginOutMessage(ServerConnection mainConnection, Message message) {
         ServerUtils.ASSERT(mainConnection.isMainConnection());
 
-        ServerConnection sessionConnection = serverConnectionDispatcher.getSessionConnectionMap().get(mainConnection.getConnectionDescription());
-
         mainConnection.getBindPipeLineTask().offLine(mainConnection);
+
+        ServerConnection sessionConnection = serverConnectionDispatcher.getSessionConnectionMap().get(mainConnection.getConnectionDescription());
 
         //可能有些连接就没有会话存在
         if (sessionConnection != null) {
