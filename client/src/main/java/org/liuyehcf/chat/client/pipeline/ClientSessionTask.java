@@ -1,6 +1,9 @@
 package org.liuyehcf.chat.client.pipeline;
 
 import org.liuyehcf.chat.client.ClientConnectionDispatcher;
+import org.liuyehcf.chat.client.connection.ClientMainConnection;
+import org.liuyehcf.chat.client.connection.ClientSessionConnection;
+import org.liuyehcf.chat.client.utils.ClientUtils;
 import org.liuyehcf.chat.connect.*;
 import org.liuyehcf.chat.pipe.AbstractPipeLineTask;
 import org.liuyehcf.chat.protocol.Message;
@@ -128,6 +131,12 @@ public class ClientSessionTask extends AbstractPipeLineTask {
     @Override
     protected void offLinePostProcess(Connection connection) {
         ClientConnectionDispatcher.LOGGER.info("Connection {} is getOff from {}", connection, this);
-        clientConnectionDispatcher.getSessionConnectionMap().remove(connection.getConnectionDescription());
+        if (connection instanceof ClientMainConnection) {
+            ClientUtils.ASSERT(clientConnectionDispatcher.getMainConnectionMap().containsKey(connection.getConnectionDescription().getSource()));
+            clientConnectionDispatcher.getMainConnectionMap().remove(connection.getConnectionDescription().getSource());
+        } else if (connection instanceof ClientSessionConnection) {
+            ClientUtils.ASSERT(clientConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
+            clientConnectionDispatcher.getSessionConnectionMap().remove(connection.getConnectionDescription());
+        }
     }
 }

@@ -174,8 +174,10 @@ public class ServerSessionTask extends AbstractPipeLineTask {
 
         ServerConnection serverConnection = (ServerConnection) connection;
         if (serverConnection.isMainConnection()) {
+            ServerUtils.ASSERT(serverConnectionDispatcher.getMainConnectionMap().containsKey(connection.getConnectionDescription().getDestination()));
             serverConnectionDispatcher.getMainConnectionMap().remove(connection.getConnectionDescription().getDestination());
         } else {
+            ServerUtils.ASSERT(serverConnectionDispatcher.getSessionConnectionMap().containsKey(connection.getConnectionDescription()));
             serverConnectionDispatcher.getSessionConnectionMap().remove(connection.getConnectionDescription());
         }
     }

@@ -23,7 +23,7 @@ public class ClientUtils {
     /**
      * 最大线程数量
      */
-    public static final int MAX_THREAD_NUM = 1;
+    public static final int MAX_THREAD_NUM = 3;
 
     /**
      * 当每个任务管理的连接数量与每个任务可管理最大连接数量之比

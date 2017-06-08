@@ -119,7 +119,7 @@ public class LoginWindow extends JFrame {
 
                 //重复登录校验
                 if (ClientConnectionDispatcher.getSingleton().getMainConnectionMap().containsKey(account)) {
-                    systemLabel.setText("SYSTEM: Please do not log in repeatedly!");
+                    systemLabel.setText("SYSTEM: Please do not login in repeatedly!");
                     return;
                 }
 
