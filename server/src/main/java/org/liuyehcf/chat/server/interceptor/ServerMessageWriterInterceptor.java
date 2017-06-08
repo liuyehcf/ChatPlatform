@@ -7,6 +7,7 @@ import org.liuyehcf.chat.protocol.Message;
 import org.liuyehcf.chat.protocol.Protocol;
 import org.liuyehcf.chat.server.connection.ServerConnection;
 import org.liuyehcf.chat.server.ServerConnectionDispatcher;
+import org.liuyehcf.chat.server.utils.ServerGroupInfo;
 import org.liuyehcf.chat.server.utils.ServerUtils;
 
 import java.io.IOException;
@@ -95,8 +96,24 @@ public class ServerMessageWriterInterceptor implements MessageInterceptor {
         mainConnection.getBindPipeLineTask().offLine(mainConnection);
 
         //可能有些连接就没有会话存在
-        if (sessionConnection != null)
+        if (sessionConnection != null) {
             sessionConnection.getBindPipeLineTask().offLine(sessionConnection);
+
+            String userName = sessionConnection.getConnectionDescription().getDestination();
+
+            for (ServerGroupInfo serverGroupInfo : serverConnectionDispatcher.getGroupInfoMap().values()) {
+                if (serverGroupInfo.getGroupSessionConnectionMap().containsKey(userName)) {
+                    serverGroupInfo.removeConnection(userName);
+                }
+
+                //刷新群成员列表
+                serverGroupInfo.offerMessage(
+                        null,
+                        ServerUtils.createFlushGroupSessionUserListMessage(
+                                serverGroupInfo.getGroupSessionConnectionMap().keySet().toString()
+                        ));
+            }
+        }
     }
 
     /**

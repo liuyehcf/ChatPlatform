@@ -2,6 +2,7 @@ package org.liuyehcf.chat.server.utils;
 
 import org.liuyehcf.chat.connect.Connection;
 import org.liuyehcf.chat.protocol.Message;
+import org.liuyehcf.chat.server.connection.ServerConnection;
 import org.liuyehcf.chat.server.utils.ServerUtils;
 
 import java.util.*;
@@ -20,7 +21,7 @@ public class ServerGroupInfo {
     /**
      * 当前群聊的Connection映射
      */
-    private Map<String, Connection> groupSessionConnectionMap;
+    private Map<String, ServerConnection> groupSessionConnectionMap;
 
     public String getGroupName() {
         return groupName;
@@ -28,10 +29,10 @@ public class ServerGroupInfo {
 
     public ServerGroupInfo(String groupName) {
         this.groupName = groupName;
-        groupSessionConnectionMap = new ConcurrentHashMap<String, Connection>();
+        groupSessionConnectionMap = new ConcurrentHashMap<String, ServerConnection>();
     }
 
-    public void addConnection(String userName, Connection connection) {
+    public void addConnection(String userName, ServerConnection connection) {
         ServerUtils.ASSERT(!groupSessionConnectionMap.containsKey(userName));
         groupSessionConnectionMap.put(userName, connection);
     }
@@ -42,7 +43,7 @@ public class ServerGroupInfo {
 
     }
 
-    public Map<String, Connection> getGroupSessionConnectionMap() {
+    public Map<String, ServerConnection> getGroupSessionConnectionMap() {
         return groupSessionConnectionMap;
     }
 
