@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * 服务端监听器
  * Created by Liuye on 2017/5/29.
  */
-public class ServerConnectionListener {
+public class ServerConnectionListener implements Runnable {
 
     /**
      * 服务器域名或ip
@@ -42,10 +42,10 @@ public class ServerConnectionListener {
         this.serverPort = serverPort;
         this.handler = handler;
 
-        start();
     }
 
-    private void start() {
+    @Override
+    public void run() {
         try {
             //阻塞模式的ServerSocketChannel
             serverSocketChannel = ServerSocketChannel.open();

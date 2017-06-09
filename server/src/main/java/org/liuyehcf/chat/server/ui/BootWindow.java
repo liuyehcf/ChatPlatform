@@ -110,27 +110,22 @@ public class BootWindow {
                     return;
                 }
 
-                listenThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        new ServerConnectionListener(
-                                serverHost,
-                                serverPort,
-                                new WindowHandler() {
-                                    //注意，以下两个回调是由listenThread这个线程来做的
-                                    @Override
-                                    public void onSuccessful() {
-                                        systemLabel.setText("Boot succeed!");
-                                    }
+                listenThread = new Thread(new ServerConnectionListener(
+                        serverHost,
+                        serverPort,
+                        new WindowHandler() {
+                            //注意，以下两个回调是由listenThread这个线程来做的
+                            @Override
+                            public void onSuccessful() {
+                                systemLabel.setText("Boot succeed!");
+                            }
 
-                                    @Override
-                                    public void onFailure() {
-                                        systemLabel.setText("Boot failed!");
-                                        listenThread = null;
-                                    }
-                                });
-                    }
-                });
+                            @Override
+                            public void onFailure() {
+                                systemLabel.setText("Boot failed!");
+                                listenThread = null;
+                            }
+                        }));
 
                 listenThread.start();
 
