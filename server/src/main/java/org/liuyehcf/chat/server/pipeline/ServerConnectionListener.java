@@ -52,6 +52,7 @@ public class ServerConnectionListener implements Runnable {
             serverSocketChannel.bind(new InetSocketAddress(serverHost, serverPort));
         } catch (Exception e) {
             ServerConnectionDispatcher.LOGGER.info("The server starts failed!");
+            e.printStackTrace(System.err);
             handler.onFailure();
             return;
         }
