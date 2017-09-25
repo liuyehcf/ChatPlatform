@@ -162,8 +162,4 @@ public class BootWindow {
         panel.add(bootButton);
         panel.add(stopButton);
     }
-
-    public static void main(String[] args) {
-        new BootWindow();
-    }
 }

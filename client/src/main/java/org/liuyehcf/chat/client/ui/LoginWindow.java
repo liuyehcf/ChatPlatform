@@ -147,9 +147,4 @@ public class LoginWindow extends JFrame {
         });
         panel.add(connectButton);
     }
-
-
-    public static void main(String[] args) {
-        new LoginWindow();
-    }
 }
