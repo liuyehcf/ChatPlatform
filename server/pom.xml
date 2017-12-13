@@ -87,7 +87,9 @@
         <defaultGoal>compile</defaultGoal>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2-beta-5</version>
                 <configuration>
                     <!--设置启动的类-->
                     <!--<archive>-->
@@ -95,7 +97,8 @@
                     <!--<mainClass>org.liuyehcf.chat.server.ChatServerListenerListener</mainClass>-->
                     <!--</manifest>-->
                     <!--</archive>-->
-                    <!--设置文件后缀-->
+                    
+                    <!--固定设置，不太懂-->
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
@@ -105,6 +108,8 @@
                         <id>make-assembly</id>
                         <phase>package</phase>
                         <goals>
+                            <!-- 以下两个goal都可以 -->
+                            <!--<goal>assembly</goal>-->
                             <goal>single</goal>
                         </goals>
                     </execution>
